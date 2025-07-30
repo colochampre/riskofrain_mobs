@@ -42,6 +42,7 @@ A Minecraft mod that brings iconic enemies from Risk of Rain into Minecraft.
 1. Clone the repository
 2. Run `./gradlew genSources` (Linux/Mac) or `gradlew.bat genSources` (Windows)
 3. Open the project in your preferred IDE
+4. If you are redirecting Temp files with a program like RAMDisk, add this property in Run/Debug Configs > VM options: '-Djava.io.tmpdir=D:/Temp'
 
 ### Building
 
