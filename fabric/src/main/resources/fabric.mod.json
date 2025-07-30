@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "riskofrain_mobs",
+  "version": "${version}",
+  "name": "Risk of Rain Mobs",
+  "description": "This mod brings content from the Risk of Rain universe into Minecraft!",
+  "authors": [
+    "Colo Champre"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/riskofrain_mobs/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "io.github.colochampre.riskofrain_mobs.fabric.RoRModFabric"
+    ],
+    "client": [
+      "io.github.colochampre.riskofrain_mobs.fabric.client.RoRModFabricClient"
+    ]
+  },
+  "mixins": [
+    "riskofrain_mobs.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.17.0",
+    "minecraft": "~1.20.1",
+    "java": ">=17",
+    "architectury": ">=9.2.14",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
