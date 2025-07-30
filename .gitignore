@@ -15,7 +15,6 @@ build/
 bin/
 out/
 *.class
-*.jar
 *.war
 *.ear
 
@@ -28,8 +27,6 @@ screenshots/
 
 # Environment and Local Settings
 .env
-*.properties
-!gradle.properties
 local/
 
 # OS Specific
