@@ -1,3 +1,18 @@
 {
-  "item.riskofrain_mobs.gunner_turret_item": "Gunner Turret"
+  "item.riskofrain_mobs.gunner_turret": "Gunner Turret",
+  "item.riskofrain_mobs.gunner_turret_black": "Gunner Turret (Black)",
+  "item.riskofrain_mobs.gunner_turret_blue": "Gunner Turret (Blue)",
+  "item.riskofrain_mobs.gunner_turret_brown": "Gunner Turret (Brown)",
+  "item.riskofrain_mobs.gunner_turret_cyan": "Gunner Turret (Cyan)",
+  "item.riskofrain_mobs.gunner_turret_gray": "Gunner Turret (Gray)",
+  "item.riskofrain_mobs.gunner_turret_green": "Gunner Turret (Green)",
+  "item.riskofrain_mobs.gunner_turret_light_gray": "Gunner Turret (Light Gray)",
+  "item.riskofrain_mobs.gunner_turret_lime": "Gunner Turret (Lime)",
+  "item.riskofrain_mobs.gunner_turret_magenta": "Gunner Turret (Magenta)",
+  "item.riskofrain_mobs.gunner_turret_orange": "Gunner Turret (Orange)",
+  "item.riskofrain_mobs.gunner_turret_pink": "Gunner Turret (Pink)",
+  "item.riskofrain_mobs.gunner_turret_purple": "Gunner Turret (Purple)",
+  "item.riskofrain_mobs.gunner_turret_red": "Gunner Turret (Red)",
+  "item.riskofrain_mobs.gunner_turret_white": "Gunner Turret (White)",
+  "item.riskofrain_mobs.gunner_turret_yellow": "Gunner Turret (Yellow)"
 }
