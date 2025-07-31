@@ -1,5 +1,6 @@
 package io.github.colochampre.riskofrain_mobs;
 
+import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,5 +11,7 @@ public final class RoRMod {
     public static void init() {
         // Write common init code here.
         LOGGER.info("Initialized RoR Mod");
+
+        RoRItems.init();
     }
 }
