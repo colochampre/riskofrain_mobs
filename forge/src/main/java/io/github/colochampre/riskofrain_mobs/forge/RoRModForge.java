@@ -17,24 +17,24 @@ import io.github.colochampre.riskofrain_mobs.RoRMod;
 
 @Mod(RoRMod.MOD_ID)
 public final class RoRModForge {
-    public RoRModForge() {
-        // Submit our event bus to let Architectury API register our content on the right time.
-        EventBuses.registerModEventBus(RoRMod.MOD_ID, FMLJavaModLoadingContext.get().getModEventBus());
-        // Run our common setup.
-        RoRMod.init();
+  public RoRModForge() {
+    // Submit our event bus to let Architectury API register our content on the right time.
+    EventBuses.registerModEventBus(RoRMod.MOD_ID, FMLJavaModLoadingContext.get().getModEventBus());
+    // Run our common setup.
+    RoRMod.init();
+  }
+
+  @Mod.EventBusSubscriber(modid = RoRMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+  public static class ClientModEvents {
+
+    @SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {
+      EntityRenderers.register(RoREntityTypes.GUNNER_TURRET.get(), GunnerTurretRenderer::new);
     }
 
-    @Mod.EventBusSubscriber(modid = RoRMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientModEvents {
-
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
-            EntityRenderers.register(RoREntityTypes.GUNNER_TURRET.get(), GunnerTurretRenderer::new);
-        }
-
-        @SubscribeEvent
-        public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
-            event.registerLayerDefinition(RoREntityRendering.GUNNER_TURRET_LAYER, GunnerTurretModel::createBodyLayer);
-        }
+    @SubscribeEvent
+    public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+      event.registerLayerDefinition(RoREntityRendering.GUNNER_TURRET_LAYER, GunnerTurretModel::createBodyLayer);
     }
+  }
 }
