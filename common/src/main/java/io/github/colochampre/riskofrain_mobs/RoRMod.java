@@ -1,5 +1,9 @@
 package io.github.colochampre.riskofrain_mobs;
 
+import dev.architectury.event.events.client.ClientLifecycleEvent;
+import dev.architectury.registry.level.entity.EntityAttributeRegistry;
+import io.github.colochampre.riskofrain_mobs.entities.GunnerTurretEntity;
+import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
 import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
 import org.slf4j.Logger;
@@ -15,5 +19,9 @@ public final class RoRMod {
 
         RoRItems.init();
         RoREntityTypes.init();
+
+        ClientLifecycleEvent.CLIENT_STARTED.register(listener -> {
+            RoREntityRendering.init();
+        });
     }
 }
