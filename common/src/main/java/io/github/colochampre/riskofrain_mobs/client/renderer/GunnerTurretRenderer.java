@@ -1,9 +1,9 @@
-package io.github.colochampre.riskofrain_mobs.entities.client.renderer;
+package io.github.colochampre.riskofrain_mobs.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.entities.GunnerTurretEntity;
-import io.github.colochampre.riskofrain_mobs.entities.client.models.GunnerTurretModel;
+import io.github.colochampre.riskofrain_mobs.client.models.GunnerTurretModel;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

@@ -1,4 +1,4 @@
-package io.github.colochampre.riskofrain_mobs.entities.client.models;
+package io.github.colochampre.riskofrain_mobs.client.models;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;

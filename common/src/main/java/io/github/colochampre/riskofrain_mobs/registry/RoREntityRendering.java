@@ -4,8 +4,8 @@ import dev.architectury.platform.Platform;
 import dev.architectury.registry.client.level.entity.EntityModelLayerRegistry;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
-import io.github.colochampre.riskofrain_mobs.entities.client.models.GunnerTurretModel;
-import io.github.colochampre.riskofrain_mobs.entities.client.renderer.GunnerTurretRenderer;
+import io.github.colochampre.riskofrain_mobs.client.models.GunnerTurretModel;
+import io.github.colochampre.riskofrain_mobs.client.renderer.GunnerTurretRenderer;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.resources.ResourceLocation;
 

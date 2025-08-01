@@ -15,8 +15,8 @@ public final class RoRMod {
     // Write common init code here.
     LOGGER.info("Initialized RoR Mod");
 
-    RoRItems.init();
     RoREntityTypes.init();
+    RoRItems.init();
 
     ClientLifecycleEvent.CLIENT_STARTED.register(listener -> {
       RoREntityRendering.init();
