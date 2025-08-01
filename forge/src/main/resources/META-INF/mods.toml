@@ -11,7 +11,7 @@ authors = "Colo Champre"
 description = '''
 This mod brings content from the Risk of Rain universe into Minecraft!
 '''
-#logoFile = ""
+logoFile = "logo.png"
 
 [[dependencies.riskofrain_mobs]]
 modId = "forge"
