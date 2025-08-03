@@ -1,4 +1,8 @@
 {
+  "entity.riskofrain_mobs.gunner_turret_entity": "Gunner Turret",
+
+  "item.riskofrain_mobs.gunner_turret_spawn_egg": "Gunner Turret Spawn Egg",
+
   "item.riskofrain_mobs.gunner_turret": "Gunner Turret",
   "item.riskofrain_mobs.gunner_turret_black": "Gunner Turret (Black)",
   "item.riskofrain_mobs.gunner_turret_blue": "Gunner Turret (Blue)",

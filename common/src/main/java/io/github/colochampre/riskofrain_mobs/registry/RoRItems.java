@@ -1,5 +1,6 @@
 package io.github.colochampre.riskofrain_mobs.registry;
 
+import dev.architectury.core.item.ArchitecturySpawnEggItem;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
@@ -10,6 +11,7 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -18,35 +20,44 @@ public class RoRItems {
 
   public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(RoRMod.MOD_ID, Registries.ITEM);
 
-  //public static RegistrySupplier<Item> GUNNER_TURRET_ITEM;
-  public static final Map<DyeColor, RegistrySupplier<Item>> COLORED_GUNNER_TURRETS = new EnumMap<>(DyeColor.class);
+  public static final Map<DyeColor, RegistrySupplier<Item>> COLORED_GUNNER_TURRETS = createColoredTurretMap();
 
-  public static void init() {
-    // GUNNER_TURRET_ITEM = registerItem("gunner_turret", () -> new Item(baseProperties("gunner_turret").stacksTo(16).arch$tab(CreativeModeTabs.SPAWN_EGGS)));
-    // Registry ítems by color
+  // Spawn Eggs
+  public static final RegistrySupplier<Item> GUNNER_TURRET_SPAWN_EGG = ITEMS.register("gunner_turret_spawn_egg",
+      () -> new ArchitecturySpawnEggItem(RoREntityTypes.GUNNER_TURRET, 0x007ADA, 0xBCCCA8,
+          new Item.Properties().arch$tab(CreativeModeTabs.SPAWN_EGGS)));
+
+  private static Map<DyeColor, RegistrySupplier<Item>> createColoredTurretMap() {
+    Map<DyeColor, RegistrySupplier<Item>> map = new EnumMap<>(DyeColor.class);
     for (DyeColor color : DyeColor.values()) {
       if (color != DyeColor.LIGHT_BLUE) {
         String name = "gunner_turret_" + color.getName();
-        RegistrySupplier<Item> coloredItem = registerItem(name, () -> new Item(baseProperties(name).stacksTo(16).arch$tab(CreativeModeTabs.SPAWN_EGGS)));
-        COLORED_GUNNER_TURRETS.put(color, coloredItem);
+        map.put(color, registerItem(name,
+            () -> new Item(baseProperties(name, 16).arch$tab(CreativeModeTabs.SPAWN_EGGS))));
       } else {
-        RegistrySupplier<Item> defaultItem = registerItem("gunner_turret", () -> new Item(baseProperties("gunner_turret").stacksTo(16).arch$tab(CreativeModeTabs.SPAWN_EGGS)));
-        COLORED_GUNNER_TURRETS.put(color, defaultItem);
+        map.put(color, registerItem("gunner_turret",
+            () -> new Item(baseProperties("gunner_turret", 16).arch$tab(CreativeModeTabs.SPAWN_EGGS))));
       }
     }
-
-    ITEMS.register();
+    return map;
   }
 
-  public static RegistrySupplier<Item> registerItem(String name, Supplier<Item> item) {
+  private static RegistrySupplier<Item> registerItem(String name, Supplier<Item> item) {
     return ITEMS.register(new ResourceLocation(RoRMod.MOD_ID, name), item);
   }
 
-  public static Item.Properties baseProperties(String name) {
-    return new Item.Properties();
+  private static Item.Properties baseProperties(String name, int stacksTo) {
+    return new Item.Properties().stacksTo(stacksTo);
   }
 
   public static Item getTurretItemForColor(@Nullable DyeColor color) {
-    return COLORED_GUNNER_TURRETS.get(color).get();
+    if (color == null) {
+      return COLORED_GUNNER_TURRETS.get(DyeColor.LIGHT_BLUE).get();
+    }
+    return COLORED_GUNNER_TURRETS.getOrDefault(color, COLORED_GUNNER_TURRETS.get(DyeColor.LIGHT_BLUE)).get();
+  }
+
+  public static void init() {
+    ITEMS.register();
   }
 }

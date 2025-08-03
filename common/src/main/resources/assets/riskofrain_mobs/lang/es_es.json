@@ -1,4 +1,8 @@
 {
+    "entity.riskofrain_mobs.gunner_turret_entity": "Torreta artillera",
+
+    "item.riskofrain_mobs.gunner_turret_spawn_egg": "Generar torreta artillera",
+
     "item.riskofrain_mobs.gunner_turret": "Turreta artillera",
     "item.riskofrain_mobs.gunner_turret_black": "Turreta artillera (Negro)",
     "item.riskofrain_mobs.gunner_turret_blue": "Turreta artillera (Azul)",
