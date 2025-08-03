@@ -18,5 +18,7 @@
   "item.riskofrain_mobs.gunner_turret_purple": "Gunner Turret (Purple)",
   "item.riskofrain_mobs.gunner_turret_red": "Gunner Turret (Red)",
   "item.riskofrain_mobs.gunner_turret_white": "Gunner Turret (White)",
-  "item.riskofrain_mobs.gunner_turret_yellow": "Gunner Turret (Yellow)"
+  "item.riskofrain_mobs.gunner_turret_yellow": "Gunner Turret (Yellow)",
+
+  "message.riskofrain_mobs.not_gold": "UES Military Supplies only accepts gold as payment"
 }

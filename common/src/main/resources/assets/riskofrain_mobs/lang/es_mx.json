@@ -18,5 +18,7 @@
     "item.riskofrain_mobs.gunner_turret_purple": "Turreta artillera (Morado)",
     "item.riskofrain_mobs.gunner_turret_red": "Turreta artillera (Rojo)",
     "item.riskofrain_mobs.gunner_turret_white": "Turreta artillera (Blanco)",
-    "item.riskofrain_mobs.gunner_turret_yellow": "Turreta artillera (Amarillo)"
+    "item.riskofrain_mobs.gunner_turret_yellow": "Turreta artillera (Amarillo)",
+
+    "message.riskofrain_mobs.not_gold": "Los suministros militares de UES solo acepta oro como pago"
 }

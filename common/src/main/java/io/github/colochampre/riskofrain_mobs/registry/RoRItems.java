@@ -20,23 +20,21 @@ public class RoRItems {
 
   public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(RoRMod.MOD_ID, Registries.ITEM);
 
-  public static final Map<DyeColor, RegistrySupplier<Item>> COLORED_GUNNER_TURRETS = createColoredTurretMap();
-
   // Spawn Eggs
-  public static final RegistrySupplier<Item> GUNNER_TURRET_SPAWN_EGG = ITEMS.register("gunner_turret_spawn_egg",
-      () -> new ArchitecturySpawnEggItem(RoREntityTypes.GUNNER_TURRET, 0x007ADA, 0xBCCCA8,
-          new Item.Properties().arch$tab(CreativeModeTabs.SPAWN_EGGS)));
+  public static final RegistrySupplier<Item> GUNNER_TURRET_SPAWN_EGG = ITEMS.register("gunner_turret_spawn_egg", () ->
+          new ArchitecturySpawnEggItem(RoREntityTypes.GUNNER_TURRET, 0x007ADA, 0xBCCCA8,
+                  baseProperties("gunner_turret_spawn_egg", 64).arch$tab(CreativeModeTabs.SPAWN_EGGS)));
+
+  public static final Map<DyeColor, RegistrySupplier<Item>> COLORED_GUNNER_TURRETS = createColoredTurretMap();
 
   private static Map<DyeColor, RegistrySupplier<Item>> createColoredTurretMap() {
     Map<DyeColor, RegistrySupplier<Item>> map = new EnumMap<>(DyeColor.class);
     for (DyeColor color : DyeColor.values()) {
       if (color != DyeColor.LIGHT_BLUE) {
-        String name = "gunner_turret_" + color.getName();
-        map.put(color, registerItem(name,
-            () -> new Item(baseProperties(name, 16).arch$tab(CreativeModeTabs.SPAWN_EGGS))));
+        String name = "gunner_turret_" + color.getName(); // Example: "gunner_turret_red"
+        map.put(color, registerItem(name, () -> new Item(baseProperties(name, 16).arch$tab(CreativeModeTabs.SPAWN_EGGS))));
       } else {
-        map.put(color, registerItem("gunner_turret",
-            () -> new Item(baseProperties("gunner_turret", 16).arch$tab(CreativeModeTabs.SPAWN_EGGS))));
+        map.put(color, registerItem("gunner_turret", () -> new Item(baseProperties("gunner_turret", 16).arch$tab(CreativeModeTabs.SPAWN_EGGS))));
       }
     }
     return map;

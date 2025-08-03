@@ -5,7 +5,7 @@ import dev.architectury.registry.level.entity.SpawnPlacementsRegistry;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
-import io.github.colochampre.riskofrain_mobs.entities.GunnerTurretEntity;
+import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerTurretEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
