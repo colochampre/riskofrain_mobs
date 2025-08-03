@@ -1,6 +1,7 @@
 package io.github.colochampre.riskofrain_mobs.entities.allies;
 
 import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
+import io.github.colochampre.riskofrain_mobs.utils.EntityUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -11,17 +12,27 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
+import java.util.UUID;
 
 public class GunnerTurretEntity extends AbstractDroneEntity {
 
@@ -49,6 +60,15 @@ public class GunnerTurretEntity extends AbstractDroneEntity {
             .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
             .add(Attributes.MAX_HEALTH, 26.0D)
             .add(Attributes.MOVEMENT_SPEED, 0.23D);
+  }
+
+  @Override
+  protected void registerGoals() {
+    this.targetSelector.addGoal(1, new OwnerHurtByTargetGoal(this));
+    this.targetSelector.addGoal(2, new OwnerHurtTargetGoal(this));
+    this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
+    this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Mob.class, 5, false, false, (entity)
+            -> entity instanceof Enemy && !(DO_NOT_ATTACK.contains(entity.getType()))));
   }
 
   @Override
@@ -85,6 +105,30 @@ public class GunnerTurretEntity extends AbstractDroneEntity {
   }
 
   @Override
+  public void aiStep() {
+    super.aiStep();
+    if (this.isTame()) {
+      this.updateGun();
+    }
+  }
+
+  @Override
+  public void tick() {
+    if (this.getHurtTime() > 0) {
+      this.setHurtTime(this.getHurtTime() - 1);
+    }
+    if (this.getDamage() > 0.0F) {
+      this.setDamage(this.getDamage() - 1.0F);
+    }
+    if (this.getXRot() > 0.0F) {
+      this.setXRot(this.getXRot() - 0.25F);
+    } else if (this.getXRot() < 0.0F) {
+      this.setXRot(this.getXRot() + 0.25F);
+    }
+    super.tick();
+  }
+
+  @Override
   public void setTame(boolean tamed) {
     // GunnerTurretAttackGoal attackGoal = new GunnerTurretAttackGoal(this, 24.0F);
     super.setTame(tamed);
@@ -117,12 +161,34 @@ public class GunnerTurretEntity extends AbstractDroneEntity {
     return super.mobInteract(player, hand);
   }
 
-  public DyeColor getBodyColor() {
-    return DyeColor.byId(this.entityData.get(DATA_BODY_COLOR));
+  @Override
+  public boolean hurt(DamageSource source, float damage) {
+    if (this.isInvulnerableTo(source)) {
+      return false;
+    } else if (source.getDirectEntity() instanceof Player && this.isTame()) {
+      if (!this.level().isClientSide && !this.isRemoved()) {
+        this.setHurtDir((int) -this.getHurtDir());
+        this.setHurtTime(10);
+        this.setDamage(this.getDamage() + damage * 10.0F);
+        this.setXRot(this.getXRot() + (this.getHurtDir() == 1 ? this.getDamage() * 2 : -this.getDamage() * 2)); // Forward-backward inclination
+        boolean isCreativeMode = ((Player) source.getEntity()).getAbilities().instabuild;
+        if (isCreativeMode || this.getDamage() > 40.0F) {
+          if (!isCreativeMode && this.level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
+            this.dropAsItem();
+          }
+          this.discard();
+        }
+      }
+      return true;
+    } else {
+      return super.hurt(source, damage);
+    }
   }
 
-  public void setBodyColor(DyeColor color) {
-    this.entityData.set(DATA_BODY_COLOR, color.getId());
+  protected void dropAsItem() {
+    ItemStack stack = new ItemStack(getDropItem());
+    this.tagItemStack(stack);
+    this.spawnAtLocation(stack);
   }
 
   public ItemStack getPickResult() {
@@ -146,6 +212,58 @@ public class GunnerTurretEntity extends AbstractDroneEntity {
     int colorId = this.entityData.get(DATA_BODY_COLOR);
     tag.putInt("BodyColor", colorId);
     stack.setTag(tag);
+  }
+
+  public DyeColor getBodyColor() {
+    return DyeColor.byId(this.entityData.get(DATA_BODY_COLOR));
+  }
+
+  public void setBodyColor(DyeColor color) {
+    this.entityData.set(DATA_BODY_COLOR, color.getId());
+  }
+
+  public void setDamage(float damage) {
+    this.entityData.set(DATA_ID_DAMAGE, damage);
+  }
+
+  public float getDamage() {
+    return this.entityData.get(DATA_ID_DAMAGE);
+  }
+
+  public void animateHurt(float p_265761_) {
+    this.setHurtDir((int) -this.getHurtDir());
+    this.setHurtTime(10);
+    this.setDamage(this.getDamage() * 11.0F);
+  }
+
+  private void setHurtTime(int time) {
+    this.entityData.set(DATA_ID_HURT, time);
+  }
+
+  public int getHurtTime() {
+    return this.entityData.get(DATA_ID_HURT);
+  }
+
+  public void setHurtDir(int dir) {
+    this.entityData.set(DATA_ID_HURTDIR, dir);
+  }
+
+  public float getHurtDir() {
+    return this.entityData.get(DATA_ID_HURTDIR);
+  }
+
+  private void updateGun() {
+    LivingEntity target = this.getActiveAttackTarget();
+    this.prevGunAngle = this.gunAngle;
+    if (target != null) {
+      this.gunSpeed = Math.min(this.gunSpeed + ROTATION_ACCELERATION, MAX_ROTATION_SPEED);
+    } else {
+      this.gunSpeed = Math.max(this.gunSpeed - ROTATION_DECELERATION, 0.0F);
+      if (this.gunSpeed == 0) {
+        gunAngle = EntityUtils.normalizeAngle(this.gunAngle);
+      }
+    }
+    this.gunAngle += this.gunSpeed;
   }
 
   @Override

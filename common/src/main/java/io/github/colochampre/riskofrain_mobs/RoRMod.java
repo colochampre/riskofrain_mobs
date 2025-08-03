@@ -4,6 +4,7 @@ import dev.architectury.event.events.client.ClientLifecycleEvent;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
 import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
+import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,7 @@ public final class RoRMod {
     // Write common init code here.
     LOGGER.info("Initialized RoR Mod");
 
+    RoRSounds.init();
     RoREntityTypes.init();
     RoRItems.init();
 

@@ -20,13 +20,13 @@ public class RoREntityTypes {
 
   private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(RoRMod.MOD_ID, Registries.ENTITY_TYPE);
 
-  public static RegistrySupplier<EntityType<GunnerTurretEntity>> GUNNER_TURRET;
+  public static final RegistrySupplier<EntityType<GunnerTurretEntity>> GUNNER_TURRET = registerEntityType("gunner_turret_entity", () ->
+          EntityType.Builder.of(GunnerTurretEntity::new, MobCategory.CREATURE)
+          .sized(0.8125F, 1.3125F)
+          // .eyeHeight(1.15625F)
+          .build(RoRMod.MOD_ID + ":gunner_turret_entity"));
 
   public static void init() {
-    GUNNER_TURRET = registerEntityType("gunner_turret_entity", () -> EntityType.Builder.of(GunnerTurretEntity::new, MobCategory.CREATURE)
-            .sized(0.8125F, 1.3125F)
-            // .eyeHeight(1.15625F)
-            .build(RoRMod.MOD_ID + ":gunner_turret_entity"));
 
     ENTITIES.register();
     entityAttributes();

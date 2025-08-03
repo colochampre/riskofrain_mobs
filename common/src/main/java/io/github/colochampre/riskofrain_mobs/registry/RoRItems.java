@@ -4,6 +4,7 @@ import dev.architectury.core.item.ArchitecturySpawnEggItem;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
+import io.github.colochampre.riskofrain_mobs.items.GunnerTurretItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -32,9 +33,9 @@ public class RoRItems {
     for (DyeColor color : DyeColor.values()) {
       if (color != DyeColor.LIGHT_BLUE) {
         String name = "gunner_turret_" + color.getName(); // Example: "gunner_turret_red"
-        map.put(color, registerItem(name, () -> new Item(baseProperties(name, 16).arch$tab(CreativeModeTabs.SPAWN_EGGS))));
+        map.put(color, registerItem(name, () -> new GunnerTurretItem(baseProperties(name, 16).arch$tab(CreativeModeTabs.SPAWN_EGGS))));
       } else {
-        map.put(color, registerItem("gunner_turret", () -> new Item(baseProperties("gunner_turret", 16).arch$tab(CreativeModeTabs.SPAWN_EGGS))));
+        map.put(color, registerItem("gunner_turret", () -> new GunnerTurretItem(baseProperties("gunner_turret", 16).arch$tab(CreativeModeTabs.SPAWN_EGGS))));
       }
     }
     return map;
