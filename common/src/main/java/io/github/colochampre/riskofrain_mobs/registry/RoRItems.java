@@ -22,7 +22,7 @@ public class RoRItems {
   public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(RoRMod.MOD_ID, Registries.ITEM);
 
   // Spawn Eggs
-  public static final RegistrySupplier<Item> GUNNER_TURRET_SPAWN_EGG = ITEMS.register("gunner_turret_spawn_egg", () ->
+  public static final RegistrySupplier<Item> GUNNER_TURRET_SPAWN_EGG = registerItem("gunner_turret_spawn_egg", () ->
           new ArchitecturySpawnEggItem(RoREntityTypes.GUNNER_TURRET, 0x007ADA, 0xBCCCA8,
                   baseProperties("gunner_turret_spawn_egg", 64).arch$tab(CreativeModeTabs.SPAWN_EGGS)));
 
@@ -45,8 +45,8 @@ public class RoRItems {
     return ITEMS.register(new ResourceLocation(RoRMod.MOD_ID, name), item);
   }
 
-  private static Item.Properties baseProperties(String name, int stacksTo) {
-    return new Item.Properties().stacksTo(stacksTo);
+  private static Item.Properties baseProperties(String name, int stackSize) {
+    return new Item.Properties().stacksTo(stackSize);
   }
 
   public static Item getTurretItemForColor(@Nullable DyeColor color) {

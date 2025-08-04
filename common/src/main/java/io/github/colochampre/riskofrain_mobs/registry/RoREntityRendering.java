@@ -6,6 +6,7 @@ import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.client.models.GunnerTurretModel;
 import io.github.colochampre.riskofrain_mobs.client.renderer.GunnerTurretRenderer;
+import io.github.colochampre.riskofrain_mobs.client.renderer.BulletRenderer;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.resources.ResourceLocation;
 
@@ -15,7 +16,10 @@ public class RoREntityRendering {
 
   public static void init() {
     if (Platform.isFabric()) {
+      // Renderer Registries
       EntityRendererRegistry.register(RoREntityTypes.GUNNER_TURRET, GunnerTurretRenderer::new);
+      EntityRendererRegistry.register(RoREntityTypes.DRONE_BULLET_ENTITY, BulletRenderer::new);
+      // Layer Definitions
       EntityModelLayerRegistry.register(GUNNER_TURRET_LAYER, GunnerTurretModel::createBodyLayer);
     }
   }

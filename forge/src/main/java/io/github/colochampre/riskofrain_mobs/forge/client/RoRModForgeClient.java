@@ -2,6 +2,7 @@ package io.github.colochampre.riskofrain_mobs.forge.client;
 
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.client.models.GunnerTurretModel;
+import io.github.colochampre.riskofrain_mobs.client.renderer.BulletRenderer;
 import io.github.colochampre.riskofrain_mobs.client.renderer.GunnerTurretRenderer;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
@@ -18,6 +19,7 @@ public class RoRModForgeClient {
   @SubscribeEvent
   public static void onClientSetup(FMLClientSetupEvent event) {
     EntityRenderers.register(RoREntityTypes.GUNNER_TURRET.get(), GunnerTurretRenderer::new);
+    EntityRenderers.register(RoREntityTypes.DRONE_BULLET_ENTITY.get(), BulletRenderer::new);
   }
 
   @SubscribeEvent

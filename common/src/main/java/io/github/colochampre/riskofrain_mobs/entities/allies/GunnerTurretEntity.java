@@ -1,5 +1,6 @@
 package io.github.colochampre.riskofrain_mobs.entities.allies;
 
+import io.github.colochampre.riskofrain_mobs.entities.projectiles.BulletEntity;
 import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
 import io.github.colochampre.riskofrain_mobs.utils.EntityUtils;
 import net.minecraft.core.BlockPos;
@@ -21,6 +22,7 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
@@ -34,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.UUID;
 
-public class GunnerTurretEntity extends AbstractDroneEntity {
+public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAttackMob {
 
   private static final EntityDataAccessor<Integer> DATA_BODY_COLOR = SynchedEntityData.defineId(GunnerTurretEntity.class, EntityDataSerializers.INT);
   private static final EntityDataAccessor<Integer> DATA_ID_HURT = SynchedEntityData.defineId(GunnerTurretEntity.class, EntityDataSerializers.INT);
@@ -264,6 +266,19 @@ public class GunnerTurretEntity extends AbstractDroneEntity {
       }
     }
     this.gunAngle += this.gunSpeed;
+  }
+
+  @Override
+  public void performRangedAttack(LivingEntity target, float velocity) {
+    BulletEntity bullet = new BulletEntity(this.level(), this);
+    /*double d0 = target.getEyeY() - (double) 0.75F;
+    double d1 = target.getX() - this.getX();
+    double d2 = d0 - bullet.getY();
+    double d3 = target.getZ() - this.getZ();
+    double d4 = Math.sqrt(Math.sqrt(d0)) * 0.25D;
+    bullet.shoot(d1, d2 + d4, d3, 6.0F, 1.0F);*/
+    bullet.shootFromRotation(this, this.getXRot(), this.getYRot(), 0.0F, 6.0F, 1.0F);
+    this.level().addFreshEntity(bullet);
   }
 
   @Override
