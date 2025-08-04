@@ -1,9 +1,11 @@
 package io.github.colochampre.riskofrain_mobs.entities.allies;
 
+import io.github.colochampre.riskofrain_mobs.entities.goals.GunnerTurretAttackGoal;
 import io.github.colochampre.riskofrain_mobs.entities.projectiles.BulletEntity;
 import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
 import io.github.colochampre.riskofrain_mobs.utils.EntityUtils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -21,6 +23,8 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
+import net.minecraft.world.entity.animal.Wolf;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.player.Player;
@@ -132,10 +136,10 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
 
   @Override
   public void setTame(boolean tamed) {
-    // GunnerTurretAttackGoal attackGoal = new GunnerTurretAttackGoal(this, 24.0F);
+    GunnerTurretAttackGoal attackGoal = new GunnerTurretAttackGoal(this, 24.0F);
     super.setTame(tamed);
     if (tamed) {
-      //this.goalSelector.addGoal(3, attackGoal);
+      this.goalSelector.addGoal(3, attackGoal);
     }
   }
 
@@ -254,6 +258,18 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
     return this.entityData.get(DATA_ID_HURTDIR);
   }
 
+  public float getGunAngle() {
+    return this.gunAngle;
+  }
+
+  public float getPrevGunAngle() {
+    return this.prevGunAngle;
+  }
+
+  public float getGunSpeed() {
+    return this.gunSpeed;
+  }
+
   private void updateGun() {
     LivingEntity target = this.getActiveAttackTarget();
     this.prevGunAngle = this.gunAngle;
@@ -271,14 +287,29 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   @Override
   public void performRangedAttack(LivingEntity target, float velocity) {
     BulletEntity bullet = new BulletEntity(this.level(), this);
-    /*double d0 = target.getEyeY() - (double) 0.75F;
-    double d1 = target.getX() - this.getX();
-    double d2 = d0 - bullet.getY();
-    double d3 = target.getZ() - this.getZ();
-    double d4 = Math.sqrt(Math.sqrt(d0)) * 0.25D;
-    bullet.shoot(d1, d2 + d4, d3, 6.0F, 1.0F);*/
-    bullet.shootFromRotation(this, this.getXRot(), this.getYRot(), 0.0F, 6.0F, 1.0F);
+
+    double d0 = target.getX() - this.getX();
+    double d1 = target.getEyeY() - bullet.getY();
+    double d2 = target.getZ() - this.getZ();
+    
+    bullet.shoot(d0, d1, d2, 3.0F, 1.0F);
     this.level().addFreshEntity(bullet);
+  }
+
+  @Override
+  public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+    if (target instanceof Wolf) {
+      Wolf wolf = (Wolf) target;
+      return !wolf.isTame() || wolf.getOwner() != owner;
+    } /* else if (target instanceof Player && owner instanceof Player && !((Player) owner).canHarmPlayer((Player) target)) {
+      return false;
+    } */ else if (target instanceof AbstractHorse && ((AbstractHorse) target).isTamed()) {
+      return false;
+    } else if (target instanceof AbstractDroneEntity && ((AbstractDroneEntity) target).isTame()) {
+      return false;
+    } else {
+      return !(target instanceof TamableAnimal) || !((TamableAnimal) target).isTame();
+    }
   }
 
   @Override

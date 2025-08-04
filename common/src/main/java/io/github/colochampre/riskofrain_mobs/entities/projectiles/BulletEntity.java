@@ -50,12 +50,12 @@ public class BulletEntity extends ThrowableProjectile {
     super.tick();
 
     // Add particle effect
-    if (this.level().isClientSide) {
+    /* if (this.level().isClientSide) {
       // Add particle effect every 4 ticks
-      /*if (this.tickCount % 4 == 0) {
+      if (this.tickCount % 2 == 0) {
         this.level().addParticle(ParticleTypes.CRIT, this.getX(), this.getY(), this.getZ(), 0, 0, 0);
-      }*/
-    }
+      }
+    } */
     // Remove the bullet if it's been alive for too long
     if (this.tickCount > 100) {
       this.discard();
