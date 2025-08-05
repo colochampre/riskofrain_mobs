@@ -39,7 +39,7 @@ public class BulletRenderer extends EntityRenderer<Entity> {
 
     // Spin the model on its axis of travel
     double speed = entity.getDeltaMovement().length();
-    float spinAngle = (entity.tickCount + partialTick) * (float) speed * 80.0F; // Adjust x.0F to change the spin speed
+    float spinAngle = (entity.tickCount + partialTick) * (float) speed * 60.0F; // Adjust x.0F to change the spin speed
     poseStack.mulPose(Axis.XP.rotationDegrees(spinAngle));
 
     this.itemRenderer.renderStatic(new ItemStack(Items.IRON_NUGGET), ItemDisplayContext.FIXED,

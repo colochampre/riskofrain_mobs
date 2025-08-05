@@ -201,7 +201,7 @@ public class GunnerTurretModel<T extends GunnerTurretEntity> extends EntityModel
   }
 
   private void getGunAnim(GunnerTurretEntity entity, float partialTicks) {
-    /*float speed = entity.getGunSpeed();
+    float speed = entity.getGunSpeed();
     float angle = entity.getGunAngle();
     float prevAngle = entity.getPrevGunAngle();
     float interpolatedAngle = prevAngle + (angle - prevAngle) * partialTicks;
@@ -209,7 +209,7 @@ public class GunnerTurretModel<T extends GunnerTurretEntity> extends EntityModel
       this.gun_2_axis.zRot = 0.785398F + angle;
     } else {
       this.gun_2_axis.zRot = 0.785398F + interpolatedAngle;
-    }*/
+    }
   }
 
   private void getBuriedPosition(GunnerTurretEntity entity) {
