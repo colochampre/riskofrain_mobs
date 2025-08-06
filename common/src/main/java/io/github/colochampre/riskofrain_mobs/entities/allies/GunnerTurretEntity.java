@@ -5,7 +5,6 @@ import io.github.colochampre.riskofrain_mobs.entities.projectiles.BulletEntity;
 import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
 import io.github.colochampre.riskofrain_mobs.utils.EntityUtils;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -37,9 +36,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-import java.util.UUID;
-
 public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAttackMob {
 
   private static final EntityDataAccessor<Integer> DATA_BODY_COLOR = SynchedEntityData.defineId(GunnerTurretEntity.class, EntityDataSerializers.INT);
@@ -52,6 +48,10 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   private float gunAngle;
   private float prevGunAngle;
   private float gunSpeed;
+  private float sitProgress;
+  private float prevSitProgress;
+  private float tameProgress;
+  private float prevTameProgress;
 
   public GunnerTurretEntity(EntityType<? extends AbstractDroneEntity> entityType, Level level) {
     super(entityType, level);
@@ -270,6 +270,38 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
     return this.gunSpeed;
   }
 
+  public void setSitProgress(float progress) {
+    this.sitProgress = progress;
+  }
+
+  public void setPrevSitProgress(float progress) {
+    this.prevSitProgress = progress;
+  }
+
+  public float getSitProgress() {
+    return this.sitProgress;
+  }
+
+  public float getPrevSitProgress() {
+    return this.prevSitProgress;
+  }
+
+  public void setTameProgress(float progress) {
+    this.tameProgress = progress;
+  }
+
+  public void setPrevTameProgress(float progress) {
+    this.prevTameProgress = progress;
+  }
+
+  public float getTameProgress() {
+    return this.tameProgress;
+  }
+
+  public float getPrevTameProgress() {
+    return this.prevTameProgress;
+  }
+
   private void updateGun() {
     LivingEntity target = this.getActiveAttackTarget();
     this.prevGunAngle = this.gunAngle;
@@ -287,11 +319,9 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   @Override
   public void performRangedAttack(LivingEntity target, float velocity) {
     BulletEntity bullet = new BulletEntity(this.level(), this);
-
     double d0 = target.getX() - this.getX();
     double d1 = target.getEyeY() - bullet.getY();
     double d2 = target.getZ() - this.getZ();
-    
     bullet.shoot(d0, d1, d2, 3.0F, 1.0F);
     this.level().addFreshEntity(bullet);
   }

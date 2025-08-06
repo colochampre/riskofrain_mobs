@@ -178,11 +178,24 @@ public class GunnerTurretModel<T extends GunnerTurretEntity> extends EntityModel
   @Override
   public void setupAnim(GunnerTurretEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
     float partialTicks = ageInTicks - entity.tickCount;
+    
+    // Actualizar el progreso de la animación de sentarse/pararse
+    float targetSitProgress = entity.isInSittingPose() ? 1.0F : 0.0F;
+    float sitProgressSpeed = 0.1F;
+    entity.setPrevSitProgress(entity.getSitProgress());
+    entity.setSitProgress(Mth.lerp(sitProgressSpeed, entity.getSitProgress(), targetSitProgress));
+    
+    // Actualizar el progreso de la domesticación
+    float targetTameProgress = entity.isTame() ? 1.0F : 0.0F;
+    float tameProgressSpeed = 0.1F;
+    entity.setPrevTameProgress(entity.getTameProgress());
+    entity.setTameProgress(Mth.lerp(tameProgressSpeed, entity.getTameProgress(), targetTameProgress));
+    
     this.resetBodyParts();
     this.getLookAnim(netHeadYaw, headPitch);
     this.getWalkAnim(limbSwing, limbSwingAmount);
     this.getGunAnim(entity, partialTicks);
-    this.getBuriedPosition(entity);
+    this.getBuriedPosition(entity, partialTicks);
   }
 
   private void getLookAnim(float headYaw, float headPitch) {
@@ -212,31 +225,56 @@ public class GunnerTurretModel<T extends GunnerTurretEntity> extends EntityModel
     }
   }
 
-  private void getBuriedPosition(GunnerTurretEntity entity) {
-    if (!entity.isTame()) {
-      this.core.y = 13.0F;
-      this.core.xRot = -0.261799F;
-      this.core.zRot = 0.261799F;
-      this.head_axis.xRot = 0.349066F;
-      this.head_axis.yRot = -0.436332F;
-      this.leg_front_left_2.zRot = 0.261799F;
-      this.leg_front_right_2.xRot = 0.174533F;
-      this.leg_back_left_2.xRot = -0.523599F;
-      this.leg_back_left_3.zRot = 1.39626F;
-      this.leg_back_right_1.xRot = -0.174533F;
-      this.leg_back_right_2.zRot = -0.174533F;
-    } else if (entity.isInSittingPose()) {
-      this.core.y = 9F;
-      this.head_axis.xRot = 0.523599F;
-      this.leg_front_left_2.xRot = 0;
-      this.leg_front_right_2.xRot = 0;
-      this.leg_back_left_2.xRot = 0;
-      this.leg_back_right_2.xRot = 0;
-    } else {
-      this.leg_front_left_2.xRot = 0.261799F;
-      this.leg_front_right_2.xRot = 0.261799F;
-      this.leg_back_left_2.xRot = 0.261799F;
-      this.leg_back_right_2.xRot = 0.261799F;
+  private void getBuriedPosition(GunnerTurretEntity entity, float partialTicks) {
+    // interpolated tame progress
+    float buriedProgress = Mth.lerp(partialTicks, entity.getPrevTameProgress(), entity.getTameProgress());
+    
+    // Not tamed values
+    float wildY = 13.0F;
+    float wildXRot = -0.261799F;
+    float wildZRot = 0.261799F;
+    float wildHeadXRot = 0.349066F;
+    float wildHeadYRot = -0.436332F;
+    float wildLegFrontLeftZRot = 0.261799F;
+    float wildLegFrontRightXRot = 0.174533F;
+    float wildLegBackLeftXRot = -0.523599F;
+    float wildLegBackLeftZRot = 1.39626F;
+    float wildLegBackRight1XRot = -0.174533F;
+    float wildLegBackRight2ZRot = -0.174533F;
+    
+    // Tamed values
+    float baseY = 7.5F;
+    float baseXRot = 0.0F;
+    float baseZRot = 0.0F;
+    float baseHeadXRot = 0.0F;
+    float baseHeadYRot = 0.0F;
+    
+    // Interpolate between tamed and not tamed
+    this.core.y = Mth.lerp(buriedProgress, wildY, baseY);
+    this.core.xRot = Mth.lerp(buriedProgress, wildXRot, baseXRot);
+    this.core.zRot = Mth.lerp(buriedProgress, wildZRot, baseZRot);
+    this.head_axis.xRot = Mth.lerp(buriedProgress, wildHeadXRot, baseHeadXRot);
+    this.head_axis.yRot = Mth.lerp(buriedProgress, wildHeadYRot, baseHeadYRot);
+    this.leg_front_left_2.zRot = Mth.lerp(buriedProgress, wildLegFrontLeftZRot, 0.0F);
+    this.leg_front_right_2.xRot = Mth.lerp(buriedProgress, wildLegFrontRightXRot, 0.0F);
+    this.leg_back_left_2.xRot = Mth.lerp(buriedProgress, wildLegBackLeftXRot, 0.0F);
+    this.leg_back_left_3.zRot = Mth.lerp(buriedProgress, wildLegBackLeftZRot, 0.0F);
+    this.leg_back_right_1.xRot = Mth.lerp(buriedProgress, wildLegBackRight1XRot, 0.0F);
+    this.leg_back_right_2.zRot = Mth.lerp(buriedProgress, wildLegBackRight2ZRot, 0.0F);
+    
+    // If is tamed, apply sit/stand animation
+    if (buriedProgress > 0.99F) { // Only if it's completely tamed
+      float sitProgress = Mth.lerp(partialTicks, entity.getPrevSitProgress(), entity.getSitProgress());
+      // Core Y position (higher when standing, lower when sitting)
+      this.core.y = Mth.lerp(sitProgress, 7.5F, 9.0F);
+      // Head rotation (more tilted when sitting)
+      this.head_axis.xRot += Mth.lerp(sitProgress, 0.0F, 0.523599F);
+      // Leg rotations (straight when sitting, angled when standing)
+      float legAngle = Mth.lerp(sitProgress, 0.261799F, 0.0F);
+      this.leg_front_left_2.xRot = legAngle;
+      this.leg_front_right_2.xRot = legAngle;
+      this.leg_back_left_2.xRot = legAngle;
+      this.leg_back_right_2.xRot = legAngle;
     }
   }
 

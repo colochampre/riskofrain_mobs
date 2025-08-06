@@ -32,7 +32,7 @@ public class RoRItems {
     for (DyeColor color : DyeColor.values()) {
       if (color != DyeColor.LIGHT_BLUE) {
         String name = "gunner_turret_" + color.getName(); // Example: "gunner_turret_red"
-        map.put(color, registerItem(name, () -> new GunnerTurretItem(baseProperties(name, 16).arch$tab(CreativeModeTabs.SPAWN_EGGS))));
+        map.put(color, registerItem(name, () -> new GunnerTurretItem(baseProperties(name, 16))));
       } else {
         map.put(color, registerItem("gunner_turret", () -> new GunnerTurretItem(baseProperties("gunner_turret", 16).arch$tab(CreativeModeTabs.SPAWN_EGGS))));
       }
