@@ -12,6 +12,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -34,7 +35,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAttackMob {
 
@@ -141,6 +144,14 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
     if (tamed) {
       this.goalSelector.addGoal(3, attackGoal);
     }
+  }
+
+  @Override
+  public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType type, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag dataTag) {
+    /*this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(RoRConfig.SERVER.BULLETS_DAMAGE.get());
+    this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(RoRConfig.SERVER.GUNNER_TURRET_MAX_HEALTH.get());
+    this.setHealth(this.getMaxHealth());*/
+    return super.finalizeSpawn(level, difficulty, type, spawnData, dataTag);
   }
 
   public static boolean checkDroneSpawnRules(EntityType<GunnerTurretEntity> entity, LevelAccessor level, MobSpawnType type, BlockPos pos, RandomSource randomSource) {

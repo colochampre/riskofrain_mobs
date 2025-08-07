@@ -5,6 +5,7 @@ import dev.architectury.registry.level.entity.SpawnPlacementsRegistry;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
+import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerDroneEntity;
 import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerTurretEntity;
 import io.github.colochampre.riskofrain_mobs.entities.projectiles.BulletEntity;
 import net.minecraft.core.registries.Registries;
@@ -28,6 +29,12 @@ public class RoREntityTypes {
           // .eyeHeight(1.15625F)
           .build(RoRMod.MOD_ID + ":gunner_turret_entity"));
 
+  public static final RegistrySupplier<EntityType<GunnerDroneEntity>> GUNNER_DRONE = registerEntityType(
+      "gunner_drone_entity", () -> EntityType.Builder.of(GunnerDroneEntity::new, MobCategory.CREATURE)
+          .sized(0.75F, 1.15F)
+          // .eyeHeight(0.055F)
+          .build(RoRMod.MOD_ID + ":gunner_drone_entity"));
+
   public static final RegistrySupplier<EntityType<BulletEntity>> DRONE_BULLET_ENTITY = registerEntityType("drone_bullet_entity", () ->
         EntityType.Builder.<BulletEntity>of(BulletEntity::new, MobCategory.MISC)
                 .sized(0.25F, 0.25F)
@@ -43,15 +50,17 @@ public class RoREntityTypes {
 
   public static void entityAttributes() {
     EntityAttributeRegistry.register(RoREntityTypes.GUNNER_TURRET, GunnerTurretEntity::createAttributes);
+    EntityAttributeRegistry.register(RoREntityTypes.GUNNER_DRONE, GunnerDroneEntity::createAttributes);
   }
 
   public static void spawnPlacement() {
     SpawnPlacementsRegistry.register(RoREntityTypes.GUNNER_TURRET, SpawnPlacements.Type.ON_GROUND,
         Heightmap.Types.WORLD_SURFACE, GunnerTurretEntity::checkDroneSpawnRules);
+    SpawnPlacementsRegistry.register(RoREntityTypes.GUNNER_DRONE, SpawnPlacements.Type.ON_GROUND,
+        Heightmap.Types.WORLD_SURFACE, GunnerDroneEntity::checkDroneSpawnRules);
   }
 
-  private static <T extends Entity> RegistrySupplier<EntityType<T>> registerEntityType(String name,
-      Supplier<EntityType<T>> entityType) {
+  private static <T extends Entity> RegistrySupplier<EntityType<T>> registerEntityType(String name, Supplier<EntityType<T>> entityType) {
     return ENTITIES.register(new ResourceLocation(RoRMod.MOD_ID, name), entityType);
   }
 }

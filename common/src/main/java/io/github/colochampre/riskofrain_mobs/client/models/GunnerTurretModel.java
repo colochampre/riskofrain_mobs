@@ -13,6 +13,7 @@ import net.minecraft.util.Mth;
 
 @Environment(EnvType.CLIENT)
 public class GunnerTurretModel<T extends GunnerTurretEntity> extends EntityModel<T> {
+
   private final ModelPart core;
   private final ModelPart hips_axis;
   private final ModelPart hips;
