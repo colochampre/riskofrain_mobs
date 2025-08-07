@@ -172,6 +172,10 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
     if (this.isInvulnerableTo(source)) {
       return false;
     } else if (source.getDirectEntity() instanceof Player && this.isTame()) {
+      Player player = (Player) source.getEntity();
+      if (player != null && player.getUUID() != this.getOwnerUUID()) {
+        return super.hurt(source, damage);
+      }
       if (!this.level().isClientSide && !this.isRemoved()) {
         this.setHurtDir((int) -this.getHurtDir());
         this.setHurtTime(10);

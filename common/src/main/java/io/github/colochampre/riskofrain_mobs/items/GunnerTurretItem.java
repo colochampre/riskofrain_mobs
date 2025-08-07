@@ -63,7 +63,12 @@ public class GunnerTurretItem extends Item {
             }
             if (tag.contains("OwnerUUID")) {
               UUID ownerUUID = tag.getUUID("OwnerUUID");
-              turret.tame(Objects.requireNonNull(level.getPlayerByUUID(ownerUUID)));
+              Player owner = level.getPlayerByUUID(ownerUUID);
+              if (owner != null) {
+                turret.tame(owner);
+              } else {
+                turret.tame(player);
+              }
             } else {
               turret.tame(player);
             }

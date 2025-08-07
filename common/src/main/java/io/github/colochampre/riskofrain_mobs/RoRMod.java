@@ -1,6 +1,7 @@
 package io.github.colochampre.riskofrain_mobs;
 
 import dev.architectury.event.events.client.ClientLifecycleEvent;
+import io.github.colochampre.riskofrain_mobs.events.ModEvents;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
 import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
@@ -19,6 +20,7 @@ public final class RoRMod {
     RoRSounds.init();
     RoREntityTypes.init();
     RoRItems.init();
+    ModEvents.init();
 
     ClientLifecycleEvent.CLIENT_STARTED.register(listener -> {
       RoREntityRendering.init();
