@@ -20,6 +20,9 @@
     ],
     "client": [
       "io.github.colochampre.riskofrain_mobs.fabric.client.RoRModFabricClient"
+    ],
+    "modmenu": [
+      "io.github.colochampre.riskofrain_mobs.config.RoRModMenuIntegration"
     ]
   },
   "mixins": [

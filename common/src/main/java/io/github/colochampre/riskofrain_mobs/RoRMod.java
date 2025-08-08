@@ -2,6 +2,7 @@ package io.github.colochampre.riskofrain_mobs;
 
 import dev.architectury.event.events.client.ClientLifecycleEvent;
 import io.github.colochampre.riskofrain_mobs.events.ModEvents;
+import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoRNetwork;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
@@ -18,6 +19,7 @@ public final class RoRMod {
     // Write common init code here.
     LOGGER.info("Initialized RoR Mod");
 
+    RoRConfigs.init();
     RoRSounds.init();
     RoREntityTypes.init();
     RoRItems.init();

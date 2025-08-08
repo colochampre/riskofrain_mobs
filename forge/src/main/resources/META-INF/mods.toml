@@ -1,6 +1,5 @@
 modLoader = "javafml"
 loaderVersion = "[47,)"
-#issueTrackerURL = ""
 license = "MIT"
 
 [[mods]]
@@ -8,28 +7,33 @@ modId = "riskofrain_mobs"
 version = "${version}"
 displayName = "Risk of Rain Mobs"
 authors = "Colo Champre"
-description = '''
-This mod brings content from the Risk of Rain universe into Minecraft!
-'''
+description = '''This mod brings content from the Risk of Rain universe into Minecraft!'''
 logoFile = "logo.png"
 
-[[dependencies.riskofrain_mobs]]
-modId = "forge"
-mandatory = true
-versionRange = "[47,)"
-ordering = "NONE"
-side = "BOTH"
+[[mixins]]
+config = "riskofrain_mobs.mixins.json"
 
 [[dependencies.riskofrain_mobs]]
-modId = "minecraft"
-mandatory = true
-versionRange = "[1.20.1,)"
-ordering = "NONE"
-side = "BOTH"
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
 
 [[dependencies.riskofrain_mobs]]
-modId = "architectury"
-mandatory = true
-versionRange = "[9.2.14,)"
-ordering = "AFTER"
-side = "BOTH"
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.riskofrain_mobs]]
+    modId="architectury"
+    mandatory=true
+    versionRange="[9.2.14,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[extensions.riskofrain_mobs]]
+type = "forge:display_test"
+value = "MATCH_VERSION"

@@ -1,5 +1,6 @@
 package io.github.colochampre.riskofrain_mobs.entities.allies;
 
+import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.utils.EntityUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -119,9 +120,9 @@ public class GunnerDroneEntity extends AbstractDroneEntity implements RangedAtta
 
   @Override
   public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType type, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag dataTag) {
-    /*this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(RoRConfig.SERVER.BULLETS_DAMAGE.get());
-    this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(RoRConfig.SERVER.GUNNER_DRONE_MAX_HEALTH.get());
-    this.setHealth(this.getMaxHealth());*/
+    this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(RoRConfigs.get().BULLETS_DAMAGE);
+    this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(RoRConfigs.get().GUNNER_DRONE_MAX_HEALTH);
+    this.setHealth(this.getMaxHealth());
     return super.finalizeSpawn(level, difficulty, type, spawnData, dataTag);
   }
 
