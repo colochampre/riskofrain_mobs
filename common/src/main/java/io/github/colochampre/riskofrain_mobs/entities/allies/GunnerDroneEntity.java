@@ -120,8 +120,8 @@ public class GunnerDroneEntity extends AbstractDroneEntity implements RangedAtta
 
   @Override
   public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType type, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag dataTag) {
-    this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(RoRConfigs.get().DRONES.BULLETS_DAMAGE);
-    this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(RoRConfigs.get().DRONES.GUNNER_DRONE_MAX_HEALTH);
+    this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(RoRConfigs.get().MOBS.DRONES.BULLETS_DAMAGE);
+    this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(RoRConfigs.get().MOBS.DRONES.GUNNER_DRONE_MAX_HEALTH);
     this.setHealth(this.getMaxHealth());
     return super.finalizeSpawn(level, difficulty, type, spawnData, dataTag);
   }

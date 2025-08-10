@@ -15,11 +15,7 @@ public class RoRConfigs implements ConfigData {
 
     @ConfigEntry.Category("mobs")
     @ConfigEntry.Gui.TransitiveObject
-    public DronesConfig DRONES = new DronesConfig();
-
-    @ConfigEntry.Category("mobs")
-    @ConfigEntry.Gui.TransitiveObject
-    public BeetlesConfig BEETLES = new BeetlesConfig();
+    public MobsConfig MOBS = new MobsConfig();
 
     @ConfigEntry.Category("sounds")
     @ConfigEntry.Gui.TransitiveObject
@@ -34,12 +30,20 @@ public class RoRConfigs implements ConfigData {
         return INSTANCE;
     }
 
+    public static class MobsConfig implements ConfigData {
+        @ConfigEntry.Gui.CollapsibleObject(startExpanded = true)
+        public DronesConfig DRONES = new DronesConfig();
+
+        @ConfigEntry.Gui.CollapsibleObject(startExpanded = true)
+        public BeetlesConfig BEETLES = new BeetlesConfig();
+    }
+
     public static class DronesConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip
-        public int GUNNER_DRONE_MAX_HEALTH = 20;
+        public double GUNNER_DRONE_MAX_HEALTH = 20;
 
         @ConfigEntry.Gui.Tooltip
-        public int GUNNER_TURRET_MAX_HEALTH = 20;
+        public double GUNNER_TURRET_MAX_HEALTH = 20;
 
         @ConfigEntry.Gui.Tooltip
         public double BULLETS_DAMAGE = 2.0;
