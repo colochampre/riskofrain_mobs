@@ -17,7 +17,11 @@ public class RoRNetwork {
       context.queue(() -> {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null && mc.level != null) {
-          mc.getSoundManager().play(SimpleSoundInstance.forUI(RoRSounds.DIFFICULTY_CHANGE.get(), 1.0F, 1.0F));
+
+          if (RoRConfigs.get().SOUNDS.DIFFICULTY_UPDATE > 0) {
+            mc.getSoundManager().play(SimpleSoundInstance.forUI(RoRSounds.DIFFICULTY_CHANGE.get(),
+                1.0F, RoRConfigs.get().SOUNDS.DIFFICULTY_UPDATE / 100.0F));
+          }
         }
       });
     });

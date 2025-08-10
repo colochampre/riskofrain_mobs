@@ -13,12 +13,11 @@ public class RoRConfigs implements ConfigData {
     @ConfigEntry.Gui.Excluded
     private static RoRConfigs INSTANCE;
 
-    @ConfigEntry.Category("mobs")
     @ConfigEntry.Gui.TransitiveObject
     public MobsConfig MOBS = new MobsConfig();
 
-    @ConfigEntry.Category("sounds")
-    @ConfigEntry.Gui.TransitiveObject
+    @ConfigEntry.Gui.CollapsibleObject(startExpanded = false)
+    @ConfigEntry.Gui.Tooltip
     public SoundsConfig SOUNDS = new SoundsConfig();
 
     public static void init() {
@@ -31,61 +30,53 @@ public class RoRConfigs implements ConfigData {
     }
 
     public static class MobsConfig implements ConfigData {
-        @ConfigEntry.Gui.CollapsibleObject(startExpanded = true)
+        @ConfigEntry.Gui.CollapsibleObject(startExpanded = false)
         public DronesConfig DRONES = new DronesConfig();
 
-        @ConfigEntry.Gui.CollapsibleObject(startExpanded = true)
+        @ConfigEntry.Gui.CollapsibleObject(startExpanded = false)
         public BeetlesConfig BEETLES = new BeetlesConfig();
     }
 
     public static class DronesConfig implements ConfigData {
-        @ConfigEntry.Gui.Tooltip
         public double GUNNER_DRONE_MAX_HEALTH = 20;
-
-        @ConfigEntry.Gui.Tooltip
-        public double GUNNER_TURRET_MAX_HEALTH = 20;
-
-        @ConfigEntry.Gui.Tooltip
+        public double GUNNER_TURRET_MAX_HEALTH = 26;
         public double BULLETS_DAMAGE = 2.0;
 
-        @ConfigEntry.Gui.Tooltip
-        public int DRONES_SPAWN_RATE = 1; // 0 - 100
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        public int DRONES_SPAWN_RATE = 1;
     }
 
     public static class BeetlesConfig implements ConfigData {
-        @ConfigEntry.Gui.Tooltip
         public double BEETLE_MAX_HEALTH = 20.0;
-
-        @ConfigEntry.Gui.Tooltip
         public double BEETLE_ATTACK_DAMAGE = 2.5;
 
-        @ConfigEntry.Gui.Tooltip
-        public int BEETLE_OVERWORLD_SPAWN_RATE = 66; // 0 - 100
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        public int BEETLE_OVERWORLD_SPAWN_RATE = 66;
 
-        @ConfigEntry.Gui.Tooltip
-        public int BEETLE_NETHER_SPAWN_RATE = 10; // 0 - 100
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        public int BEETLE_NETHER_SPAWN_RATE = 10;
 
-        @ConfigEntry.Gui.Tooltip
-        public int BEETLE_MIN_GROUP_SIZE = 1; // 1 - 8
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
+        public int BEETLE_MIN_GROUP_SIZE = 1;
 
-        @ConfigEntry.Gui.Tooltip
-        public int BEETLE_MAX_GROUP_SIZE = 3; // 1 - 8
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
+        public int BEETLE_MAX_GROUP_SIZE = 3;
     }
 
     public static class SoundsConfig implements ConfigData {
-        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int ADVANCEMENT = 0;
 
-        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int CHAT_MESSAGE = 0;
 
-        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int DIFFICULTY_UPDATE = 0;
 
-        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int LEVEL_UPDATE = 0;
 
-        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int PLAYER_DEATH_SOUND = 0;
     }
 }

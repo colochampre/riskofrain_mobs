@@ -2,6 +2,7 @@ package io.github.colochampre.riskofrain_mobs.entities.allies;
 
 import io.github.colochampre.riskofrain_mobs.entities.goals.GunnerTurretAttackGoal;
 import io.github.colochampre.riskofrain_mobs.entities.projectiles.BulletEntity;
+import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
 import io.github.colochampre.riskofrain_mobs.utils.EntityUtils;
 import net.minecraft.core.BlockPos;
@@ -148,9 +149,13 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
 
   @Override
   public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType type, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag dataTag) {
-    /*this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(RoRConfig.SERVER.BULLETS_DAMAGE.get());
-    this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(RoRConfig.SERVER.GUNNER_TURRET_MAX_HEALTH.get());
-    this.setHealth(this.getMaxHealth());*/
+    this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(RoRConfigs.get().MOBS.DRONES.BULLETS_DAMAGE);
+    this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(RoRConfigs.get().MOBS.DRONES.GUNNER_TURRET_MAX_HEALTH);
+    if (dataTag != null && dataTag.contains("TurretHealth")) {
+      this.setHealth(dataTag.getFloat("TurretHealth"));
+    } else {
+      this.setHealth(this.getMaxHealth());
+    }
     return super.finalizeSpawn(level, difficulty, type, spawnData, dataTag);
   }
 
@@ -257,6 +262,47 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
     this.setDamage(this.getDamage() * 11.0F);
   }
 
+
+  @Override
+  public void performRangedAttack(LivingEntity target, float velocity) {
+    BulletEntity bullet = new BulletEntity(this.level(), this);
+    double d0 = target.getX() - this.getX();
+    double d1 = target.getEyeY() - bullet.getY();
+    double d2 = target.getZ() - this.getZ();
+    bullet.shoot(d0, d1, d2, 3.0F, 1.0F);
+    this.level().addFreshEntity(bullet);
+  }
+
+  @Override
+  public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+    if (target instanceof Wolf) {
+      Wolf wolf = (Wolf) target;
+      return !wolf.isTame() || wolf.getOwner() != owner;
+    } /* else if (target instanceof Player && owner instanceof Player && !((Player) owner).canHarmPlayer((Player) target)) {
+      return false;
+    } */ else if (target instanceof AbstractHorse && ((AbstractHorse) target).isTamed()) {
+      return false;
+    } else if (target instanceof AbstractDroneEntity && ((AbstractDroneEntity) target).isTame()) {
+      return false;
+    } else {
+      return !(target instanceof TamableAnimal) || !((TamableAnimal) target).isTame();
+    }
+  }
+
+  private void updateGun() {
+    LivingEntity target = this.getActiveAttackTarget();
+    this.prevGunAngle = this.gunAngle;
+    if (target != null) {
+      this.gunSpeed = Math.min(this.gunSpeed + ROTATION_ACCELERATION, MAX_ROTATION_SPEED);
+    } else {
+      this.gunSpeed = Math.max(this.gunSpeed - ROTATION_DECELERATION, 0.0F);
+      if (this.gunSpeed == 0) {
+        gunAngle = EntityUtils.normalizeAngle(this.gunAngle);
+      }
+    }
+    this.gunAngle += this.gunSpeed;
+  }
+
   private void setHurtTime(int time) {
     this.entityData.set(DATA_ID_HURT, time);
   }
@@ -315,46 +361,6 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
 
   public float getPrevTameProgress() {
     return this.prevTameProgress;
-  }
-
-  private void updateGun() {
-    LivingEntity target = this.getActiveAttackTarget();
-    this.prevGunAngle = this.gunAngle;
-    if (target != null) {
-      this.gunSpeed = Math.min(this.gunSpeed + ROTATION_ACCELERATION, MAX_ROTATION_SPEED);
-    } else {
-      this.gunSpeed = Math.max(this.gunSpeed - ROTATION_DECELERATION, 0.0F);
-      if (this.gunSpeed == 0) {
-        gunAngle = EntityUtils.normalizeAngle(this.gunAngle);
-      }
-    }
-    this.gunAngle += this.gunSpeed;
-  }
-
-  @Override
-  public void performRangedAttack(LivingEntity target, float velocity) {
-    BulletEntity bullet = new BulletEntity(this.level(), this);
-    double d0 = target.getX() - this.getX();
-    double d1 = target.getEyeY() - bullet.getY();
-    double d2 = target.getZ() - this.getZ();
-    bullet.shoot(d0, d1, d2, 3.0F, 1.0F);
-    this.level().addFreshEntity(bullet);
-  }
-
-  @Override
-  public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
-    if (target instanceof Wolf) {
-      Wolf wolf = (Wolf) target;
-      return !wolf.isTame() || wolf.getOwner() != owner;
-    } /* else if (target instanceof Player && owner instanceof Player && !((Player) owner).canHarmPlayer((Player) target)) {
-      return false;
-    } */ else if (target instanceof AbstractHorse && ((AbstractHorse) target).isTamed()) {
-      return false;
-    } else if (target instanceof AbstractDroneEntity && ((AbstractDroneEntity) target).isTame()) {
-      return false;
-    } else {
-      return !(target instanceof TamableAnimal) || !((TamableAnimal) target).isTame();
-    }
   }
 
   @Override
