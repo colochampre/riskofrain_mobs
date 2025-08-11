@@ -21,10 +21,15 @@ public class RoRItems {
   public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(RoRMod.MOD_ID, Registries.ITEM);
 
   // Spawn Eggs
+  public static final RegistrySupplier<Item> GUNNER_DRONE_SPAWN_EGG = registerItem("gunner_drone_spawn_egg", () ->
+          new ArchitecturySpawnEggItem(RoREntityTypes.GUNNER_DRONE, 0x007ADA, 0x202F51,
+                  baseProperties("gunner_drone_spawn_egg", 64).arch$tab(CreativeModeTabs.SPAWN_EGGS)));
+
   public static final RegistrySupplier<Item> GUNNER_TURRET_SPAWN_EGG = registerItem("gunner_turret_spawn_egg", () ->
           new ArchitecturySpawnEggItem(RoREntityTypes.GUNNER_TURRET, 0x007ADA, 0xBCCCA8,
                   baseProperties("gunner_turret_spawn_egg", 64).arch$tab(CreativeModeTabs.SPAWN_EGGS)));
 
+  // Tuuret Items
   public static final Map<DyeColor, RegistrySupplier<Item>> COLORED_GUNNER_TURRETS = createColoredTurretMap();
 
   private static Map<DyeColor, RegistrySupplier<Item>> createColoredTurretMap() {

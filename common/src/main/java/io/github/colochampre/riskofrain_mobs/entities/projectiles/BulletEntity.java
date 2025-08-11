@@ -1,16 +1,25 @@
 package io.github.colochampre.riskofrain_mobs.entities.projectiles;
 
+import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.PatrollingMonster;
+import net.minecraft.world.entity.monster.piglin.AbstractPiglin;
+import net.minecraft.world.entity.npc.AbstractVillager;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 
 public class BulletEntity extends ThrowableProjectile {
-  private float damage = 2.0f;
+  private float damage = (float) RoRConfigs.get().MOBS.DRONES.BULLETS_DAMAGE;
   private LivingEntity owner;
 
   public BulletEntity(EntityType<? extends BulletEntity> type, Level level) {
@@ -28,7 +37,6 @@ public class BulletEntity extends ThrowableProjectile {
   protected void onHit(HitResult result) {
     super.onHit(result);
     if (!this.level().isClientSide) {
-      // Add your hit logic here
       this.discard();
     }
   }
@@ -37,7 +45,6 @@ public class BulletEntity extends ThrowableProjectile {
   protected void onHitEntity(EntityHitResult result) {
     super.onHitEntity(result);
     if (!this.level().isClientSide) {
-      // Add your entity hit logic here
       if (result.getEntity() instanceof LivingEntity target && target != this.owner) {
         target.hurt(this.damageSources().thrown(this, this.owner), damage);
       }
@@ -48,14 +55,6 @@ public class BulletEntity extends ThrowableProjectile {
   @Override
   public void tick() {
     super.tick();
-
-    // Add particle effect
-    /* if (this.level().isClientSide) {
-      // Add particle effect every 4 ticks
-      if (this.tickCount % 2 == 0) {
-        this.level().addParticle(ParticleTypes.CRIT, this.getX(), this.getY(), this.getZ(), 0, 0, 0);
-      }
-    } */
     // Remove the bullet if it's been alive for too long
     if (this.tickCount > 100) {
       this.discard();
@@ -64,6 +63,5 @@ public class BulletEntity extends ThrowableProjectile {
 
   @Override
   protected void defineSynchedData() {
-    // Required for entity data synchronization
   }
 }

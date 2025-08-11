@@ -27,14 +27,12 @@ public class RoREntityTypes {
       "gunner_turret_entity", () -> EntityType.Builder.of(GunnerTurretEntity::new, MobCategory.CREATURE)
           .sized(0.8125F, 1.3125F)
           // .eyeHeight(1.15625F)
-          .noSave()
           .build(RoRMod.MOD_ID + ":gunner_turret_entity"));
 
   public static final RegistrySupplier<EntityType<GunnerDroneEntity>> GUNNER_DRONE = registerEntityType(
       "gunner_drone_entity", () -> EntityType.Builder.of(GunnerDroneEntity::new, MobCategory.CREATURE)
           .sized(0.75F, 1.15F)
           // .eyeHeight(0.055F)
-          .noSave()
           .build(RoRMod.MOD_ID + ":gunner_drone_entity"));
 
   public static final RegistrySupplier<EntityType<BulletEntity>> DRONE_BULLET_ENTITY = registerEntityType("drone_bullet_entity", () ->
@@ -42,7 +40,6 @@ public class RoREntityTypes {
                 .sized(0.25F, 0.25F)
                 .clientTrackingRange(4)
                 .updateInterval(10)
-                .noSave()
                 .build(RoRMod.MOD_ID + ":drone_bullet_entity"));
 
   public static void init() {
