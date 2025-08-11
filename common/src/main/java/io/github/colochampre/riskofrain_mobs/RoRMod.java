@@ -7,6 +7,7 @@ import io.github.colochampre.riskofrain_mobs.registry.RoRNetwork;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
 import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
+import io.github.colochampre.riskofrain_mobs.registry.RoRBiomeModifiers;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +17,6 @@ public final class RoRMod {
   public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
   public static void init() {
-    // Write common init code here.
     LOGGER.info("Initialized RoR Mod");
 
     RoRConfigs.init();
@@ -25,6 +25,7 @@ public final class RoRMod {
     RoRItems.init();
     ModEvents.init();
     RoRNetwork.init();
+    RoRBiomeModifiers.init();
 
     ClientLifecycleEvent.CLIENT_STARTED.register(listener -> {
       RoREntityRendering.init();

@@ -55,9 +55,9 @@ public class RoREntityTypes {
 
   public static void spawnPlacement() {
     SpawnPlacementsRegistry.register(RoREntityTypes.GUNNER_TURRET, SpawnPlacements.Type.ON_GROUND,
-        Heightmap.Types.WORLD_SURFACE, GunnerTurretEntity::checkDroneSpawnRules);
+        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, GunnerTurretEntity::checkDroneSpawnRules);
     SpawnPlacementsRegistry.register(RoREntityTypes.GUNNER_DRONE, SpawnPlacements.Type.ON_GROUND,
-        Heightmap.Types.WORLD_SURFACE, GunnerDroneEntity::checkDroneSpawnRules);
+        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, GunnerDroneEntity::checkDroneSpawnRules);
   }
 
   private static <T extends Entity> RegistrySupplier<EntityType<T>> registerEntityType(String name, Supplier<EntityType<T>> entityType) {
