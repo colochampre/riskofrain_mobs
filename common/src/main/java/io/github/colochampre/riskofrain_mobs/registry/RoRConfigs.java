@@ -52,70 +52,70 @@ public class RoRConfigs implements ConfigData {
 
     public static class BeetlesConfig implements ConfigData {
         @ConfigEntry.BoundedDiscrete(min = 1, max = 999)
-        public double BEETLE_MAX_HEALTH = 20.0;
+        public double MAX_HEALTH = 20.0;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 999)
-        public double BEETLE_ATTACK_DAMAGE = 2.5;
+        public double ATTACK_DAMAGE = 2.5;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-        public int BEETLE_OVERWORLD_SPAWN_RATE = 66;
+        public int OVERWORLD_SPAWN_RATE = 66;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-        public int BEETLE_NETHER_SPAWN_RATE = 10;
+        public int NETHER_SPAWN_RATE = 10;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
-        public int BEETLE_MIN_GROUP_SIZE = 1;
+        public int MIN_GROUP_SIZE = 1;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
-        public int BEETLE_MAX_GROUP_SIZE = 3;
-        public boolean BEETLE_DESPAWN = true;
+        public int MAX_GROUP_SIZE = 3;
+        public boolean ENABLE_DESPAWN = true;
     }
 
     public static class LemuriansConfig implements ConfigData {
         @ConfigEntry.BoundedDiscrete(min = 1, max = 999)
-        public double LEMURIAN_MAX_HEALTH = 20.0;
+        public double MAX_HEALTH = 20.0;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 999)
-        public double LEMURIAN_ATTACK_DAMAGE = 2.5;
+        public double ATTACK_DAMAGE = 2.5;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-        public int LEMURIAN_OVERWORLD_SPAWN_RATE = 66;
+        public int OVERWORLD_SPAWN_RATE = 66;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-        public int LEMURIAN_NETHER_SPAWN_RATE = 10;
+        public int NETHER_SPAWN_RATE = 10;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
-        public int LEMURIAN_MIN_GROUP_SIZE = 1;
+        public int MIN_GROUP_SIZE = 1;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
-        public int LEMURIAN_MAX_GROUP_SIZE = 3;
-        public boolean LEMURIAN_DESPAWN = true;
+        public int MAX_GROUP_SIZE = 3;
+        public boolean ENABLE_DESPAWN = true;
         public boolean ENABLE_FIREBALL_ATTACK = true;
         public boolean ENABLE_FIREBALL_GRIEF = true;
     }
 
     public static class StoneGolemsConfig implements ConfigData {
         @ConfigEntry.BoundedDiscrete(min = 1, max = 999)
-        public double STONE_GOLEM_MAX_HEALTH = 100.0;
+        public double MAX_HEALTH = 100.0;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 999)
-        public double STONE_GOLEM_ATTACK_DAMAGE = 24.0;
+        public double ATTACK_DAMAGE = 24.0;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-        public int STONE_GOLEM_OVERWORLD_SPAWN_RATE = 10;
+        public int OVERWORLD_SPAWN_RATE = 10;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-        public int STONE_GOLEM_NETHER_SPAWN_RATE = 2;
+        public int NETHER_SPAWN_RATE = 2;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
-        public int STONE_GOLEM_MIN_GROUP_SIZE = 1;
+        public int MIN_GROUP_SIZE = 1;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
-        public int STONE_GOLEM_MAX_GROUP_SIZE = 1;
-        public boolean STONE_GOLEM_DESPAWN = false;
+        public int MAX_GROUP_SIZE = 1;
+        public boolean ENABLE_DESPAWN = false;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-        public int STONE_GOLEM_SPAWN_VOLUME = 100;
+        public int SPAWN_VOLUME = 100;
     }
 
     public static class WispsConfig implements ConfigData {
         @ConfigEntry.BoundedDiscrete(min = 1, max = 999)
-        public double WISP_MAX_HEALTH = 12.0;
+        public double MAX_HEALTH = 12.0;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 999)
-        public double WISP_ATTACK_DAMAGE = 2.0;
+        public double ATTACK_DAMAGE = 2.0;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-        public int WISP_OVERWORLD_SPAWN_RATE = 50;
+        public int OVERWORLD_SPAWN_RATE = 50;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-        public int WISP_NETHER_SPAWN_RATE = 10;
+        public int NETHER_SPAWN_RATE = 10;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
-        public int WISP_MIN_GROUP_SIZE = 1;
+        public int MIN_GROUP_SIZE = 1;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
-        public int WISP_MAX_GROUP_SIZE = 3;
-        public boolean WISP_DESPAWN = true;
+        public int MAX_GROUP_SIZE = 3;
+        public boolean ENABLE_DESPAWN = true;
     }
 
     public static class SoundsConfig implements ConfigData {
