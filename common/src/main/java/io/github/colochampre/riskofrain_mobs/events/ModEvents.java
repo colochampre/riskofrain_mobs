@@ -16,6 +16,7 @@ import io.github.colochampre.riskofrain_mobs.entities.allies.AbstractDroneEntity
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
 public class ModEvents {
@@ -24,11 +25,24 @@ public class ModEvents {
 
   public static void events() {
     EntityEvent.LIVING_HURT.register((entity, source, amount) -> {
-      if (entity instanceof AbstractDroneEntity turret) {
+      if (entity instanceof AbstractDroneEntity drone) {
         Entity attacker = source.getEntity();
-        if (attacker instanceof Player && !turret.isTame()) {
+        if (attacker instanceof Player && !drone.isTame()) {
           return EventResult.interruptFalse();
         }
+      }
+      return EventResult.pass();
+    });
+
+    EntityEvent.LIVING_DEATH.register((entity, source) -> {
+      if (entity instanceof AbstractDroneEntity drone && drone.isTame()) {
+        drone.setTame(false);
+        drone.setOwnerUUID(null);
+        drone.removeGoals();
+        drone.setHealth(drone.getMaxHealth());
+        drone.setCurrentGoldPrice(drone.getDronePrice());
+        drone.setPriceName();
+        return EventResult.interruptFalse();
       }
       return EventResult.pass();
     });

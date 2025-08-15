@@ -56,13 +56,21 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   public static final int TYPE_FLYING = 1;
   public static final int MIN_FLIGHT_HEIGHT = 3;
   public static final int MAX_FLIGHT_HEIGHT = 8;
-  public static final Set<EntityType<?>> DO_NOT_ATTACK = Sets.newHashSet(EntityType.CREEPER, EntityType.PIGLIN, EntityType.PIGLIN_BRUTE, EntityType.ZOMBIFIED_PIGLIN, EntityType.HOGLIN, EntityType.ZOGLIN);
-  private static final Set<Item> TAME_ITEMS = Sets.newHashSet(Items.GOLD_BLOCK, Items.RAW_GOLD_BLOCK, Items.GOLD_INGOT, Items.RAW_GOLD, Items.GOLD_NUGGET);
+  public static final Set<EntityType<?>> DO_NOT_ATTACK = Sets.newHashSet(EntityType.CREEPER, EntityType.PIGLIN,
+          EntityType.PIGLIN_BRUTE, EntityType.ZOMBIFIED_PIGLIN, EntityType.HOGLIN, EntityType.ZOGLIN);
+  private static final Set<Item> TAME_ITEMS = Sets.newHashSet(Items.GOLD_BLOCK, Items.RAW_GOLD_BLOCK, Items.GOLD_INGOT,
+          Items.RAW_GOLD, Items.GOLD_NUGGET);
   private static final Set<Item> REPAIR_ITEMS = Sets.newHashSet(Items.IRON_INGOT, Items.IRON_NUGGET, Items.RAW_IRON);
-  private static final EntityDataAccessor<Integer> DATA_PRICE = SynchedEntityData.defineId(AbstractDroneEntity.class, EntityDataSerializers.INT);
-  private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData.defineId(AbstractDroneEntity.class, EntityDataSerializers.INT);
+  private static final EntityDataAccessor<Integer> DATA_PRICE = SynchedEntityData.defineId(AbstractDroneEntity.class,
+          EntityDataSerializers.INT);
+  private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData
+          .defineId(AbstractDroneEntity.class, EntityDataSerializers.INT);
   private static final Map<Item, Integer> dronePriceMap = new HashMap<>();
   private LivingEntity clientSideCachedAttackTarget;
+  private final RandomLookAroundGoal randomLookAroundGoal = new RandomLookAroundGoal(this);
+  private final DroneFollowOwnerGoal followOwnerGoal = new DroneFollowOwnerGoal(this, 1.0D, 8.0F, 4.0F, true);
+  private final WaterAvoidingRandomFlyingGoal randomFlyingGoal = new WaterAvoidingRandomFlyingGoal(this, 0.5D);
+  private final SitWhenOrderedToGoal sitGoal = new SitWhenOrderedToGoal(this);
   private float bodyXRot;
   private float bodyZRot;
   private int flyingSound;
@@ -90,9 +98,9 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     }
   }
 
-  protected abstract int getDroneType();
+  public abstract int getDroneType();
 
-  protected abstract int getDronePrice();
+  public abstract int getDronePrice();
 
   @Override
   protected void defineSynchedData() {
@@ -137,13 +145,36 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   public void setTame(boolean tamed) {
     super.setTame(tamed);
     int type = this.getDroneType();
-    this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
+    this.goalSelector.addGoal(2, sitGoal);
     if (type == TYPE_LAND) {
       this.addLandDroneGoals();
     }
     if (type == TYPE_FLYING) {
       this.addFlyingDroneGoals();
+      this.setNoGravity(true);
     }
+  }
+
+  private void addLandDroneGoals() {
+    this.goalSelector.addGoal(8, randomLookAroundGoal);
+  }
+
+  private void addFlyingDroneGoals() {
+    this.goalSelector.addGoal(4, followOwnerGoal);
+    this.goalSelector.addGoal(5, randomFlyingGoal);
+  }
+
+  public void removeGoals() {
+    int type = this.getDroneType();
+    if (type == TYPE_LAND) {
+      this.goalSelector.removeGoal(randomLookAroundGoal);
+    }
+    if (type == TYPE_FLYING) {
+      this.goalSelector.removeGoal(followOwnerGoal);
+      this.goalSelector.removeGoal(randomFlyingGoal);
+      this.setNoGravity(false);
+    }
+    this.goalSelector.removeGoal(sitGoal);
   }
 
   @Override
@@ -172,18 +203,6 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     }
   }
 
-  private void addLandDroneGoals() {
-    RandomLookAroundGoal randomLookAroundGoal = new RandomLookAroundGoal(this);
-    this.goalSelector.addGoal(8, randomLookAroundGoal);
-  }
-
-  private void addFlyingDroneGoals() {
-    DroneFollowOwnerGoal followOwnerGoal = new DroneFollowOwnerGoal(this, 1.0D, 8.0F, 4.0F, true);
-    WaterAvoidingRandomFlyingGoal randomFlyingGoal = new WaterAvoidingRandomFlyingGoal(this, 0.5D);
-    this.goalSelector.addGoal(4, followOwnerGoal);
-    this.goalSelector.addGoal(5, randomFlyingGoal);
-  }
-
   @Override
   public void aiStep() {
     super.aiStep();
@@ -202,7 +221,8 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     if (this.isTame()) {
       this.takeWaterDamage();
       if (this.getDroneType() == TYPE_FLYING) {
-        EntityUtils.updateMovementInclinations(this, this.bodyXRot, this.bodyZRot, newBodyXRot -> this.bodyXRot = newBodyXRot, newBodyZRot -> this.bodyZRot = newBodyZRot);
+        EntityUtils.updateMovementInclinations(this, this.bodyXRot, this.bodyZRot,
+                newBodyXRot -> this.bodyXRot = newBodyXRot, newBodyZRot -> this.bodyZRot = newBodyZRot);
       }
     }
   }
@@ -235,7 +255,8 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     if (heightAboveGround < MIN_FLIGHT_HEIGHT) {
       this.setDeltaMovement(this.getDeltaMovement().add(0.0D, ((double) 0.2F - vec3a.y) * (double) 0.2F, 0.0D));
       this.hasImpulse = true;
-    } else if (!(Objects.requireNonNull(this.getOwner()).getEyeY() > this.getEyeY()) && target == null && heightAboveGround > MAX_FLIGHT_HEIGHT) {
+    } else if (this.getOwner() != null && !(this.getOwner().getEyeY() > this.getEyeY()) && target == null
+            && heightAboveGround > MAX_FLIGHT_HEIGHT) {
       this.setDeltaMovement(this.getDeltaMovement().add(0.0D, ((double) -0.1F - vec3a.y), 0.0D));
       this.hasImpulse = true;
     }
@@ -266,14 +287,19 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   }
 
   @Override
-  public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType reason, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag dataTag) {
+  public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType reason,
+                                      @Nullable SpawnGroupData spawnData, @Nullable CompoundTag dataTag) {
     if (this.getCurrentGoldPrice() > 0) {
-      String price = String.valueOf(this.getCurrentGoldPrice());
-      Component component = Component.literal(price).withStyle(ChatFormatting.YELLOW);
-      this.setCustomName(component);
-      this.setCustomNameVisible(true);
+      this.setPriceName();
     }
     return super.finalizeSpawn(level, difficulty, reason, spawnData, dataTag);
+  }
+
+  public void setPriceName() {
+    String price = String.valueOf(this.getCurrentGoldPrice());
+    Component component = Component.literal(price).withStyle(ChatFormatting.YELLOW);
+    this.setCustomName(component);
+    this.setCustomNameVisible(true);
   }
 
   @Override
@@ -287,7 +313,8 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
           if (!player.getAbilities().instabuild) {
             itemstack.shrink(1);
           }
-          this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.IRON_GOLEM_REPAIR, this.getSoundSource(), 0.5F, 1.25F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
+          this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.IRON_GOLEM_REPAIR,
+                  this.getSoundSource(), 0.5F, 1.25F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
           if (itemstack.getItem().equals(Items.IRON_INGOT)) {
             this.heal(18.0F);
           } else if (itemstack.getItem().equals(Items.RAW_IRON)) {
@@ -303,14 +330,17 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
         this.setOrderedToSit(!this.isOrderedToSit());
         this.navigation.stop();
         this.setTarget(null);
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(), RoRSounds.DRONE_REPAIR.get(), this.getSoundSource(), 0.2F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(), RoRSounds.DRONE_REPAIR.get(),
+                this.getSoundSource(), 0.2F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
         return InteractionResult.SUCCESS;
       }
     } else if (!this.isTame()) {
       // Not gold
       if (!TAME_ITEMS.contains(itemstack.getItem())) {
-        Component goldMessage = Component.translatable("message.riskofrain_mobs.not_gold").withStyle(ChatFormatting.YELLOW);
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(), RoRSounds.INSUFFICIENT_FOUNDS.get(), this.getSoundSource(), 0.5F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
+        Component goldMessage = Component.translatable("message.riskofrain_mobs.not_gold")
+                .withStyle(ChatFormatting.YELLOW);
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(), RoRSounds.INSUFFICIENT_FOUNDS.get(),
+                this.getSoundSource(), 0.5F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
         if (!this.level().isClientSide) {
           player.sendSystemMessage(goldMessage);
         }
@@ -320,7 +350,8 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
         if (!player.getAbilities().instabuild) {
           itemstack.shrink(1);
         }
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(), RoRSounds.COIN_PROC.get(), this.getSoundSource(), 1.0F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(), RoRSounds.COIN_PROC.get(),
+                this.getSoundSource(), 1.0F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
         this.updateGoldPrice(itemstack);
         String price = String.valueOf(this.getCurrentGoldPrice());
         Component priceName = Component.literal(price).withStyle(ChatFormatting.YELLOW);
@@ -329,7 +360,8 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
         if (!this.level().isClientSide) {
           if (this.getCurrentGoldPrice() <= 0) {
             this.tame(player);
-            this.level().playSound((Player) null, this.getX(), this.getY(), this.getZ(), RoRSounds.DRONE_REPAIR.get(), this.getSoundSource(), 0.6F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
+            this.level().playSound((Player) null, this.getX(), this.getY(), this.getZ(), RoRSounds.DRONE_REPAIR.get(),
+                    this.getSoundSource(), 0.6F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
             this.level().broadcastEntityEvent(this, (byte) 7);
             this.setCustomName(null);
             this.setCustomNameVisible(false);

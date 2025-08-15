@@ -49,6 +49,7 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   private static final float MAX_ROTATION_SPEED = Mth.PI * 0.3F;
   private static final float ROTATION_ACCELERATION = 0.16F;
   private static final float ROTATION_DECELERATION = 0.012F;
+  private final GunnerTurretAttackGoal attackGoal = new GunnerTurretAttackGoal(this, 24.0F);
   private float gunAngle;
   private float prevGunAngle;
   private float gunSpeed;
@@ -82,12 +83,12 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   }
 
   @Override
-  protected int getDroneType() {
+  public int getDroneType() {
     return TYPE_LAND;
   }
 
   @Override
-  protected int getDronePrice() {
+  public int getDronePrice() {
     return 36;
   }
 
@@ -140,11 +141,16 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
 
   @Override
   public void setTame(boolean tamed) {
-    GunnerTurretAttackGoal attackGoal = new GunnerTurretAttackGoal(this, 24.0F);
     super.setTame(tamed);
     if (tamed) {
       this.goalSelector.addGoal(3, attackGoal);
     }
+  }
+
+  @Override
+  public void removeGoals() {
+    super.removeGoals();
+    this.goalSelector.removeGoal(attackGoal);
   }
 
   @Override

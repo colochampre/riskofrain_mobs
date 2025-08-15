@@ -45,6 +45,7 @@ public class GunnerDroneEntity extends AbstractDroneEntity implements RangedAtta
   private static final float MAX_ROTATION_SPEED = Mth.PI * 0.3F;
   private static final float ROTATION_ACCELERATION = 0.16F;
   private static final float ROTATION_DECELERATION = 0.012F;
+  private final GunnerDroneAttackGoal attackGoal = new GunnerDroneAttackGoal(this, 16.0F);
   private float propellerSpeed;
   private float propellerAngle;
   private float prevPropellerAngle;
@@ -57,12 +58,12 @@ public class GunnerDroneEntity extends AbstractDroneEntity implements RangedAtta
   }
 
   @Override
-  protected int getDroneType() {
+  public int getDroneType() {
     return TYPE_FLYING;
   }
 
   @Override
-  protected int getDronePrice() {
+  public int getDronePrice() {
     return 36;
   }
 
@@ -108,19 +109,22 @@ public class GunnerDroneEntity extends AbstractDroneEntity implements RangedAtta
   @Override
   public void aiStep() {
     super.aiStep();
-    if (this.isTame()) {
-      this.updateGun();
-      this.updatePropeller();
-    }
+    this.updateGun();
+    this.updatePropeller();
   }
 
   @Override
   public void setTame(boolean tamed) {
-    GunnerDroneAttackGoal attackGoal = new GunnerDroneAttackGoal(this, 16.0F);
     super.setTame(tamed);
     if (tamed) {
       this.goalSelector.addGoal(3, attackGoal);
     }
+  }
+
+  @Override
+  public void removeGoals() {
+    super.removeGoals();
+    this.goalSelector.removeGoal(attackGoal);
   }
 
   @Override
@@ -194,7 +198,7 @@ public class GunnerDroneEntity extends AbstractDroneEntity implements RangedAtta
     this.prevPropellerAngle = this.propellerAngle;
     if (this.isFlying()) {
       this.propellerSpeed = Math.min(this.propellerSpeed + ROTATION_ACCELERATION, MAX_ROTATION_SPEED);
-    } else if (this.onGround()) {
+    } else if (this.onGround() || !this.isTame()) {
       this.propellerSpeed = Math.max(this.propellerSpeed - ROTATION_DECELERATION, 0.0F);
       if (this.propellerSpeed == 0) {
         propellerAngle = EntityUtils.normalizeAngle(this.propellerAngle);
@@ -206,7 +210,7 @@ public class GunnerDroneEntity extends AbstractDroneEntity implements RangedAtta
   private void updateGun() {
     LivingEntity target = this.getActiveAttackTarget();
     this.prevGunAngle = this.gunAngle;
-    if (target != null) {
+    if (target != null && this.isTame()) {
       this.gunSpeed = Math.min(this.gunSpeed + ROTATION_ACCELERATION, MAX_ROTATION_SPEED);
     } else {
       this.gunSpeed = Math.max(this.gunSpeed - ROTATION_DECELERATION, 0.0F);
