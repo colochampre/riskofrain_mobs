@@ -1,7 +1,9 @@
-package io.github.colochampre.riskofrain_mobs.registry;
+package io.github.colochampre.riskofrain_mobs.world;
 
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.registry.level.biome.BiomeModifications;
+import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
+import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BiomeTags;
@@ -10,7 +12,7 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 
-public class RoRBiomeModifiers {
+public class ModBiomeModifiers {
 
   public static void init() {
     LifecycleEvent.SETUP.register(() -> {

@@ -1,7 +1,7 @@
 package io.github.colochampre.riskofrain_mobs.forge;
 
 import dev.architectury.platform.forge.EventBuses;
-import io.github.colochampre.riskofrain_mobs.forge.config.RoRForgeConfigIntegration;
+import io.github.colochampre.riskofrain_mobs.forge.config.ForgeConfigIntegration;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
@@ -17,6 +17,6 @@ public final class RoRModForge {
     // Run our common setup.
     RoRMod.init();
 
-    DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> RoRForgeConfigIntegration::register);
+    DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> ForgeConfigIntegration::register);
   }
 }
