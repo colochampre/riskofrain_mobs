@@ -212,6 +212,11 @@ public class LemurianEntity extends Monster {
     return RoRConfigs.get().MOBS.LEMURIANS.ENABLE_DESPAWN;
   }
 
+  @Override
+  protected ResourceLocation getDefaultLootTable() {
+    return new ResourceLocation(RoRMod.MOD_ID, "entities/lemurian");
+  }
+
   public void setIsSelectingHand(boolean value) {
     this.selectingHand = value;
   }
