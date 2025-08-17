@@ -156,7 +156,9 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   @Override
   public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType type, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag dataTag) {
     this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(RoRConfigs.get().MOBS.DRONES.BULLETS_DAMAGE);
-    this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(RoRConfigs.get().MOBS.DRONES.GUNNER_TURRET_MAX_HEALTH);
+    if (RoRConfigs.get().MOBS.DRONES.GUNNER_TURRET_MAX_HEALTH > 0) {
+      this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(RoRConfigs.get().MOBS.DRONES.GUNNER_TURRET_MAX_HEALTH);
+    }
     if (dataTag != null && dataTag.contains("TurretHealth")) {
       this.setHealth(dataTag.getFloat("TurretHealth"));
     } else {

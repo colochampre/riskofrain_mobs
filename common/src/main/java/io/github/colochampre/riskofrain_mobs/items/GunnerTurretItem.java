@@ -1,12 +1,15 @@
 package io.github.colochampre.riskofrain_mobs.items;
 
+import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerTurretEntity;
+import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
@@ -51,6 +54,9 @@ public class GunnerTurretItem extends Item {
       }
       if (hitresult.getType() == HitResult.Type.BLOCK) {
         GunnerTurretEntity turret = new GunnerTurretEntity(RoREntityTypes.GUNNER_TURRET.get(), level);
+        if (RoRConfigs.get().MOBS.DRONES.GUNNER_TURRET_MAX_HEALTH > 0) {
+          turret.getAttribute(Attributes.MAX_HEALTH).setBaseValue(RoRConfigs.get().MOBS.DRONES.GUNNER_TURRET_MAX_HEALTH);
+        }
         CompoundTag tag = itemstack.getTag();
         turret.moveTo(hitresult.getLocation().x, hitresult.getLocation().y, hitresult.getLocation().z);
         turret.setYRot(player.getYRot());
@@ -59,6 +65,7 @@ public class GunnerTurretItem extends Item {
             if (tag.contains("TurretHealth")) {
               float health = tag.getFloat("TurretHealth");
               turret.setHealth(health);
+              RoRMod.LOGGER.info("Has tag: " + health + "/" + turret.getMaxHealth());
             }
             if (tag.contains("OwnerUUID")) {
               UUID ownerUUID = tag.getUUID("OwnerUUID");
@@ -78,6 +85,8 @@ public class GunnerTurretItem extends Item {
           }
         } else {
           turret.tame(player);
+          turret.setHealth(turret.getMaxHealth());
+          RoRMod.LOGGER.info("No tag: " + turret.getHealth() + "/" + turret.getMaxHealth());
         }
         if (!level.noCollision(turret, turret.getBoundingBox())) {
           return InteractionResultHolder.fail(itemstack);
