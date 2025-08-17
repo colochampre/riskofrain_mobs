@@ -7,6 +7,7 @@ import dev.architectury.registry.registries.RegistrySupplier;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerDroneEntity;
 import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerTurretEntity;
+import io.github.colochampre.riskofrain_mobs.entities.enemies.LemurianEntity;
 import io.github.colochampre.riskofrain_mobs.entities.projectiles.BulletEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -35,6 +36,12 @@ public class RoREntityTypes {
           // .eyeHeight(0.055F)
           .build(RoRMod.MOD_ID + ":gunner_drone_entity"));
 
+  public static final RegistrySupplier<EntityType<LemurianEntity>> LEMURIAN = registerEntityType(
+          "lemurian_entity", () -> EntityType.Builder.of(LemurianEntity::new, MobCategory.MONSTER)
+                  .sized(0.7F, 1.72F)
+                  // .eyeHeight(1.62F)
+                  .build(RoRMod.MOD_ID + ":lemurian_entity"));
+
   public static final RegistrySupplier<EntityType<BulletEntity>> DRONE_BULLET_ENTITY = registerEntityType("drone_bullet_entity", () ->
         EntityType.Builder.<BulletEntity>of(BulletEntity::new, MobCategory.MISC)
                 .sized(0.25F, 0.25F)
@@ -44,16 +51,19 @@ public class RoREntityTypes {
 
   public static void init() {
     ENTITIES.register();
-    entityAttributes();
-    spawnPlacement();
+    registerEntityAttributes();
+    registerSpawnPlacement();
   }
 
-  public static void entityAttributes() {
+  public static void registerEntityAttributes() {
+    EntityAttributeRegistry.register(RoREntityTypes.LEMURIAN, LemurianEntity::createAttributes);
     EntityAttributeRegistry.register(RoREntityTypes.GUNNER_TURRET, GunnerTurretEntity::createAttributes);
     EntityAttributeRegistry.register(RoREntityTypes.GUNNER_DRONE, GunnerDroneEntity::createAttributes);
   }
 
-  public static void spawnPlacement() {
+  public static void registerSpawnPlacement() {
+    SpawnPlacementsRegistry.register(RoREntityTypes.LEMURIAN, SpawnPlacements.Type.ON_GROUND,
+        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, LemurianEntity::checkMonsterSpawnRules);
     SpawnPlacementsRegistry.register(RoREntityTypes.GUNNER_TURRET, SpawnPlacements.Type.ON_GROUND,
         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, GunnerTurretEntity::checkDroneSpawnRules);
     SpawnPlacementsRegistry.register(RoREntityTypes.GUNNER_DRONE, SpawnPlacements.Type.ON_GROUND,

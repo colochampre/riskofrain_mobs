@@ -118,9 +118,7 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   @Override
   public void aiStep() {
     super.aiStep();
-    if (this.isTame()) {
-      this.updateGun();
-    }
+    this.updateGun();
   }
 
   @Override
@@ -300,7 +298,7 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   private void updateGun() {
     LivingEntity target = this.getActiveAttackTarget();
     this.prevGunAngle = this.gunAngle;
-    if (target != null) {
+    if (target != null && this.isTame()) {
       this.gunSpeed = Math.min(this.gunSpeed + ROTATION_ACCELERATION, MAX_ROTATION_SPEED);
     } else {
       this.gunSpeed = Math.max(this.gunSpeed - ROTATION_DECELERATION, 0.0F);

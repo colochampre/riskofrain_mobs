@@ -65,7 +65,6 @@ public class GunnerTurretItem extends Item {
             if (tag.contains("TurretHealth")) {
               float health = tag.getFloat("TurretHealth");
               turret.setHealth(health);
-              RoRMod.LOGGER.info("Has tag: " + health + "/" + turret.getMaxHealth());
             }
             if (tag.contains("OwnerUUID")) {
               UUID ownerUUID = tag.getUUID("OwnerUUID");
@@ -86,7 +85,6 @@ public class GunnerTurretItem extends Item {
         } else {
           turret.tame(player);
           turret.setHealth(turret.getMaxHealth());
-          RoRMod.LOGGER.info("No tag: " + turret.getHealth() + "/" + turret.getMaxHealth());
         }
         if (!level.noCollision(turret, turret.getBoundingBox())) {
           return InteractionResultHolder.fail(itemstack);
