@@ -7,6 +7,7 @@ import dev.architectury.registry.registries.RegistrySupplier;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerDroneEntity;
 import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerTurretEntity;
+import io.github.colochampre.riskofrain_mobs.entities.enemies.BeetleEntity;
 import io.github.colochampre.riskofrain_mobs.entities.enemies.LemurianEntity;
 import io.github.colochampre.riskofrain_mobs.entities.projectiles.BulletEntity;
 import net.minecraft.core.registries.Registries;
@@ -36,6 +37,12 @@ public class RoREntityTypes {
           // .eyeHeight(0.055F)
           .build(RoRMod.MOD_ID + ":gunner_drone_entity"));
 
+  public static final RegistrySupplier<EntityType<BeetleEntity>> BEETLE = registerEntityType(
+          "beetle_entity", () -> EntityType.Builder.of(BeetleEntity::new, MobCategory.MONSTER)
+                  .sized(0.98F, 1.70F)
+                  // .eyeHeight(1.4375F)
+                  .build(RoRMod.MOD_ID + ":beetle_entity"));
+
   public static final RegistrySupplier<EntityType<LemurianEntity>> LEMURIAN = registerEntityType(
           "lemurian_entity", () -> EntityType.Builder.of(LemurianEntity::new, MobCategory.MONSTER)
                   .sized(0.7F, 1.72F)
@@ -56,12 +63,15 @@ public class RoREntityTypes {
   }
 
   public static void registerEntityAttributes() {
+    EntityAttributeRegistry.register(RoREntityTypes.BEETLE, BeetleEntity::createAttributes);
     EntityAttributeRegistry.register(RoREntityTypes.LEMURIAN, LemurianEntity::createAttributes);
     EntityAttributeRegistry.register(RoREntityTypes.GUNNER_TURRET, GunnerTurretEntity::createAttributes);
     EntityAttributeRegistry.register(RoREntityTypes.GUNNER_DRONE, GunnerDroneEntity::createAttributes);
   }
 
   public static void registerSpawnPlacement() {
+    SpawnPlacementsRegistry.register(RoREntityTypes.BEETLE, SpawnPlacements.Type.ON_GROUND,
+        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BeetleEntity::checkMonsterSpawnRules);
     SpawnPlacementsRegistry.register(RoREntityTypes.LEMURIAN, SpawnPlacements.Type.ON_GROUND,
         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, LemurianEntity::checkMonsterSpawnRules);
     SpawnPlacementsRegistry.register(RoREntityTypes.GUNNER_TURRET, SpawnPlacements.Type.ON_GROUND,

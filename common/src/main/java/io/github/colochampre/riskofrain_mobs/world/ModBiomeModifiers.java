@@ -31,9 +31,9 @@ public class ModBiomeModifiers {
             }
             if (!key.equals(Biomes.MUSHROOM_FIELDS)) {
               if (configs.BEETLES.OVERWORLD_SPAWN_RATE > 0) {
-                /* mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
-                      RoREntityTypes.BEETLE.get(), configs.BEETLES.OVERWORLD_SPAWN_RATE,
-                        configs.BEETLES.MIN_GROUP_SIZE, configs.BEETLES.MAX_GROUP_SIZE)); */
+                mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
+                        RoREntityTypes.BEETLE.get(), configs.BEETLES.OVERWORLD_SPAWN_RATE,
+                        configs.BEETLES.MIN_GROUP_SIZE, configs.BEETLES.MAX_GROUP_SIZE));
               }
               if (configs.LEMURIANS.OVERWORLD_SPAWN_RATE > 0) {
                 mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
@@ -55,19 +55,21 @@ public class ModBiomeModifiers {
           if (ctx.hasTag(BiomeTags.IS_NETHER) && !key.equals(Biomes.THE_VOID)) {
             if (!key.equals(Biomes.WARPED_FOREST)) {
               if (configs.BEETLES.NETHER_SPAWN_RATE > 0) {
-              /* mutable.getSpawnProperties().addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(
-                      RoREntityTypes.BEETLE.get(), configs.BEETLES.NETHER_SPAWN_RATE, 1, 1)); */
+                mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
+                        RoREntityTypes.BEETLE.get(), configs.BEETLES.NETHER_SPAWN_RATE,
+                        configs.BEETLES.MIN_GROUP_SIZE, configs.BEETLES.MAX_GROUP_SIZE));
               }
               if (configs.LEMURIANS.NETHER_SPAWN_RATE > 0) {
-              /* mutable.getSpawnProperties().addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(
-                      RoREntityTypes.LEMURIAN.get(), configs.LEMURIANS.NETHER_SPAWN_RATE, 1, 1)); */
+                mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
+                        RoREntityTypes.LEMURIAN.get(), configs.LEMURIANS.NETHER_SPAWN_RATE,
+                        configs.LEMURIANS.MIN_GROUP_SIZE, configs.LEMURIANS.MAX_GROUP_SIZE));
               }
               if (configs.STONE_GOLEMS.NETHER_SPAWN_RATE > 0) {
-              /* mutable.getSpawnProperties().addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(
+              /* mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
                       RoREntityTypes.STONE_GOLEM.get(), configs.STONE_GOLEMS.NETHER_SPAWN_RATE, 1, 1)); */
               }
               if (configs.WISPS.NETHER_SPAWN_RATE > 0) {
-              /* mutable.getSpawnProperties().addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(
+              /* mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
                       RoREntityTypes.WISP.get(), configs.WISPS.NETHER_SPAWN_RATE, 1, 1)); */
               }
             }

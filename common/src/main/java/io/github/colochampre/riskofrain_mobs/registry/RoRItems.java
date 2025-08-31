@@ -21,6 +21,10 @@ public class RoRItems {
   public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(RoRMod.MOD_ID, Registries.ITEM);
 
   // Spawn Eggs
+  public static final RegistrySupplier<Item> BEETLE_SPAWN_EGG = registerItem("beetle_spawn_egg", () ->
+          new ArchitecturySpawnEggItem(RoREntityTypes.BEETLE, 0x47302F, 0xB38B5D,
+                  baseProperties("beetle_spawn_egg", 64).arch$tab(CreativeModeTabs.SPAWN_EGGS)));
+
   public static final RegistrySupplier<Item> LEMURIAN_SPAWN_EGG = registerItem("lemurian_spawn_egg", () ->
           new ArchitecturySpawnEggItem(RoREntityTypes.LEMURIAN, 0x6C537B, 0x2E2242,
                   baseProperties("lemurian_spawn_egg", 64).arch$tab(CreativeModeTabs.SPAWN_EGGS)));
