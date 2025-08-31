@@ -213,7 +213,7 @@ public class LemurianEntity extends Monster {
   }
 
   @Override
-  protected ResourceLocation getDefaultLootTable() {
+  protected @NotNull ResourceLocation getDefaultLootTable() {
     return new ResourceLocation(RoRMod.MOD_ID, "entities/lemurian");
   }
 

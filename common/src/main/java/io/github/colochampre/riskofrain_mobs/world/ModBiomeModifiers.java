@@ -46,9 +46,9 @@ public class ModBiomeModifiers {
                        configs.STONE_GOLEMS.MIN_GROUP_SIZE, configs.STONE_GOLEMS.MAX_GROUP_SIZE)); */
               }
               if (configs.WISPS.OVERWORLD_SPAWN_RATE > 0) {
-              /* mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
-                      RoREntityTypes.WISP.get(), configs.WISPS.OVERWORLD_SPAWN_RATE,
-                       configs.WISPS.MIN_GROUP_SIZE, configs.WISPS.MAX_GROUP_SIZE)); */
+                mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
+                        RoREntityTypes.WISP.get(), configs.WISPS.OVERWORLD_SPAWN_RATE,
+                        configs.WISPS.MIN_GROUP_SIZE, configs.WISPS.MAX_GROUP_SIZE));
               }
             }
           }
@@ -69,8 +69,9 @@ public class ModBiomeModifiers {
                       RoREntityTypes.STONE_GOLEM.get(), configs.STONE_GOLEMS.NETHER_SPAWN_RATE, 1, 1)); */
               }
               if (configs.WISPS.NETHER_SPAWN_RATE > 0) {
-              /* mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
-                      RoREntityTypes.WISP.get(), configs.WISPS.NETHER_SPAWN_RATE, 1, 1)); */
+                mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
+                        RoREntityTypes.WISP.get(), configs.WISPS.NETHER_SPAWN_RATE,
+                        configs.WISPS.MIN_GROUP_SIZE, configs.WISPS.MAX_GROUP_SIZE));
               }
             }
           }

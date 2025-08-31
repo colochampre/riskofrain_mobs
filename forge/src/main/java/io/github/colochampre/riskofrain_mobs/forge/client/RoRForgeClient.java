@@ -1,10 +1,7 @@
 package io.github.colochampre.riskofrain_mobs.forge.client;
 
 import io.github.colochampre.riskofrain_mobs.RoRMod;
-import io.github.colochampre.riskofrain_mobs.client.models.BeetleModel;
-import io.github.colochampre.riskofrain_mobs.client.models.GunnerDroneModel;
-import io.github.colochampre.riskofrain_mobs.client.models.GunnerTurretModel;
-import io.github.colochampre.riskofrain_mobs.client.models.LemurianModel;
+import io.github.colochampre.riskofrain_mobs.client.models.*;
 import io.github.colochampre.riskofrain_mobs.client.renderer.*;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
@@ -22,6 +19,7 @@ public class RoRForgeClient {
   public static void onClientSetup(FMLClientSetupEvent event) {
     EntityRenderers.register(RoREntityTypes.BEETLE.get(), BeetleRenderer::new);
     EntityRenderers.register(RoREntityTypes.LEMURIAN.get(), LemurianRenderer::new);
+    EntityRenderers.register(RoREntityTypes.WISP.get(), WispRenderer::new);
     EntityRenderers.register(RoREntityTypes.GUNNER_TURRET.get(), GunnerTurretRenderer::new);
     EntityRenderers.register(RoREntityTypes.GUNNER_DRONE.get(), GunnerDroneRenderer::new);
     EntityRenderers.register(RoREntityTypes.DRONE_BULLET_ENTITY.get(), BulletRenderer::new);
@@ -31,6 +29,7 @@ public class RoRForgeClient {
   public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
     event.registerLayerDefinition(RoREntityRendering.BEETLE_LAYER, BeetleModel::createBodyLayer);
     event.registerLayerDefinition(RoREntityRendering.LEMURIAN_LAYER, LemurianModel::createBodyLayer);
+    event.registerLayerDefinition(RoREntityRendering.WISP_LAYER, WispModel::createBodyLayer);
     event.registerLayerDefinition(RoREntityRendering.GUNNER_TURRET_LAYER, GunnerTurretModel::createBodyLayer);
     event.registerLayerDefinition(RoREntityRendering.GUNNER_DRONE_LAYER, GunnerDroneModel::createBodyLayer);
   }

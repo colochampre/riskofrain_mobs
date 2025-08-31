@@ -29,6 +29,10 @@ public class RoRItems {
           new ArchitecturySpawnEggItem(RoREntityTypes.LEMURIAN, 0x6C537B, 0x2E2242,
                   baseProperties("lemurian_spawn_egg", 64).arch$tab(CreativeModeTabs.SPAWN_EGGS)));
 
+  public static final RegistrySupplier<Item> WISP_SPAWN_EGG = registerItem("wisp_spawn_egg", () ->
+          new ArchitecturySpawnEggItem(RoREntityTypes.WISP, 0x210502, 0xDE6B2C,
+                  baseProperties("wisp_spawn_egg", 64).arch$tab(CreativeModeTabs.SPAWN_EGGS)));
+
   public static final RegistrySupplier<Item> GUNNER_DRONE_SPAWN_EGG = registerItem("gunner_drone_spawn_egg", () ->
           new ArchitecturySpawnEggItem(RoREntityTypes.GUNNER_DRONE, 0x007ADA, 0x202F51,
                   baseProperties("gunner_drone_spawn_egg", 64).arch$tab(CreativeModeTabs.SPAWN_EGGS)));
