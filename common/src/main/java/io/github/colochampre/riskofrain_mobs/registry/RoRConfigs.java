@@ -126,7 +126,7 @@ public class RoRConfigs implements ConfigData {
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int DIFFICULTY_UPDATE = 0;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-        public int LEVEL_UPDATE = 0;
+        public int LEVEL_UP = 0;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int PLAYER_DEATH_SOUND = 0;
     }

@@ -83,6 +83,6 @@
     "text.autoconfig.riskofrain_mobs.option.SOUNDS.ADVANCEMENT": "Logros",
     "text.autoconfig.riskofrain_mobs.option.SOUNDS.CHAT_MESSAGE": "Mensaje de Chat",
     "text.autoconfig.riskofrain_mobs.option.SOUNDS.DIFFICULTY_UPDATE": "Actualización de Dificultad",
-    "text.autoconfig.riskofrain_mobs.option.SOUNDS.LEVEL_UPDATE": "Nuevo Nivel",
+    "text.autoconfig.riskofrain_mobs.option.SOUNDS.LEVEL_UP": "Nuevo Nivel",
     "text.autoconfig.riskofrain_mobs.option.SOUNDS.PLAYER_DEATH_SOUND": "Sonido de Muerte del Jugador"
 }
