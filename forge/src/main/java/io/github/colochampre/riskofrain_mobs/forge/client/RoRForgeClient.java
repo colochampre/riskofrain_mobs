@@ -19,6 +19,7 @@ public class RoRForgeClient {
   public static void onClientSetup(FMLClientSetupEvent event) {
     EntityRenderers.register(RoREntityTypes.BEETLE.get(), BeetleRenderer::new);
     EntityRenderers.register(RoREntityTypes.LEMURIAN.get(), LemurianRenderer::new);
+    EntityRenderers.register(RoREntityTypes.STONE_GOLEM.get(), StoneGolemRenderer::new);
     EntityRenderers.register(RoREntityTypes.WISP.get(), WispRenderer::new);
     EntityRenderers.register(RoREntityTypes.GUNNER_TURRET.get(), GunnerTurretRenderer::new);
     EntityRenderers.register(RoREntityTypes.GUNNER_DRONE.get(), GunnerDroneRenderer::new);
@@ -29,6 +30,7 @@ public class RoRForgeClient {
   public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
     event.registerLayerDefinition(RoREntityRendering.BEETLE_LAYER, BeetleModel::createBodyLayer);
     event.registerLayerDefinition(RoREntityRendering.LEMURIAN_LAYER, LemurianModel::createBodyLayer);
+    event.registerLayerDefinition(RoREntityRendering.STONE_GOLEM_LAYER, StoneGolemModel::createBodyLayer);
     event.registerLayerDefinition(RoREntityRendering.WISP_LAYER, WispModel::createBodyLayer);
     event.registerLayerDefinition(RoREntityRendering.GUNNER_TURRET_LAYER, GunnerTurretModel::createBodyLayer);
     event.registerLayerDefinition(RoREntityRendering.GUNNER_DRONE_LAYER, GunnerDroneModel::createBodyLayer);

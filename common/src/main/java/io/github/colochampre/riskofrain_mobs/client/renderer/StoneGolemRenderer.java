@@ -1,0 +1,151 @@
+package io.github.colochampre.riskofrain_mobs.client.renderer;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import io.github.colochampre.riskofrain_mobs.RoRMod;
+import io.github.colochampre.riskofrain_mobs.client.models.StoneGolemModel;
+import io.github.colochampre.riskofrain_mobs.client.renderer.layers.StoneGolemEyeLayer;
+import io.github.colochampre.riskofrain_mobs.entities.enemies.StoneGolemEntity;
+import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+
+@Environment(EnvType.CLIENT)
+public class StoneGolemRenderer extends MobRenderer<StoneGolemEntity, StoneGolemModel<StoneGolemEntity>> {
+  private static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(RoRMod.MOD_ID, "textures/entity/stone_golem/stone_golem_default.png");
+  private static final ResourceLocation BEAM_LOCATION = new ResourceLocation(RoRMod.MOD_ID, "textures/entity/stone_golem/laser_beam.png");
+  private static final RenderType BEAM_RENDER_TYPE = RenderType.entityCutoutNoCull(BEAM_LOCATION);
+
+  public StoneGolemRenderer(EntityRendererProvider.Context context) {
+    super(context, new StoneGolemModel<>(context.bakeLayer(RoREntityRendering.STONE_GOLEM_LAYER)), 1.0F);
+    this.addLayer(new StoneGolemEyeLayer(this));
+  }
+
+  protected StoneGolemRenderer(EntityRendererProvider.Context context, ModelLayerLocation layerLocation, float shadow) {
+    super(context, new StoneGolemModel<>(context.bakeLayer(layerLocation)), shadow);
+  }
+
+  public boolean shouldRender(@NotNull StoneGolemEntity entity, @NotNull Frustum frustum, double p_114838_, double p_114839_, double p_114840_) {
+    if (super.shouldRender(entity, frustum, p_114838_, p_114839_, p_114840_)) {
+      return true;
+    } else {
+      if (entity.isAlive() && entity.hasActiveAttackTarget()) {
+        LivingEntity target = entity.getActiveAttackTarget();
+        if (target != null) {
+          Vec3 vec3 = this.getPosition(target, (double) target.getBbHeight() * 0.5D, 1.0F);
+          Vec3 vec31 = this.getPosition(entity, entity.getEyeHeight(), 1.0F);
+          return frustum.isVisible(new AABB(vec31.x, vec31.y, vec31.z, vec3.x, vec3.y, vec3.z));
+        }
+      }
+      return false;
+    }
+  }
+
+  private Vec3 getPosition(LivingEntity entity, double p_114804_, float p_114805_) {
+    double d0 = Mth.lerp(p_114805_, entity.xOld, entity.getX());
+    double d1 = Mth.lerp(p_114805_, entity.yOld, entity.getY()) + p_114804_;
+    double d2 = Mth.lerp(p_114805_, entity.zOld, entity.getZ());
+    return new Vec3(d0, d1, d2);
+  }
+
+  public void render(@NotNull StoneGolemEntity entity, float p_114830_, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+    renderLaser(entity, partialTicks, poseStack, bufferSource);
+    super.render(entity, p_114830_, partialTicks, poseStack, bufferSource, packedLight);
+  }
+
+  private void renderLaser(StoneGolemEntity entity, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource) {
+    LivingEntity target = entity.getActiveAttackTarget();
+    if (target != null) {
+      float f = entity.getAttackAnimationScale(partialTicks);
+      float f1 = (float) entity.level().getGameTime() + partialTicks;
+      float f2 = f1 * 0.5F % 1.0F;
+      float f3 = entity.getEyeHeight();
+      poseStack.pushPose();
+      poseStack.translate(0.0F, f3, 0.0F);
+      Vec3 vec3 = this.getPosition(target, (double) target.getBbHeight() * 0.5D, partialTicks);
+      Vec3 vec31 = this.getPosition(entity, f3, partialTicks);
+      Vec3 vec32 = vec3.subtract(vec31);
+      float f4 = (float) (vec32.length());
+      vec32 = vec32.normalize();
+      float f5 = (float) Math.acos(vec32.y);
+      float f6 = (float) Math.atan2(vec32.z, vec32.x);
+      poseStack.mulPose(Axis.YP.rotationDegrees((((float) Math.PI / 2F) - f6) * (180F / (float) Math.PI)));
+      poseStack.mulPose(Axis.XP.rotationDegrees(f5 * (180F / (float) Math.PI)));
+      float f7 = f1 * 0.05F * -1.5F;
+      float f8 = f * f;
+      int j = 64 + (int) (f8 * 191.0F);
+      int k = 32 + (int) (f8 * 191.0F);
+      int l = 128 - (int) (f8 * 64.0F);
+      float f11 = Mth.cos(f7 + 2.3561945F) * 0.282F;
+      float f12 = Mth.sin(f7 + 2.3561945F) * 0.282F;
+      float f13 = Mth.cos(f7 + ((float) Math.PI / 4F)) * 0.282F;
+      float f14 = Mth.sin(f7 + ((float) Math.PI / 4F)) * 0.282F;
+      float f15 = Mth.cos(f7 + 3.926991F) * 0.282F;
+      float f16 = Mth.sin(f7 + 3.926991F) * 0.282F;
+      float f17 = Mth.cos(f7 + 5.4977875F) * 0.282F;
+      float f18 = Mth.sin(f7 + 5.4977875F) * 0.282F;
+      float f19 = Mth.cos(f7 + (float) Math.PI) * 0.2F;
+      float f20 = Mth.sin(f7 + (float) Math.PI) * 0.2F;
+      float f21 = Mth.cos(f7 + 0.0F) * 0.2F;
+      float f22 = Mth.sin(f7 + 0.0F) * 0.2F;
+      float f23 = Mth.cos(f7 + ((float) Math.PI / 2F)) * 0.2F;
+      float f24 = Mth.sin(f7 + ((float) Math.PI / 2F)) * 0.2F;
+      float f25 = Mth.cos(f7 + ((float) Math.PI * 1.5F)) * 0.2F;
+      float f26 = Mth.sin(f7 + ((float) Math.PI * 1.5F)) * 0.2F;
+      float f29 = -1.0F + f2;
+      float f30 = f4 * 2.5F + f29;
+      VertexConsumer vertexconsumer = bufferSource.getBuffer(BEAM_RENDER_TYPE);
+      PoseStack.Pose posestack$pose = poseStack.last();
+      Matrix4f matrix4f = posestack$pose.pose();
+      Matrix3f matrix3f = posestack$pose.normal();
+      vertex(vertexconsumer, matrix4f, matrix3f, f19, f4, f20, j, k, l, 0.4999F, f30);
+      vertex(vertexconsumer, matrix4f, matrix3f, f19, 0.0F, f20, j, k, l, 0.4999F, f29);
+      vertex(vertexconsumer, matrix4f, matrix3f, f21, 0.0F, f22, j, k, l, 0.0F, f29);
+      vertex(vertexconsumer, matrix4f, matrix3f, f21, f4, f22, j, k, l, 0.0F, f30);
+      vertex(vertexconsumer, matrix4f, matrix3f, f23, f4, f24, j, k, l, 0.4999F, f30);
+      vertex(vertexconsumer, matrix4f, matrix3f, f23, 0.0F, f24, j, k, l, 0.4999F, f29);
+      vertex(vertexconsumer, matrix4f, matrix3f, f25, 0.0F, f26, j, k, l, 0.0F, f29);
+      vertex(vertexconsumer, matrix4f, matrix3f, f25, f4, f26, j, k, l, 0.0F, f30);
+      float f31 = 0.0F;
+      if (entity.tickCount % 2 == 0) {
+        f31 = 0.5F;
+      }
+      vertex(vertexconsumer, matrix4f, matrix3f, f11, f4, f12, j, k, l, 0.5F, f31 + 0.5F);
+      vertex(vertexconsumer, matrix4f, matrix3f, f13, f4, f14, j, k, l, 1.0F, f31 + 0.5F);
+      vertex(vertexconsumer, matrix4f, matrix3f, f17, f4, f18, j, k, l, 1.0F, f31);
+      vertex(vertexconsumer, matrix4f, matrix3f, f15, f4, f16, j, k, l, 0.5F, f31);
+      poseStack.popPose();
+    }
+  }
+
+  private static void vertex(VertexConsumer vertexConsumer, Matrix4f matrix4f, Matrix3f matrix3f, float f1, float f2, float f3, int red, int green, int blue, float f4, float f5) {
+    vertexConsumer.vertex(matrix4f, f1, f2, f3)
+            .color(250, 10, 10, 255)
+            .uv(f4, f5)
+            .overlayCoords(OverlayTexture.NO_OVERLAY)
+            .uv2(15728880)
+            .normal(matrix3f, 0.0F, 1.0F, 0.0F)
+            .endVertex();
+  }
+
+  @Override
+  public @NotNull ResourceLocation getTextureLocation(StoneGolemEntity entity) {
+    return DEFAULT_TEXTURE;
+  }
+}

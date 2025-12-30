@@ -13,6 +13,7 @@ public class RoREntityRendering {
 
   public static final ModelLayerLocation BEETLE_LAYER = new ModelLayerLocation(new ResourceLocation(RoRMod.MOD_ID, "beetle_entity"), "main");
   public static final ModelLayerLocation LEMURIAN_LAYER = new ModelLayerLocation(new ResourceLocation(RoRMod.MOD_ID, "lemurian_entity"), "main");
+  public static final ModelLayerLocation STONE_GOLEM_LAYER = new ModelLayerLocation(new ResourceLocation(RoRMod.MOD_ID, "stone_golem_entity"), "main");
   public static final ModelLayerLocation WISP_LAYER = new ModelLayerLocation(new ResourceLocation(RoRMod.MOD_ID, "wisp_entity"), "main");
   public static final ModelLayerLocation GUNNER_TURRET_LAYER = new ModelLayerLocation(new ResourceLocation(RoRMod.MOD_ID, "gunner_turret_entity"), "main");
   public static final ModelLayerLocation GUNNER_DRONE_LAYER = new ModelLayerLocation(new ResourceLocation(RoRMod.MOD_ID, "gunner_drone_entity"), "main");
@@ -22,6 +23,7 @@ public class RoREntityRendering {
       // Renderer Registries
       EntityRendererRegistry.register(RoREntityTypes.BEETLE, BeetleRenderer::new);
       EntityRendererRegistry.register(RoREntityTypes.LEMURIAN, LemurianRenderer::new);
+      EntityRendererRegistry.register(RoREntityTypes.STONE_GOLEM, StoneGolemRenderer::new);
       EntityRendererRegistry.register(RoREntityTypes.WISP, WispRenderer::new);
       EntityRendererRegistry.register(RoREntityTypes.GUNNER_TURRET, GunnerTurretRenderer::new);
       EntityRendererRegistry.register(RoREntityTypes.GUNNER_DRONE, GunnerDroneRenderer::new);
@@ -29,6 +31,7 @@ public class RoREntityRendering {
       // Layer Definitions
       EntityModelLayerRegistry.register(BEETLE_LAYER, BeetleModel::createBodyLayer);
       EntityModelLayerRegistry.register(LEMURIAN_LAYER, LemurianModel::createBodyLayer);
+      EntityModelLayerRegistry.register(STONE_GOLEM_LAYER, StoneGolemModel::createBodyLayer);
       EntityModelLayerRegistry.register(WISP_LAYER, WispModel::createBodyLayer);
       EntityModelLayerRegistry.register(GUNNER_TURRET_LAYER, GunnerTurretModel::createBodyLayer);
       EntityModelLayerRegistry.register(GUNNER_DRONE_LAYER, GunnerDroneModel::createBodyLayer);

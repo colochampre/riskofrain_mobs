@@ -9,6 +9,7 @@ import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerDroneEntity;
 import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerTurretEntity;
 import io.github.colochampre.riskofrain_mobs.entities.enemies.BeetleEntity;
 import io.github.colochampre.riskofrain_mobs.entities.enemies.LemurianEntity;
+import io.github.colochampre.riskofrain_mobs.entities.enemies.StoneGolemEntity;
 import io.github.colochampre.riskofrain_mobs.entities.enemies.WispEntity;
 import io.github.colochampre.riskofrain_mobs.entities.projectiles.BulletEntity;
 import net.minecraft.core.registries.Registries;
@@ -24,7 +25,7 @@ import java.util.function.Supplier;
 public class RoREntityTypes {
 
   private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(RoRMod.MOD_ID,
-      Registries.ENTITY_TYPE);
+          Registries.ENTITY_TYPE);
 
   public static final RegistrySupplier<EntityType<BeetleEntity>> BEETLE = registerEntityType(
           "beetle_entity", () -> EntityType.Builder.of(BeetleEntity::new, MobCategory.MONSTER)
@@ -37,6 +38,12 @@ public class RoREntityTypes {
                   .sized(0.7F, 1.72F)
                   // .eyeHeight(1.62F)
                   .build(RoRMod.MOD_ID + ":lemurian_entity"));
+
+  public static final RegistrySupplier<EntityType<StoneGolemEntity>> STONE_GOLEM = registerEntityType(
+          "stone_golem_entity", () -> EntityType.Builder.of(StoneGolemEntity::new, MobCategory.MONSTER)
+                  .sized(1.66F, 3.95F)
+                  // .eyeHeight(3.5F)
+                  .build(RoRMod.MOD_ID + ":stone_golem_entity"));
 
   public static final RegistrySupplier<EntityType<WispEntity>> WISP = registerEntityType(
           "wisp_entity", () -> EntityType.Builder.of(WispEntity::new, MobCategory.MONSTER)
@@ -57,11 +64,11 @@ public class RoREntityTypes {
                   .build(RoRMod.MOD_ID + ":gunner_drone_entity"));
 
   public static final RegistrySupplier<EntityType<BulletEntity>> DRONE_BULLET_ENTITY = registerEntityType("drone_bullet_entity", () ->
-        EntityType.Builder.<BulletEntity>of(BulletEntity::new, MobCategory.MISC)
-                .sized(0.25F, 0.25F)
-                .clientTrackingRange(4)
-                .updateInterval(10)
-                .build(RoRMod.MOD_ID + ":drone_bullet_entity"));
+          EntityType.Builder.<BulletEntity>of(BulletEntity::new, MobCategory.MISC)
+                  .sized(0.25F, 0.25F)
+                  .clientTrackingRange(4)
+                  .updateInterval(10)
+                  .build(RoRMod.MOD_ID + ":drone_bullet_entity"));
 
   public static void init() {
     ENTITIES.register();
@@ -73,6 +80,7 @@ public class RoREntityTypes {
     // Enemies
     EntityAttributeRegistry.register(RoREntityTypes.BEETLE, BeetleEntity::createAttributes);
     EntityAttributeRegistry.register(RoREntityTypes.LEMURIAN, LemurianEntity::createAttributes);
+    EntityAttributeRegistry.register(RoREntityTypes.STONE_GOLEM, StoneGolemEntity::createAttributes);
     EntityAttributeRegistry.register(RoREntityTypes.WISP, WispEntity::createAttributes);
     // Allies
     EntityAttributeRegistry.register(RoREntityTypes.GUNNER_TURRET, GunnerTurretEntity::createAttributes);
@@ -82,16 +90,18 @@ public class RoREntityTypes {
   public static void registerSpawnPlacement() {
     // Enemies
     SpawnPlacementsRegistry.register(RoREntityTypes.BEETLE, SpawnPlacements.Type.ON_GROUND,
-        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BeetleEntity::checkMonsterSpawnRules);
+            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BeetleEntity::checkMonsterSpawnRules);
     SpawnPlacementsRegistry.register(RoREntityTypes.LEMURIAN, SpawnPlacements.Type.ON_GROUND,
-        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, LemurianEntity::checkMonsterSpawnRules);
+            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, LemurianEntity::checkMonsterSpawnRules);
+    SpawnPlacementsRegistry.register(RoREntityTypes.STONE_GOLEM, SpawnPlacements.Type.ON_GROUND,
+            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, StoneGolemEntity::checkMonsterSpawnRules);
     SpawnPlacementsRegistry.register(RoREntityTypes.WISP, SpawnPlacements.Type.NO_RESTRICTIONS,
-        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, WispEntity::checkWispSpawnRules);
+            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, WispEntity::checkWispSpawnRules);
     // Allies
     SpawnPlacementsRegistry.register(RoREntityTypes.GUNNER_TURRET, SpawnPlacements.Type.ON_GROUND,
-        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, GunnerTurretEntity::checkDroneSpawnRules);
+            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, GunnerTurretEntity::checkDroneSpawnRules);
     SpawnPlacementsRegistry.register(RoREntityTypes.GUNNER_DRONE, SpawnPlacements.Type.ON_GROUND,
-        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, GunnerDroneEntity::checkDroneSpawnRules);
+            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, GunnerDroneEntity::checkDroneSpawnRules);
   }
 
   private static <T extends Entity> RegistrySupplier<EntityType<T>> registerEntityType(String name, Supplier<EntityType<T>> entityType) {

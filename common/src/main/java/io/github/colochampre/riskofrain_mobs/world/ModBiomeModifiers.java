@@ -41,9 +41,9 @@ public class ModBiomeModifiers {
                         configs.LEMURIANS.MIN_GROUP_SIZE, configs.LEMURIANS.MAX_GROUP_SIZE));
               }
               if (configs.STONE_GOLEMS.OVERWORLD_SPAWN_RATE > 0) {
-              /* mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
-                      RoREntityTypes.STONE_GOLEM.get(), configs.STONE_GOLEMS.OVERWORLD_SPAWN_RATE,
-                       configs.STONE_GOLEMS.MIN_GROUP_SIZE, configs.STONE_GOLEMS.MAX_GROUP_SIZE)); */
+                mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
+                        RoREntityTypes.STONE_GOLEM.get(), configs.STONE_GOLEMS.OVERWORLD_SPAWN_RATE,
+                        configs.STONE_GOLEMS.MIN_GROUP_SIZE, configs.STONE_GOLEMS.MAX_GROUP_SIZE));
               }
               if (configs.WISPS.OVERWORLD_SPAWN_RATE > 0) {
                 mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
@@ -65,8 +65,8 @@ public class ModBiomeModifiers {
                         configs.LEMURIANS.MIN_GROUP_SIZE, configs.LEMURIANS.MAX_GROUP_SIZE));
               }
               if (configs.STONE_GOLEMS.NETHER_SPAWN_RATE > 0) {
-              /* mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
-                      RoREntityTypes.STONE_GOLEM.get(), configs.STONE_GOLEMS.NETHER_SPAWN_RATE, 1, 1)); */
+                mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
+                        RoREntityTypes.STONE_GOLEM.get(), configs.STONE_GOLEMS.NETHER_SPAWN_RATE, 1, 1));
               }
               if (configs.WISPS.NETHER_SPAWN_RATE > 0) {
                 mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
