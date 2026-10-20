@@ -42,7 +42,6 @@ import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class StoneGolemEntity extends Monster {
@@ -90,7 +89,7 @@ public class StoneGolemEntity extends Monster {
   }
 
   @Override
-  public void onSyncedDataUpdated(List<SynchedEntityData.DataValue<?>> accessor) {
+  public void onSyncedDataUpdated(EntityDataAccessor<?> accessor) {
     super.onSyncedDataUpdated(accessor);
     if (DATA_ID_ATTACK_TARGET.equals(accessor)) {
       this.clientSideAttackTime = 0;
