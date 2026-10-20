@@ -6,6 +6,7 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
+import net.minecraft.util.Mth;
 
 @Config(name = RoRMod.MOD_ID)
 public class RoRConfigs implements ConfigData {
@@ -27,6 +28,24 @@ public class RoRConfigs implements ConfigData {
 
     public static RoRConfigs get() {
         return INSTANCE;
+    }
+
+    @Override
+    public void validatePostLoad() {
+        // GUI bounds are not enforced on hand-edited files, and invalid spawn values crash natural spawning
+        MOBS.DRONES.DRONES_SPAWN_RATE = clampSpawnRate(MOBS.DRONES.DRONES_SPAWN_RATE);
+        MOBS.BEETLES.clampSpawns();
+        MOBS.LEMURIANS.clampSpawns();
+        MOBS.STONE_GOLEMS.clampSpawns();
+        MOBS.WISPS.clampSpawns();
+    }
+
+    private static int clampSpawnRate(int rate) {
+        return Mth.clamp(rate, 0, 100);
+    }
+
+    private static int clampGroupSize(int size) {
+        return Mth.clamp(size, 1, 8);
     }
 
     public static class MobsConfig implements ConfigData {
@@ -64,6 +83,13 @@ public class RoRConfigs implements ConfigData {
         @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
         public int MAX_GROUP_SIZE = 3;
         public boolean ENABLE_DESPAWN = true;
+
+        void clampSpawns() {
+            OVERWORLD_SPAWN_RATE = clampSpawnRate(OVERWORLD_SPAWN_RATE);
+            NETHER_SPAWN_RATE = clampSpawnRate(NETHER_SPAWN_RATE);
+            MIN_GROUP_SIZE = clampGroupSize(MIN_GROUP_SIZE);
+            MAX_GROUP_SIZE = Math.max(MIN_GROUP_SIZE, clampGroupSize(MAX_GROUP_SIZE));
+        }
     }
 
     public static class LemuriansConfig implements ConfigData {
@@ -82,6 +108,13 @@ public class RoRConfigs implements ConfigData {
         public boolean ENABLE_DESPAWN = true;
         public boolean ENABLE_FIREBALL_ATTACK = true;
         public boolean ENABLE_FIREBALL_GRIEF = true;
+
+        void clampSpawns() {
+            OVERWORLD_SPAWN_RATE = clampSpawnRate(OVERWORLD_SPAWN_RATE);
+            NETHER_SPAWN_RATE = clampSpawnRate(NETHER_SPAWN_RATE);
+            MIN_GROUP_SIZE = clampGroupSize(MIN_GROUP_SIZE);
+            MAX_GROUP_SIZE = Math.max(MIN_GROUP_SIZE, clampGroupSize(MAX_GROUP_SIZE));
+        }
     }
 
     public static class StoneGolemsConfig implements ConfigData {
@@ -100,6 +133,13 @@ public class RoRConfigs implements ConfigData {
         public boolean ENABLE_DESPAWN = false;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int SPAWN_VOLUME = 100;
+
+        void clampSpawns() {
+            OVERWORLD_SPAWN_RATE = clampSpawnRate(OVERWORLD_SPAWN_RATE);
+            NETHER_SPAWN_RATE = clampSpawnRate(NETHER_SPAWN_RATE);
+            MIN_GROUP_SIZE = clampGroupSize(MIN_GROUP_SIZE);
+            MAX_GROUP_SIZE = Math.max(MIN_GROUP_SIZE, clampGroupSize(MAX_GROUP_SIZE));
+        }
     }
 
     public static class WispsConfig implements ConfigData {
@@ -116,6 +156,13 @@ public class RoRConfigs implements ConfigData {
         @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
         public int MAX_GROUP_SIZE = 3;
         public boolean ENABLE_DESPAWN = true;
+
+        void clampSpawns() {
+            OVERWORLD_SPAWN_RATE = clampSpawnRate(OVERWORLD_SPAWN_RATE);
+            NETHER_SPAWN_RATE = clampSpawnRate(NETHER_SPAWN_RATE);
+            MIN_GROUP_SIZE = clampGroupSize(MIN_GROUP_SIZE);
+            MAX_GROUP_SIZE = Math.max(MIN_GROUP_SIZE, clampGroupSize(MAX_GROUP_SIZE));
+        }
     }
 
     public static class SoundsConfig implements ConfigData {

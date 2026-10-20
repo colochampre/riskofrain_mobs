@@ -22,8 +22,8 @@ Open decision for the user: HARD difficulty damage is scaled twice (vanilla x1.5
 | ID | Specs | Route | Status | Evidence / commit |
 |----|-------|-------|--------|-------------------|
 | T1 | S1 | inline | done (Forge server + in-game client check pending) | RED: Fabric runServer crashes with `Cannot load class net.minecraft.client.resources.sounds.SoundInstance in environment type SERVER`. GREEN: Fabric runServer logs `Initialized RoR Mod` and reaches the EULA prompt. Forge checks the EULA before loading mods, so it is unverified. |
-| T2 | S2 | inline | pending | |
-| T3 | S3 | inline | pending | |
+| T2 | S2 | inline | done (in-game check pending) | No runnable RED: no unit-test harness; fix is in mobInteract, which needs a live player. Build green. |
+| T3 | S3 | inline | done (in-game check pending) | No runnable RED without a running world (needs eula=true). `validatePostLoad` clamps spawn rates to 0-100, group sizes to 1-8 and max >= min. Build green. |
 
 ## Log
 
