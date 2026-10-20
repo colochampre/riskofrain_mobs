@@ -8,6 +8,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 import io.github.colochampre.riskofrain_mobs.RoRMod;
+import io.github.colochampre.riskofrain_mobs.client.RoRModClient;
 
 @Mod(RoRMod.MOD_ID)
 public final class RoRModForge {
@@ -17,6 +18,7 @@ public final class RoRModForge {
     // Run our common setup.
     RoRMod.init();
 
+    DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> RoRModClient::init);
     DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> ForgeConfigIntegration::register);
   }
 }
