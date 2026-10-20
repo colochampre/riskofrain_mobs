@@ -78,6 +78,8 @@ public class StoneGolemRenderer extends MobRenderer<StoneGolemEntity, StoneGolem
       float f3 = entity.getEyeHeight();
       poseStack.pushPose();
       poseStack.translate(0.0F, f3, 0.0F);
+      // Capture normals before aiming so diffuse lighting does not darken the beam when it points down
+      Matrix3f matrix3f = new Matrix3f(poseStack.last().normal());
       Vec3 vec3 = this.getPosition(target, (double) target.getBbHeight() * 0.5D, partialTicks);
       Vec3 vec31 = this.getPosition(entity, f3, partialTicks);
       Vec3 vec32 = vec3.subtract(vec31);
@@ -113,7 +115,6 @@ public class StoneGolemRenderer extends MobRenderer<StoneGolemEntity, StoneGolem
       VertexConsumer vertexconsumer = bufferSource.getBuffer(BEAM_RENDER_TYPE);
       PoseStack.Pose posestack$pose = poseStack.last();
       Matrix4f matrix4f = posestack$pose.pose();
-      Matrix3f matrix3f = posestack$pose.normal();
       vertex(vertexconsumer, matrix4f, matrix3f, f19, f4, f20, j, k, l, 0.4999F, f30);
       vertex(vertexconsumer, matrix4f, matrix3f, f19, 0.0F, f20, j, k, l, 0.4999F, f29);
       vertex(vertexconsumer, matrix4f, matrix3f, f21, 0.0F, f22, j, k, l, 0.0F, f29);
