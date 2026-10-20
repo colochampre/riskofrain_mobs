@@ -6,6 +6,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.client.RoRModClient;
@@ -18,7 +19,11 @@ public final class RoRModForge {
     // Run our common setup.
     RoRMod.init();
 
-    DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> RoRModClient::init);
+    // Plain check instead of DistExecutor: in dev, DistExecutor resolves the method reference on every
+    // dist, which loads RoRModClient and its client classes on a dedicated server
+    if (FMLEnvironment.dist == Dist.CLIENT) {
+      RoRModClient.init();
+    }
     DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> ForgeConfigIntegration::register);
   }
 }
