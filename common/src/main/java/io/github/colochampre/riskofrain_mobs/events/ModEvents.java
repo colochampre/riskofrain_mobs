@@ -129,6 +129,7 @@ public class ModEvents {
 
   public static void init() {
     registerEvents();
+    StoneGolemSummoning.register();
     if (Platform.getEnvironment() == Env.CLIENT) {
       registerClientEvents();
     }
