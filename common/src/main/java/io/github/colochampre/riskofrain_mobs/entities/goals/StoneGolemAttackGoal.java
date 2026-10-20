@@ -18,6 +18,7 @@ public class StoneGolemAttackGoal extends Goal {
   private final StoneGolemEntity golem;
   private int laserAttackTick;
   private int laserCooldown = 0;
+  private LivingEntity laserTarget;
   private final double speedModifier;
   private final boolean followingTargetEvenIfNotSeen;
   private Path path;
@@ -79,7 +80,7 @@ public class StoneGolemAttackGoal extends Goal {
 
   @Override
   public void start() {
-    this.laserAttackTick = -10;
+    this.resetLaser();
     LivingEntity livingentity = this.golem.getTarget();
     if (livingentity != null) {
       this.golem.getLookControl().setLookAt(livingentity, 90.0F, 90.0F);
@@ -92,7 +93,7 @@ public class StoneGolemAttackGoal extends Goal {
 
   @Override
   public void stop() {
-    this.golem.setActiveAttackTarget(0);
+    this.resetLaser();
     this.golem.setTarget(null);
     this.golem.setAggressive(false);
     this.golem.getNavigation().stop();
@@ -109,15 +110,23 @@ public class StoneGolemAttackGoal extends Goal {
     LivingEntity target = this.golem.getTarget();
     --this.laserCooldown;
 
-    if (target != null) {
-      boolean canSee = this.golem.hasLineOfSight(target);
-      this.golem.getLookControl().setLookAt(target, 90.0F, 90.0F);
-      meleeAttackTick(target);
+    if (this.laserTarget != null && !this.laserTarget.isAlive()) {
+      this.resetLaser();
+    }
+
+    // An ongoing charge stays on its original target, even if retaliation already switched getTarget()
+    LivingEntity focus = this.laserTarget != null ? this.laserTarget : target;
+    if (focus != null) {
+      boolean canSee = this.golem.hasLineOfSight(focus);
+      this.golem.getLookControl().setLookAt(focus, 90.0F, 90.0F);
+      meleeAttackTick(focus);
       if (!canSee) {
-        this.golem.setActiveAttackTarget(0);
-        this.golem.setTarget(null);
+        this.resetLaser();
+        if (focus == target) {
+          this.golem.setTarget(null);
+        }
       } else {
-        laserTick(target);
+        laserTick(focus);
       }
     }
   }
@@ -157,10 +166,12 @@ public class StoneGolemAttackGoal extends Goal {
   }
 
   protected void laserTick(LivingEntity target) {
-    if (this.laserCooldown <= 0) {
-      ++this.laserAttackTick;
+    if (this.laserCooldown > 0) {
+      return;
     }
+    ++this.laserAttackTick;
     if (this.laserAttackTick == 0) {
+      this.laserTarget = target;
       this.golem.setActiveAttackTarget(target.getId());
       if (!this.golem.isSilent()) {
         this.golem.playSound(this.getLaserChargeSound(), 2.0F, 1.0F);
@@ -177,10 +188,19 @@ public class StoneGolemAttackGoal extends Goal {
       target.hurt(golem.damageSources().indirectMagic(this.golem, this.golem), f);
       target.hurt(golem.damageSources().mobAttack(this.golem), this.golem.getAttackDamage() / 2);
       target.addDeltaMovement(vec3);
-      this.golem.setActiveAttackTarget(0);
-      this.golem.setTarget(null);
+      this.resetLaser();
+      // Keep a target acquired mid-charge (e.g. the entity that hit the golem)
+      if (this.golem.getTarget() == target) {
+        this.golem.setTarget(null);
+      }
       this.laserCooldown = 85;
     }
+  }
+
+  private void resetLaser() {
+    this.laserAttackTick = -10;
+    this.laserTarget = null;
+    this.golem.setActiveAttackTarget(0);
   }
 
   protected void checkAndPerformAttack(LivingEntity livingEntity, double distance) {

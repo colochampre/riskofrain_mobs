@@ -47,8 +47,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public class StoneGolemEntity extends Monster {
 
   private static final ResourceLocation STONE_GOLEM_LOOT_TABLE = new ResourceLocation(RoRMod.MOD_ID, "entities/stone_golem_entity");
+  private static final int TARGET_UNSEEN_MEMORY_TICKS = 20;
   private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData.defineId(StoneGolemEntity.class, EntityDataSerializers.INT);
-  private final HurtByTargetGoal hurtByTargetGoal = new HurtByTargetGoal(this);
   private LivingEntity clientSideCachedAttackTarget;
   public int clientSideAttackTime;
   private int attackTick;
@@ -66,9 +66,18 @@ public class StoneGolemEntity extends Monster {
     this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6D));
     this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
     this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
-    this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
-    this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolem.class, true));
-    this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, WanderingTrader.class, true));
+    // Short unseen memory so a hidden target is dropped quickly in favor of a visible one
+    this.targetSelector.addGoal(1, new HurtByTargetGoal(this) {
+      @Override
+      public void start() {
+        super.start();
+        // Vanilla start() hardcodes 300 ticks of memory, overriding setUnseenMemoryTicks
+        this.unseenMemoryTicks = TARGET_UNSEEN_MEMORY_TICKS;
+      }
+    });
+    this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true).setUnseenMemoryTicks(TARGET_UNSEEN_MEMORY_TICKS));
+    this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolem.class, true).setUnseenMemoryTicks(TARGET_UNSEEN_MEMORY_TICKS));
+    this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, WanderingTrader.class, true).setUnseenMemoryTicks(TARGET_UNSEEN_MEMORY_TICKS));
   }
 
   public static AttributeSupplier.Builder createAttributes() {
@@ -105,10 +114,6 @@ public class StoneGolemEntity extends Monster {
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
       } else {
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.25D);
-      }
-      LivingEntity target = this.getTarget();
-      if (target == null) {
-        this.goalSelector.addGoal(1, this.hurtByTargetGoal);
       }
       if (this.attackTick > 0) {
         --this.attackTick;
