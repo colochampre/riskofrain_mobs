@@ -315,9 +315,10 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
           }
           this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.IRON_GOLEM_REPAIR,
                   this.getSoundSource(), 0.5F, 1.25F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
-          if (itemstack.getItem().equals(Items.IRON_INGOT)) {
+          // Use the item captured before shrink(): an emptied stack reports AIR
+          if (item == Items.IRON_INGOT) {
             this.heal(18.0F);
-          } else if (itemstack.getItem().equals(Items.RAW_IRON)) {
+          } else if (item == Items.RAW_IRON) {
             this.heal(12.0F);
           } else {
             this.heal(2.0F);
@@ -352,7 +353,7 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
         }
         this.level().playSound(null, this.getX(), this.getY(), this.getZ(), RoRSounds.COIN_PROC.get(),
                 this.getSoundSource(), 1.0F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
-        this.updateGoldPrice(itemstack);
+        this.updateGoldPrice(item);
         String price = String.valueOf(this.getCurrentGoldPrice());
         Component priceName = Component.literal(price).withStyle(ChatFormatting.YELLOW);
         this.setCustomName(priceName);
@@ -376,8 +377,8 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     return super.mobInteract(player, hand);
   }
 
-  private void updateGoldPrice(ItemStack itemstack) {
-    int priceReduction = dronePriceMap.get(itemstack.getItem());
+  private void updateGoldPrice(Item item) {
+    int priceReduction = dronePriceMap.getOrDefault(item, 0);
     this.setCurrentGoldPrice(this.getCurrentGoldPrice() - priceReduction);
   }
 
