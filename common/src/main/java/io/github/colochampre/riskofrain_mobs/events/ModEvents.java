@@ -43,11 +43,8 @@ public class ModEvents {
       return EventResult.pass();
     });
 
+    // Tamed drones breaking down instead of dying is handled in AbstractDroneEntity.die
     EntityEvent.LIVING_DEATH.register((entity, source) -> {
-      if (entity instanceof AbstractDroneEntity drone && drone.isTame()) {
-        breakDrone(drone);
-        return EventResult.interruptFalse();
-      }
       if (entity instanceof Player player && configs.SOUNDS.PLAYER_DEATH_SOUND > 0) {
         player.level().playSound(null, player.blockPosition(), RoRSounds.PLAYER_DEATH.get(),
                 player.getSoundSource(), (float) configs.SOUNDS.PLAYER_DEATH_SOUND / 100, 1.0F);
@@ -92,15 +89,6 @@ public class ModEvents {
         playerLevels.put(player.getUUID(), currentLevel);
       }
     });
-  }
-
-  private static void breakDrone(AbstractDroneEntity drone) {
-    drone.setTame(false);
-    drone.setOwnerUUID(null);
-    drone.removeGoals();
-    drone.setHealth(drone.getMaxHealth());
-    drone.setCurrentGoldPrice(drone.getDronePrice());
-    drone.setPriceName();
   }
 
   private static void playDifficultyChangeSound(MinecraftServer server) {

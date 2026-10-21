@@ -16,6 +16,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
@@ -105,10 +106,13 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   @Override
   protected void defineSynchedData() {
     super.defineSynchedData();
-    Difficulty difficulty = this.level().getDifficulty();
-    int initialGold = difficulty == Difficulty.HARD ? (int) (this.getDronePrice() * 1.5) : this.getDronePrice();
-    this.entityData.define(DATA_PRICE, initialGold);
+    this.entityData.define(DATA_PRICE, this.getInitialGoldPrice());
     this.entityData.define(DATA_ID_ATTACK_TARGET, 0);
+  }
+
+  private int getInitialGoldPrice() {
+    Difficulty difficulty = this.level().getDifficulty();
+    return difficulty == Difficulty.HARD ? (int) (this.getDronePrice() * 1.5) : this.getDronePrice();
   }
 
   @Override
@@ -144,6 +148,10 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   @Override
   public void setTame(boolean tamed) {
     super.setTame(tamed);
+    if (!tamed) {
+      this.removeGoals();
+      return;
+    }
     int type = this.getDroneType();
     this.goalSelector.addGoal(2, sitGoal);
     if (type == TYPE_LAND) {
@@ -366,7 +374,6 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
             this.level().broadcastEntityEvent(this, (byte) 7);
             this.setCustomName(null);
             this.setCustomNameVisible(false);
-            this.goalSelector.addGoal(1, new SitWhenOrderedToGoal(this));
           } else {
             this.level().broadcastEntityEvent(this, (byte) 6);
           }
@@ -433,7 +440,34 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   @Override
   public void die(@NotNull DamageSource source) {
     this.playSound(this.getShutDownSound(), 1.0F, 1.0F);
+    // Tamed drones break down instead of dying, unless the damage bypasses invulnerability (/kill, the void).
+    // Returning before super.die also skips TamableAnimal's death message to the owner
+    if (this.isTame() && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+      this.breakDown();
+      return;
+    }
     super.die(source);
+  }
+
+  // Back to the untamed, for-sale state, with nothing left over from the fight or the previous owner
+  private void breakDown() {
+    this.setTame(false);
+    this.setOwnerUUID(null);
+    this.setOrderedToSit(false);
+    this.setInSittingPose(false);
+    this.navigation.stop();
+    this.setTarget(null);
+    this.setActiveAttackTarget(0);
+    this.setLastHurtByMob(null);
+    this.setLastHurtByPlayer(null);
+    if (this.isLeashed()) {
+      this.dropLeash(true, true);
+    }
+    this.clearFire();
+    this.removeAllEffects();
+    this.setHealth(this.getMaxHealth());
+    this.setCurrentGoldPrice(this.getInitialGoldPrice());
+    this.setPriceName();
   }
 
   @Nullable
