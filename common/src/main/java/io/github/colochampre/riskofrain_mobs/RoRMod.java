@@ -1,10 +1,7 @@
 package io.github.colochampre.riskofrain_mobs;
 
-import dev.architectury.event.events.client.ClientLifecycleEvent;
 import io.github.colochampre.riskofrain_mobs.events.ModEvents;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
-import io.github.colochampre.riskofrain_mobs.registry.RoRNetwork;
-import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
 import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
 import io.github.colochampre.riskofrain_mobs.world.ModBiomeModifiers;
@@ -24,11 +21,7 @@ public final class RoRMod {
     RoREntityTypes.init();
     RoRItems.init();
     ModEvents.init();
-    RoRNetwork.init();
     ModBiomeModifiers.init();
-
-    ClientLifecycleEvent.CLIENT_STARTED.register(listener -> {
-      RoREntityRendering.init();
-    });
+    // Client-only setup runs from the platform client entrypoints via client.RoRModClient
   }
 }
