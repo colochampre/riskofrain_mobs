@@ -177,7 +177,7 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
     ItemStack itemstack = player.getItemInHand(hand);
     Item item = itemstack.getItem();
     // Set body color
-    if (item instanceof DyeItem && this.isTame()) {
+    if (item instanceof DyeItem && this.isTame() && this.isOwnedBy(player)) {
       DyeColor dyecolor = ((DyeItem) item).getDyeColor();
       if (dyecolor != this.getBodyColor()) {
         this.setBodyColor(dyecolor);
@@ -285,9 +285,10 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
     if (target instanceof Wolf) {
       Wolf wolf = (Wolf) target;
       return !wolf.isTame() || wolf.getOwner() != owner;
-    } /* else if (target instanceof Player && owner instanceof Player && !((Player) owner).canHarmPlayer((Player) target)) {
+    } else if (target instanceof Player player && owner instanceof Player ownerPlayer && !ownerPlayer.canHarmPlayer(player)) {
+      // Respects server PvP and team friendly fire, like tamed wolves
       return false;
-    } */ else if (target instanceof AbstractHorse && ((AbstractHorse) target).isTamed()) {
+    } else if (target instanceof AbstractHorse && ((AbstractHorse) target).isTamed()) {
       return false;
     } else if (target instanceof AbstractDroneEntity && ((AbstractDroneEntity) target).isTame()) {
       return false;
