@@ -16,7 +16,13 @@ User request: "Me ayudas a revisar los mobs, eventos y demás en busca de posibl
 User: "Cual sería la solución para el UUID y las balas que pegan al dueño y sus drones?" Then: "Dale, arrancá el bloque 2 con esas soluciones".
 - S4. A tamed turret's owner hitting it must take the pick-up path (tilt, drop as item), also after a world reload. Owner check through `isOwnedBy`, not UUID `!=`.
 - S5. Bullets from a tamed drone must not hit its owner, the shooter, or other `TamableAnimal`s with the same owner (they pass through), so same-owner drones never infight. Other players' drones and pets can still be hit.
-- Remaining block 2 items (not authorized yet): duplicate `SitWhenOrderedToGoal`, `setTame(false)` side effects, `breakDrone` leftovers, server-side muzzle flash particles, non-owners dyeing drones, commented-out PvP check, stale owner in `DroneFollowOwnerGoal`.
+User: "Esos arreglalos directamente. Los anteriores solo me causaron dudas por posibles cambios en los comportamientos, pero estuve de acuerdo".
+- S6. Taming adds `SitWhenOrderedToGoal` once; `setTame(false)` removes the tame goals and restores gravity instead of adding goals.
+- S7. A tamed drone that would die breaks down to its untamed, for-sale state with nothing left over: no target or revenge memory, leash dropped, fire and effects cleared, no owner death message, price reset including the HARD x1.5. Damage that bypasses invulnerability (/kill, the void) still kills it.
+- S8. The turret muzzle flash is visible to clients.
+- S9. Only the owner can dye a tamed drone or turret.
+- S10. Drones and turrets do not target players the owner cannot harm (server PvP off, same team without friendly fire), like tamed wolves.
+- S11. `DroneFollowOwnerGoal` stops when the cached owner is no longer the drone's owner, dead, a spectator, or gone.
 ### Block 3: enemies (not started, awaiting go-ahead)
 ### Block 4: cleanup and performance (not started, awaiting go-ahead)
 Open decision for the user: HARD difficulty damage is scaled twice (vanilla x1.5 plus custom multipliers). Keep or remove.
@@ -30,6 +36,10 @@ Open decision for the user: HARD difficulty damage is scaled twice (vanilla x1.5
 | T3 | S3 | inline | done | No runnable RED without a running world (needs eula=true). `validatePostLoad` clamps spawn rates to 0-100, group sizes to 1-8 and max >= min. Build green. |
 | T4 | S4 | inline | done (in-game check pending) | No runnable RED: no unit-test harness; needs a reloaded world with a tamed turret. Build green. |
 | T5 | S5 | inline | done (in-game check pending) | No runnable RED: needs live drones. `canHitEntity` filters same-owner targets. Build green. |
+| T6 | S6, S7 | inline | done (in-game check pending) | Breakdown moved from the `LIVING_DEATH` event into `AbstractDroneEntity.die`, because `TamableAnimal.die` sends the owner death message before the event can cancel. Build green. |
+| T7 | S8 | inline | done (in-game check pending) | `ServerLevel.sendParticles`. Build green. |
+| T8 | S9, S10 | inline | done (in-game check pending) | `isOwnedBy` on dyeing; restored the wolf-style `canHarmPlayer` check. Build green. |
+| T9 | S11 | inline | done | Build green. |
 
 ## Log
 
@@ -42,3 +52,4 @@ Open decision for the user: HARD difficulty damage is scaled twice (vanilla x1.5
 - L7 (2026-10-20): User: "Si, te autorizo" (accept the EULA in `fabric/run` and `forge/run`). Forge world run disproved the verifier's code-reading PASS: `Attempted to load class net/minecraft/client/resources/sounds/SoundInstance for invalid dist DEDICATED_SERVER` at `RoRModForge.java:21`. Cause: in dev, `DistExecutor.validateSafeReferent` calls `supplier.get()` on every dist (confirmed with javap on fmlcore 47.4.3). Fixed with a plain `FMLEnvironment.dist == Dist.CLIENT` check. Forge server then reached `Done (16.490s)!`; Fabric server reached `Done` earlier in this session.
 - L8 (2026-10-21): User: "Todo correcto. Hecho el merge luego de testear el render de mobs y pagar con la ultima pepita de oro un dron. Sin crash". PR #2 merged; T1-T3 in-game checks passed.
 - L9 (2026-10-21): User: "Dale, arrancá el bloque 2 con esas soluciones". Branch `1.20.1-drones` from `1.20.1` (`7081243`). Design choice: bullets pass through any `TamableAnimal` of the same owner (wolves and cats too), not only drones.
+- L10 (2026-10-21): User: "Esos arreglalos directamente. Los anteriores solo me causaron dudas por posibles cambios en los comportamientos, pero estuve de acuerdo". Behavior changes to report: /kill and the void now kill tamed drones (before they broke down and kept taking damage); no owner death message on breakdown; non-owners can no longer dye; drones stop attacking players when PvP is off or they share a team without friendly fire.
