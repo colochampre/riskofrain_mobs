@@ -3,6 +3,7 @@ package io.github.colochampre.riskofrain_mobs.entities.goals;
 import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerTurretEntity;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -81,7 +82,10 @@ public class GunnerTurretAttackGoal extends Goal {
       if (this.attackStep > 1) {
         if (!this.drone.isSilent()) {
           this.drone.playSound(this.getShootSound(), 1.5F, 1.6F);
-          this.drone.level().addParticle(ParticleTypes.FLASH, this.drone.getX(), this.drone.getY(), this.drone.getZ(), 0, 0, 0);
+          // Goals only tick on the server, where addParticle is a no-op: send the particle to clients instead
+          if (this.drone.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.FLASH, this.drone.getX(), this.drone.getY(), this.drone.getZ(), 1, 0, 0, 0, 0);
+          }
         }
         for (int i = 0; i < 1; ++i) {
           this.drone.performRangedAttack(target, this.maxAttackDistance);
