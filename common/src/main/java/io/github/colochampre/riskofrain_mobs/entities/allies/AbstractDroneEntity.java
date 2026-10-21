@@ -441,8 +441,9 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   public void die(@NotNull DamageSource source) {
     this.playSound(this.getShutDownSound(), 1.0F, 1.0F);
     // Tamed drones break down instead of dying, unless the damage bypasses invulnerability (/kill, the void).
-    // Returning before super.die also skips TamableAnimal's death message to the owner
-    if (this.isTame() && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+    // Returning before super.die also skips the owner death message (vanilla sends it before super.die).
+    // Server only: the client runs die() from entity event 3 for a real death, and must play the death animation
+    if (!this.level().isClientSide() && this.isTame() && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
       this.breakDown();
       return;
     }
@@ -459,7 +460,9 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     this.setTarget(null);
     this.setActiveAttackTarget(0);
     this.setLastHurtByMob(null);
-    this.setLastHurtByPlayer(null);
+    // Clear the fields directly: setLastHurtByPlayer(null) restarts the player-kill XP window
+    this.lastHurtByPlayer = null;
+    this.lastHurtByPlayerTime = 0;
     if (this.isLeashed()) {
       this.dropLeash(true, true);
     }
