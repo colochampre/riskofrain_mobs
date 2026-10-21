@@ -4,6 +4,8 @@ import io.github.colochampre.riskofrain_mobs.entities.allies.AbstractDroneEntity
 import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerDroneEntity;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import io.github.colochampre.riskofrain_mobs.utils.EntityUtils;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -13,6 +15,8 @@ import java.util.EnumSet;
 
 public class GunnerDroneAttackGoal extends Goal {
 
+  // Distance from the drone's eye towards the target where the muzzle flash appears
+  private static final double MUZZLE_OFFSET = 0.6D;
   private final GunnerDroneEntity drone;
   private final float maxAttackDistance;
   private int attackStep;
@@ -108,6 +112,12 @@ public class GunnerDroneAttackGoal extends Goal {
       if (this.attackStep > 1) {
         if (!this.drone.isSilent()) {
           this.drone.playSound(this.getShootSound(), 1.5F, 1.0F);
+          // Goals only tick on the server, where addParticle is a no-op: send the particle to clients instead
+          if (this.drone.level() instanceof ServerLevel serverLevel) {
+            Vec3 muzzle = this.drone.getEyePosition()
+                    .add(target.getEyePosition().subtract(this.drone.getEyePosition()).normalize().scale(MUZZLE_OFFSET));
+            serverLevel.sendParticles(ParticleTypes.CRIT, muzzle.x, muzzle.y, muzzle.z, 4, 0.05D, 0.05D, 0.05D, 0.1D);
+          }
         }
         for (int i = 0; i < 1; ++i) {
           this.drone.performRangedAttack(target, this.maxAttackDistance);
