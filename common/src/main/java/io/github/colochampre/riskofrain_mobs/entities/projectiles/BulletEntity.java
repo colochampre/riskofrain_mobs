@@ -1,5 +1,6 @@
 package io.github.colochampre.riskofrain_mobs.entities.projectiles;
 
+import io.github.colochampre.riskofrain_mobs.entities.allies.AbstractDroneEntity;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -8,6 +9,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.monster.PatrollingMonster;
 import net.minecraft.world.entity.monster.piglin.AbstractPiglin;
 import net.minecraft.world.entity.npc.AbstractVillager;
@@ -17,6 +19,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+
+import java.util.UUID;
 
 public class BulletEntity extends ThrowableProjectile {
   private float damage = (float) RoRConfigs.get().MOBS.DRONES.BULLETS_DAMAGE;
@@ -39,6 +43,25 @@ public class BulletEntity extends ThrowableProjectile {
     if (!this.level().isClientSide) {
       this.discard();
     }
+  }
+
+  @Override
+  protected boolean canHitEntity(Entity entity) {
+    return super.canHitEntity(entity) && !this.isFriendly(entity);
+  }
+
+  // Shots from a tamed drone pass through its owner and the owner's other pets, so they never start infighting
+  private boolean isFriendly(Entity entity) {
+    if (!(this.getOwner() instanceof AbstractDroneEntity shooter) || !shooter.isTame()) {
+      return false;
+    }
+    UUID ownerId = shooter.getOwnerUUID();
+    if (ownerId == null) {
+      return false;
+    }
+    return entity == shooter
+        || ownerId.equals(entity.getUUID())
+        || (entity instanceof TamableAnimal pet && ownerId.equals(pet.getOwnerUUID()));
   }
 
   @Override
