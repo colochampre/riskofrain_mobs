@@ -27,6 +27,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
@@ -41,6 +42,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +59,7 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   public static final int TYPE_FLYING = 1;
   public static final int MIN_FLIGHT_HEIGHT = 3;
   public static final int MAX_FLIGHT_HEIGHT = 8;
+  private static final double ATTACKER_SEARCH_RADIUS = 64.0D;
   public static final Set<EntityType<?>> DO_NOT_ATTACK = Sets.newHashSet(EntityType.CREEPER, EntityType.PIGLIN,
           EntityType.PIGLIN_BRUTE, EntityType.ZOMBIFIED_PIGLIN, EntityType.HOGLIN, EntityType.ZOGLIN);
   private static final Set<Item> TAME_ITEMS = Sets.newHashSet(Items.GOLD_BLOCK, Items.RAW_GOLD_BLOCK, Items.GOLD_INGOT,
@@ -459,6 +462,7 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     this.navigation.stop();
     this.setTarget(null);
     this.setActiveAttackTarget(0);
+    this.calmAttackers();
     this.setLastHurtByMob(null);
     // Clear the fields directly: setLastHurtByPlayer(null) restarts the player-kill XP window
     this.lastHurtByPlayer = null;
@@ -471,6 +475,21 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     this.setHealth(this.getMaxHealth());
     this.setCurrentGoldPrice(this.getInitialGoldPrice());
     this.setPriceName();
+  }
+
+  // A broken drone is still alive, so mobs fighting it would keep hitting it: make them drop it as a target
+  private void calmAttackers() {
+    AABB area = this.getBoundingBox().inflate(ATTACKER_SEARCH_RADIUS);
+    for (Mob mob : this.level().getEntitiesOfClass(Mob.class, area, mob -> mob.getTarget() == this)) {
+      if (mob instanceof NeutralMob neutralMob && this.getUUID().equals(neutralMob.getPersistentAngerTarget())) {
+        neutralMob.stopBeingAngry();
+      }
+      if (mob.getLastHurtByMob() == this) {
+        mob.setLastHurtByMob(null);
+      }
+      mob.getBrain().eraseMemory(MemoryModuleType.ATTACK_TARGET);
+      mob.setTarget(null);
+    }
   }
 
   @Nullable
