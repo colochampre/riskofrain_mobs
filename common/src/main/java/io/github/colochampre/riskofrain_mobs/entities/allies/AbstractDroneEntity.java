@@ -477,6 +477,13 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     this.setPriceName();
   }
 
+  // Untamed drones are inert shop items. Running target goals fall back to their cached target when the mob's
+  // target is cleared, and only let go once canAttack fails, which ends in this check
+  @Override
+  public boolean canBeSeenAsEnemy() {
+    return this.isTame() && super.canBeSeenAsEnemy();
+  }
+
   // A broken drone is still alive, so mobs fighting it would keep hitting it: make them drop it as a target
   private void calmAttackers() {
     AABB area = this.getBoundingBox().inflate(ATTACKER_SEARCH_RADIUS);
