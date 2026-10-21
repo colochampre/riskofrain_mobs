@@ -7,11 +7,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
 public class GunnerTurretAttackGoal extends Goal {
 
+  // Distance from the turret's eye towards the target where the muzzle flash appears
+  private static final double MUZZLE_OFFSET = 0.6D;
   private final GunnerTurretEntity drone;
   private final float maxAttackDistance;
   private int attackStep;
@@ -84,7 +87,9 @@ public class GunnerTurretAttackGoal extends Goal {
           this.drone.playSound(this.getShootSound(), 1.5F, 1.6F);
           // Goals only tick on the server, where addParticle is a no-op: send the particle to clients instead
           if (this.drone.level() instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.FLASH, this.drone.getX(), this.drone.getY(), this.drone.getZ(), 1, 0, 0, 0, 0);
+            Vec3 muzzle = this.drone.getEyePosition()
+                    .add(target.getEyePosition().subtract(this.drone.getEyePosition()).normalize().scale(MUZZLE_OFFSET));
+            serverLevel.sendParticles(ParticleTypes.CRIT, muzzle.x, muzzle.y, muzzle.z, 4, 0.05D, 0.05D, 0.05D, 0.1D);
           }
         }
         for (int i = 0; i < 1; ++i) {
