@@ -194,9 +194,9 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   public boolean hurt(DamageSource source, float damage) {
     if (this.isInvulnerableTo(source)) {
       return false;
-    } else if (source.getDirectEntity() instanceof Player && this.isTame()) {
-      Player player = (Player) source.getEntity();
-      if (player != null && player.getUUID() != this.getOwnerUUID()) {
+    } else if (source.getDirectEntity() instanceof Player player && this.isTame()) {
+      // Compare owners by identity through isOwnedBy: UUIDs read back from NBT are new objects, so != never matches
+      if (!this.isOwnedBy(player)) {
         return super.hurt(source, damage);
       }
       if (!this.level().isClientSide && !this.isRemoved()) {
@@ -204,7 +204,7 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
         this.setHurtTime(10);
         this.setDamage(this.getDamage() + damage * 10.0F);
         this.setXRot(this.getXRot() + (this.getHurtDir() == 1 ? this.getDamage() * 2 : -this.getDamage() * 2)); // Forward-backward inclination
-        boolean isCreativeMode = ((Player) source.getEntity()).getAbilities().instabuild;
+        boolean isCreativeMode = player.getAbilities().instabuild;
         if (isCreativeMode || this.getDamage() > 40.0F) {
           if (!isCreativeMode && this.level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
             this.dropAsItem();
