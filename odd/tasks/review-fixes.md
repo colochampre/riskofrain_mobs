@@ -41,11 +41,11 @@ User: "Hecho el merge. Hagamos limpieza de las ramasa remotas que ya se hayan me
 | T1 | S1 | inline | done | RED: Fabric runServer crashes with `Cannot load class net.minecraft.client.resources.sounds.SoundInstance in environment type SERVER`. GREEN: Fabric runServer logs `Initialized RoR Mod` and reaches the EULA prompt. With `eula=true` (authorized by the user): Fabric and Forge dedicated servers load a world (`Done`). Forge needed a follow-up fix (see L7). |
 | T2 | S2 | inline | done | No runnable RED: no unit-test harness; fix is in mobInteract, which needs a live player. Build green. |
 | T3 | S3 | inline | done | No runnable RED without a running world (needs eula=true). `validatePostLoad` clamps spawn rates to 0-100, group sizes to 1-8 and max >= min. Build green. |
-| T4 | S4 | inline | done (in-game check pending) | `f076c86`. No runnable RED: no unit-test harness; needs a reloaded world with a tamed turret. Build green. |
-| T5 | S5 | inline | done (in-game check pending) | `9b7ccc3`. No runnable RED: needs live drones. `canHitEntity` filters same-owner targets. Build green. |
+| T4 | S4 | inline | done | `f076c86`. No runnable RED: no unit-test harness; needs a reloaded world with a tamed turret. Build green. |
+| T5 | S5 | inline | done | `9b7ccc3`. No runnable RED: needs live drones. `canHitEntity` filters same-owner targets. Build green. |
 | T6 | S6, S7 | inline | done | Breakdown moved from the `LIVING_DEATH` event into `AbstractDroneEntity.die`, because vanilla/Fabric `TamableAnimal.die` sends the owner death message before the event can cancel (Forge already deferred it). Commits `d1fcfd0`, verifier fix (see L11). Build green. |
 | T7 | S8 | inline | done | `51b8314`, crit swap (see L13). `ServerLevel.sendParticles`. Build green. |
-| T8 | S9, S10 | inline | done (in-game check pending) | `f6b34af`. `isOwnedBy` on dyeing; restored the wolf-style `canHarmPlayer` check. Build green. |
+| T8 | S9, S10 | inline | done | `f6b34af`. `isOwnedBy` on dyeing; restored the wolf-style `canHarmPlayer` check. Build green. |
 | T9 | S11 | inline | done | `a0c9a37`. Build green. |
 | T10 | S12, S13 | inline | done | RED by reading: after a shot the target goal restores the cleared target, the goal keeps running and `hitScanAttackTick` stays >= duration, so later shots skip the charge. Build green. |
 | T11 | S14 | inline | done | Vanilla `LivingEntity.hurt` applies only `amount - lastHurt` while `invulnerableTime > 10`. Build green. |
