@@ -62,6 +62,9 @@ public class DroneFollowOwnerGoal extends Goal {
       return false;
     } else if (this.tamable.isOrderedToSit()) {
       return false;
+    } else if (this.tamable.getOwner() != this.owner || !this.owner.isAlive() || this.owner.isSpectator()) {
+      // The cached owner went stale: logged out, died, changed dimension or the drone lost its owner
+      return false;
     } else {
       return !(this.tamable.distanceToSqr(this.owner) <= (double) (this.stopDistance * this.stopDistance));
     }

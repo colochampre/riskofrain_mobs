@@ -224,8 +224,9 @@ public class WispEntity extends Monster {
     }
   }
 
+  // Called from WispAttackGoal, which only ticks on the server
   public void doHitScanParticles(LivingEntity target) {
-    EntityUtils.doParticlesAtEntity(target, ParticleTypes.LAVA, 3);
+    EntityUtils.sendParticlesAtEntity(target, ParticleTypes.LAVA, 3);
   }
 
   private void takeWaterDamage() {
@@ -288,7 +289,8 @@ public class WispEntity extends Monster {
   @Override
   public boolean hurt(DamageSource source, float amount) {
     boolean flag = super.hurt(source, amount);
-    EntityUtils.doParticlesAtEntity(this, ParticleTypes.LAVA, 3);
+    // hurt only does damage on the server, so send the particles from there to every nearby player
+    EntityUtils.sendParticlesAtEntity(this, ParticleTypes.LAVA, 3);
     return flag;
   }
 

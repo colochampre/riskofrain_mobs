@@ -2,6 +2,7 @@ package io.github.colochampre.riskofrain_mobs.utils;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
@@ -22,6 +23,14 @@ public class EntityUtils {
         double randomZ = entity.getZ((2.0D * ThreadLocalRandom.current().nextDouble() - 1.0D) * 0.5);
         entity.level().addParticle(particle, randomX, randomY, randomZ, 0.0D, 0.0D, 0.0D);
       }
+    }
+  }
+
+  // Server-side counterpart of doParticlesAtEntity, for code that only runs on the server (goals, hurt)
+  public static void sendParticlesAtEntity(LivingEntity entity, SimpleParticleType particle, int amount) {
+    if (entity.level() instanceof ServerLevel serverLevel) {
+      serverLevel.sendParticles(particle, entity.getX(), entity.getY(0.5D), entity.getZ(), amount,
+              entity.getBbWidth() / 4.0D, entity.getBbHeight() / 4.0D, entity.getBbWidth() / 4.0D, 0.0D);
     }
   }
 

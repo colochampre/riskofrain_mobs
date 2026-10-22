@@ -16,6 +16,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
@@ -26,6 +27,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
@@ -40,6 +42,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +59,7 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   public static final int TYPE_FLYING = 1;
   public static final int MIN_FLIGHT_HEIGHT = 3;
   public static final int MAX_FLIGHT_HEIGHT = 8;
+  private static final double ATTACKER_SEARCH_RADIUS = 64.0D;
   public static final Set<EntityType<?>> DO_NOT_ATTACK = Sets.newHashSet(EntityType.CREEPER, EntityType.PIGLIN,
           EntityType.PIGLIN_BRUTE, EntityType.ZOMBIFIED_PIGLIN, EntityType.HOGLIN, EntityType.ZOGLIN);
   private static final Set<Item> TAME_ITEMS = Sets.newHashSet(Items.GOLD_BLOCK, Items.RAW_GOLD_BLOCK, Items.GOLD_INGOT,
@@ -105,10 +109,13 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   @Override
   protected void defineSynchedData() {
     super.defineSynchedData();
-    Difficulty difficulty = this.level().getDifficulty();
-    int initialGold = difficulty == Difficulty.HARD ? (int) (this.getDronePrice() * 1.5) : this.getDronePrice();
-    this.entityData.define(DATA_PRICE, initialGold);
+    this.entityData.define(DATA_PRICE, this.getInitialGoldPrice());
     this.entityData.define(DATA_ID_ATTACK_TARGET, 0);
+  }
+
+  private int getInitialGoldPrice() {
+    Difficulty difficulty = this.level().getDifficulty();
+    return difficulty == Difficulty.HARD ? (int) (this.getDronePrice() * 1.5) : this.getDronePrice();
   }
 
   @Override
@@ -144,6 +151,10 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   @Override
   public void setTame(boolean tamed) {
     super.setTame(tamed);
+    if (!tamed) {
+      this.removeGoals();
+      return;
+    }
     int type = this.getDroneType();
     this.goalSelector.addGoal(2, sitGoal);
     if (type == TYPE_LAND) {
@@ -366,7 +377,6 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
             this.level().broadcastEntityEvent(this, (byte) 7);
             this.setCustomName(null);
             this.setCustomNameVisible(false);
-            this.goalSelector.addGoal(1, new SitWhenOrderedToGoal(this));
           } else {
             this.level().broadcastEntityEvent(this, (byte) 6);
           }
@@ -433,7 +443,60 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   @Override
   public void die(@NotNull DamageSource source) {
     this.playSound(this.getShutDownSound(), 1.0F, 1.0F);
+    // Tamed drones break down instead of dying, unless the damage bypasses invulnerability (/kill, the void).
+    // Returning before super.die also skips the owner death message (vanilla sends it before super.die).
+    // Server only: the client runs die() from entity event 3 for a real death, and must play the death animation
+    if (!this.level().isClientSide() && this.isTame() && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+      this.breakDown();
+      return;
+    }
     super.die(source);
+  }
+
+  // Back to the untamed, for-sale state, with nothing left over from the fight or the previous owner
+  private void breakDown() {
+    this.setTame(false);
+    this.setOwnerUUID(null);
+    this.setOrderedToSit(false);
+    this.setInSittingPose(false);
+    this.navigation.stop();
+    this.setTarget(null);
+    this.setActiveAttackTarget(0);
+    this.calmAttackers();
+    this.setLastHurtByMob(null);
+    // Clear the fields directly: setLastHurtByPlayer(null) restarts the player-kill XP window
+    this.lastHurtByPlayer = null;
+    this.lastHurtByPlayerTime = 0;
+    if (this.isLeashed()) {
+      this.dropLeash(true, true);
+    }
+    this.clearFire();
+    this.removeAllEffects();
+    this.setHealth(this.getMaxHealth());
+    this.setCurrentGoldPrice(this.getInitialGoldPrice());
+    this.setPriceName();
+  }
+
+  // Untamed drones are inert shop items. Running target goals fall back to their cached target when the mob's
+  // target is cleared, and only let go once canAttack fails, which ends in this check
+  @Override
+  public boolean canBeSeenAsEnemy() {
+    return this.isTame() && super.canBeSeenAsEnemy();
+  }
+
+  // A broken drone is still alive, so mobs fighting it would keep hitting it: make them drop it as a target
+  private void calmAttackers() {
+    AABB area = this.getBoundingBox().inflate(ATTACKER_SEARCH_RADIUS);
+    for (Mob mob : this.level().getEntitiesOfClass(Mob.class, area, mob -> mob.getTarget() == this)) {
+      if (mob instanceof NeutralMob neutralMob && this.getUUID().equals(neutralMob.getPersistentAngerTarget())) {
+        neutralMob.stopBeingAngry();
+      }
+      if (mob.getLastHurtByMob() == this) {
+        mob.setLastHurtByMob(null);
+      }
+      mob.getBrain().eraseMemory(MemoryModuleType.ATTACK_TARGET);
+      mob.setTarget(null);
+    }
   }
 
   @Nullable

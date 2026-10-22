@@ -177,7 +177,7 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
     ItemStack itemstack = player.getItemInHand(hand);
     Item item = itemstack.getItem();
     // Set body color
-    if (item instanceof DyeItem && this.isTame()) {
+    if (item instanceof DyeItem && this.isTame() && this.isOwnedBy(player)) {
       DyeColor dyecolor = ((DyeItem) item).getDyeColor();
       if (dyecolor != this.getBodyColor()) {
         this.setBodyColor(dyecolor);
@@ -194,9 +194,9 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   public boolean hurt(DamageSource source, float damage) {
     if (this.isInvulnerableTo(source)) {
       return false;
-    } else if (source.getDirectEntity() instanceof Player && this.isTame()) {
-      Player player = (Player) source.getEntity();
-      if (player != null && player.getUUID() != this.getOwnerUUID()) {
+    } else if (source.getDirectEntity() instanceof Player player && this.isTame()) {
+      // Compare owners by identity through isOwnedBy: UUIDs read back from NBT are new objects, so != never matches
+      if (!this.isOwnedBy(player)) {
         return super.hurt(source, damage);
       }
       if (!this.level().isClientSide && !this.isRemoved()) {
@@ -204,7 +204,7 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
         this.setHurtTime(10);
         this.setDamage(this.getDamage() + damage * 10.0F);
         this.setXRot(this.getXRot() + (this.getHurtDir() == 1 ? this.getDamage() * 2 : -this.getDamage() * 2)); // Forward-backward inclination
-        boolean isCreativeMode = ((Player) source.getEntity()).getAbilities().instabuild;
+        boolean isCreativeMode = player.getAbilities().instabuild;
         if (isCreativeMode || this.getDamage() > 40.0F) {
           if (!isCreativeMode && this.level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
             this.dropAsItem();
@@ -285,9 +285,10 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
     if (target instanceof Wolf) {
       Wolf wolf = (Wolf) target;
       return !wolf.isTame() || wolf.getOwner() != owner;
-    } /* else if (target instanceof Player && owner instanceof Player && !((Player) owner).canHarmPlayer((Player) target)) {
+    } else if (target instanceof Player player && owner instanceof Player ownerPlayer && !ownerPlayer.canHarmPlayer(player)) {
+      // Respects server PvP and team friendly fire, like tamed wolves
       return false;
-    } */ else if (target instanceof AbstractHorse && ((AbstractHorse) target).isTamed()) {
+    } else if (target instanceof AbstractHorse && ((AbstractHorse) target).isTamed()) {
       return false;
     } else if (target instanceof AbstractDroneEntity && ((AbstractDroneEntity) target).isTame()) {
       return false;
