@@ -47,7 +47,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class WispEntity extends Monster {
 
   private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData.defineId(WispEntity.class, EntityDataSerializers.INT);
-  private final HurtByTargetGoal hurtByTargetGoal = new HurtByTargetGoal(this);
   public static final int MIN_FLIGHT_HEIGHT = 3;
   public static final int MAX_FLIGHT_HEIGHT = 7;
   private LivingEntity clientSideCachedAttackTarget;
@@ -81,6 +80,7 @@ public class WispEntity extends Monster {
   protected void registerGoals() {
     this.goalSelector.addGoal(2, new WispAttackGoal(this, 16.0F));
     this.goalSelector.addGoal(3, new WaterAvoidingRandomFlyingGoal(this, 0.5D));
+    this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
     this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
     this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolem.class, true));
     this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, WanderingTrader.class, true));
@@ -135,10 +135,6 @@ public class WispEntity extends Monster {
   public void aiStep() {
     super.aiStep();
     if (this.isAlive()) {
-      LivingEntity target = this.getTarget();
-      if (target == null) {
-        this.goalSelector.addGoal(1, this.hurtByTargetGoal);
-      }
       this.doHitScanParticleEffects();
       this.doLoopSound();
       this.smokeIfWet();

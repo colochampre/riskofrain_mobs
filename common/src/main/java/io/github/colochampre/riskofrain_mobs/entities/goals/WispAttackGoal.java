@@ -32,7 +32,7 @@ public class WispAttackGoal extends Goal {
 
   @Override
   public void start() {
-    this.hitScanAttackTick = -10;
+    this.resetHitScan();
     LivingEntity livingentity = this.wisp.getTarget();
     if (livingentity != null) {
       this.wisp.getLookControl().setLookAt(livingentity, 90.0F, 90.0F);
@@ -63,6 +63,7 @@ public class WispAttackGoal extends Goal {
       double distance = this.wisp.distanceToSqr(target);
       this.wisp.getLookControl().setLookAt(target, 90.0F, 90.0F);
       if (!canSee) {
+        this.resetHitScan();
         this.wisp.setTarget(null);
       } else {
         double followRange = this.wisp.getAttributeValue(Attributes.FOLLOW_RANGE);
@@ -103,9 +104,17 @@ public class WispAttackGoal extends Goal {
       target.playSound(this.getAttackFireSound(), 1.0F, 1.0F);
       this.wisp.doHitScanParticles(target);
       target.hurt(wisp.damageSources().mobAttack(this.wisp), this.wisp.getAttackDamage());
+      // The target goal restores a cleared target, so this goal keeps running: reset the charge here, or the
+      // next shots fire without charging
+      this.resetHitScan();
       this.wisp.setTarget(null);
       this.hitScanCooldown = 80;
     }
+  }
+
+  private void resetHitScan() {
+    this.hitScanAttackTick = -10;
+    this.wisp.setActiveAttackTarget(0);
   }
 
   protected SoundEvent getAttackChargeSound() {
