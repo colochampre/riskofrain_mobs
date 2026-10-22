@@ -185,9 +185,11 @@ public class StoneGolemAttackGoal extends Goal {
       }
       this.golem.playSound(this.getLaserFireSound(), 3.0F, 1.0F);
       target.playSound(this.getLaserFireSound(), 3.0F, 1.0F);
-      target.hurt(golem.damageSources().indirectMagic(this.golem, this.golem), f);
-      // The first hit leaves the target invulnerable, which would turn the second into max(a, b) instead of a + b
-      target.invulnerableTime = 0;
+      // The first hit leaves the target invulnerable, which would turn the second into max(a, b) instead of a + b.
+      // Only clear it when this hit landed, so invulnerability from another attacker is kept
+      if (target.hurt(golem.damageSources().indirectMagic(this.golem, this.golem), f)) {
+        target.invulnerableTime = 0;
+      }
       target.hurt(golem.damageSources().mobAttack(this.golem), this.golem.getAttackDamage() / 2);
       target.addDeltaMovement(vec3);
       this.resetLaser();
