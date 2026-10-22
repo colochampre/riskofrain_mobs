@@ -116,7 +116,8 @@ public class GunnerDroneAttackGoal extends Goal {
           if (this.drone.level() instanceof ServerLevel serverLevel) {
             Vec3 muzzle = this.drone.getEyePosition()
                     .add(target.getEyePosition().subtract(this.drone.getEyePosition()).normalize().scale(MUZZLE_OFFSET));
-            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK, muzzle.x, muzzle.y, muzzle.z, 4, 0.05D, 0.05D, 0.05D, 0.1D);
+            serverLevel.sendParticles(ParticleTypes.SMALL_FLAME, muzzle.x, muzzle.y, muzzle.z, 4, 0.05D, 0.05D, 0.05D, 0.02D);
+            serverLevel.sendParticles(ParticleTypes.SMOKE, muzzle.x, muzzle.y, muzzle.z, 1, 0.0D, 0.0D, 0.0D, 0.02D);
           }
         }
         for (int i = 0; i < 1; ++i) {
