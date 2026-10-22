@@ -15,7 +15,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -46,6 +45,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class WispEntity extends Monster {
 
+  private static final int TARGET_UNSEEN_MEMORY_TICKS = 20;
   private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData.defineId(WispEntity.class, EntityDataSerializers.INT);
   public static final int MIN_FLIGHT_HEIGHT = 3;
   public static final int MAX_FLIGHT_HEIGHT = 7;
@@ -80,10 +80,19 @@ public class WispEntity extends Monster {
   protected void registerGoals() {
     this.goalSelector.addGoal(2, new WispAttackGoal(this, 16.0F));
     this.goalSelector.addGoal(3, new WaterAvoidingRandomFlyingGoal(this, 0.5D));
-    this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-    this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
-    this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolem.class, true));
-    this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, WanderingTrader.class, true));
+    // Short unseen memory so a hidden target is dropped quickly in favor of a visible one, as for the Stone Golem:
+    // at priority 1, a retaliation target kept for vanilla's 300 ticks would block the other target goals
+    this.targetSelector.addGoal(1, new HurtByTargetGoal(this) {
+      @Override
+      public void start() {
+        super.start();
+        // Vanilla start() hardcodes 300 ticks of memory, overriding setUnseenMemoryTicks
+        this.unseenMemoryTicks = TARGET_UNSEEN_MEMORY_TICKS;
+      }
+    });
+    this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true).setUnseenMemoryTicks(TARGET_UNSEEN_MEMORY_TICKS));
+    this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolem.class, true).setUnseenMemoryTicks(TARGET_UNSEEN_MEMORY_TICKS));
+    this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, WanderingTrader.class, true).setUnseenMemoryTicks(TARGET_UNSEEN_MEMORY_TICKS));
   }
 
   public static boolean checkWispSpawnRules(EntityType<WispEntity> entityType, ServerLevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
@@ -279,7 +288,8 @@ public class WispEntity extends Monster {
   }
 
   public float getAttackDamage() {
-    return this.level().getDifficulty() == Difficulty.HARD ? (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE) * 2 : (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
+    // Difficulty scaling is left to vanilla, which already multiplies mob damage to players on HARD
+    return (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
   }
 
   @Override
