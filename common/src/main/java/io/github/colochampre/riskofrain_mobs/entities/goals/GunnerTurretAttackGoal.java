@@ -14,7 +14,7 @@ import java.util.EnumSet;
 public class GunnerTurretAttackGoal extends Goal {
 
   // Distance from the turret's eye towards the target where the muzzle flash appears
-  private static final double MUZZLE_OFFSET = 1.0D;
+  private static final double MUZZLE_OFFSET = 1.2D;
   private final GunnerTurretEntity drone;
   private final float maxAttackDistance;
   private int attackStep;
