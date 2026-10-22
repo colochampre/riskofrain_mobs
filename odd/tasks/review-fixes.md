@@ -1,7 +1,7 @@
 # Review fixes
 
 Objective: apply the fixes found in the full code review (2026-10-20), block by block.
-Branches: block 1 `1.20.1-fixes` (PR #2, merged); block 2 `1.20.1-drones` (from `1.20.1`). Delivery: ask-on-risk. Test runner: none (no unit-test harness in the mod); checks are `./gradlew build`, `./gradlew :fabric:runServer` / `:forge:runServer` and in-game manual tests.
+Branches: block 1 `1.20.1-fixes` (PR #2, merged); block 2 `1.20.1-drones` (PR #3, merged); block 3 `1.20.1-enemies` (from `1.20.1`). Merged branches deleted. Delivery: ask-on-risk. Test runner: none (no unit-test harness in the mod); checks are `./gradlew build`, `./gradlew :fabric:runServer` / `:forge:runServer` and in-game manual tests.
 
 ## Specs
 
@@ -23,7 +23,14 @@ User: "Esos arreglalos directamente. Los anteriores solo me causaron dudas por p
 - S9. Only the owner can dye a tamed drone or turret.
 - S10. Drones and turrets do not target players the owner cannot harm (server PvP off, same team without friendly fire), like tamed wolves.
 - S11. `DroneFollowOwnerGoal` stops when the cached owner is no longer the drone's owner, dead, a spectator, or gone.
-### Block 3: enemies (not started, awaiting go-ahead)
+### Block 3: enemies (in progress)
+User: "Hecho el merge. Hagamos limpieza de las ramasa remotas que ya se hayan mergeado y no hagan más falta. Despues de eso, seguimos con lo dempas".
+- S12. The Wisp charges (sound and beam) before every shot, not only the first; losing sight of the target cancels the charge.
+- S13. The Wisp's retaliation goal (`HurtByTargetGoal`) lives in the target selector, registered once.
+- S14. The Stone Golem laser deals both of its hits (magic + half attack), not the larger of the two.
+- S15. The Stone Golem summon check always runs after the redstone block is placed, also when the placement does not come from a player packet.
+- S16. Lemurians start strafing as soon as they see the target again after losing sight of it, and aim fireballs from where they spawn, at any range.
+- S17. A Lemurian fireball does not turn into a vanilla small fireball when the chunk is saved and reloaded.
 ### Block 4: cleanup and performance (not started, awaiting go-ahead)
 Open decision for the user: HARD difficulty damage is scaled twice (vanilla x1.5 plus custom multipliers). Keep or remove.
 
@@ -40,6 +47,11 @@ Open decision for the user: HARD difficulty damage is scaled twice (vanilla x1.5
 | T7 | S8 | inline | done | `51b8314`, crit swap (see L13). `ServerLevel.sendParticles`. Build green. |
 | T8 | S9, S10 | inline | done (in-game check pending) | `f6b34af`. `isOwnedBy` on dyeing; restored the wolf-style `canHarmPlayer` check. Build green. |
 | T9 | S11 | inline | done | `a0c9a37`. Build green. |
+| T10 | S12, S13 | inline | done (in-game check pending) | RED by reading: after a shot the target goal restores the cleared target, the goal keeps running and `hitScanAttackTick` stays >= duration, so later shots skip the charge. Build green. |
+| T11 | S14 | inline | done (in-game check pending) | Vanilla `LivingEntity.hurt` applies only `amount - lastHurt` while `invulnerableTime > 10`. Build green. |
+| T12 | S15 | inline | done (in-game check pending) | Bytecode: `execute()` runs inline on the server thread when not inside a task (`ReentrantBlockableEventLoop.scheduleExecutables`); player placements only worked because packet handling runs as a task. Build green. |
+| T13 | S16 | inline | done (in-game check pending) | `lastSeen` reset on visibility change, like vanilla `RangedBowAttackGoal`; aim from the spawn point. Build green. |
+| T14 | S17 | inline | done | `shouldBeSaved()` false; bytecode: `PersistentEntitySectionManager` filters saved entities with `EntityAccess.shouldBeSaved`. Build green. |
 
 ## Log
 
@@ -62,3 +74,4 @@ Open decision for the user: HARD difficulty damage is scaled twice (vanilla x1.5
 - L17 (2026-10-22): User: "Que otras particulas pueden llegar a quedar bien para los disparos de los drones? De paso ajusta la distancia del gunner turret de 1.0 a 1.2". Turret muzzle offset 1.2. Build green.
 - L18 (2026-10-22): User: "Probemos small flame y smoke a ver que tal". Muzzle flash on turret and Gunner Drone: 4 `SMALL_FLAME` (speed 0.02) plus 1 `SMOKE`. Build green; in-game look pending.
 - L19 (2026-10-22): User: "Cambié las particulas una vez más de manera manual. Y de paso recordé que la entidad Wisp tiene un problema similar con su disparo y las particulas con su hitScan. Podrías corregirlo?". User's manual change committed as `eba83bc` (1 `LAVA` particle at the muzzle). Wisp (pulled forward from block 3): `doHitScanParticles` runs from `WispAttackGoal` (server only) and `hurt` only damages on the server, but both used the client-only `EntityUtils.doParticlesAtEntity`, so the impact and hurt LAVA particles never showed (hurt ones only for the attacking player's melee hits). Added `EntityUtils.sendParticlesAtEntity` (ServerLevel.sendParticles) and used it in both. The client-side beam in `doHitScanParticleEffects` already works. Build green.
+- L20 (2026-10-22): PR #3 merged; remote and local branches `1.20.1-golem`, `1.20.1-fixes`, `1.20.1-drones` deleted (all fully merged). Block 3 started on `1.20.1-enemies` from `fc1f613`. The HARD double-damage decision stays open (laser `f *= 2`, Wisp `getAttackDamage` x2 on top of vanilla difficulty scaling).
