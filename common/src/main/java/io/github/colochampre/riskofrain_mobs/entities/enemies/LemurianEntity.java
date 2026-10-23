@@ -13,7 +13,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.BiomeTags;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
@@ -143,8 +142,8 @@ public class LemurianEntity extends Monster {
   }
 
   public float getAttackDamage() {
-    double d0 = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
-    return this.level().getDifficulty() == Difficulty.HARD ? (float) d0 * 2 : (float) d0;
+    // Difficulty scaling is left to vanilla, which already multiplies mob damage to players on HARD
+    return (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
   }
 
   public int getAttackTick() {

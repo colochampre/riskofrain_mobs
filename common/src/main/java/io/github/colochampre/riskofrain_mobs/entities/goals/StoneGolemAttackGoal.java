@@ -3,7 +3,6 @@ package io.github.colochampre.riskofrain_mobs.entities.goals;
 import io.github.colochampre.riskofrain_mobs.entities.enemies.StoneGolemEntity;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -177,15 +176,16 @@ public class StoneGolemAttackGoal extends Goal {
         this.golem.playSound(this.getLaserChargeSound(), 2.0F, 1.0F);
       }
     } else if (this.laserAttackTick >= this.golem.getAttackDuration()) {
+      // Difficulty scaling is left to vanilla, which already multiplies mob damage to players on HARD
       float f = 2.0F;
       Vec3 vec3 = this.golem.getLookAngle().multiply(1.0D, 1.0D, 1.0D).normalize().scale(3.0);
-
-      if (this.golem.level().getDifficulty() == Difficulty.HARD) {
-        f *= 2.0F;
-      }
       this.golem.playSound(this.getLaserFireSound(), 3.0F, 1.0F);
       target.playSound(this.getLaserFireSound(), 3.0F, 1.0F);
-      target.hurt(golem.damageSources().indirectMagic(this.golem, this.golem), f);
+      // The first hit leaves the target invulnerable, which would turn the second into max(a, b) instead of a + b.
+      // Only clear it when this hit landed, so invulnerability from another attacker is kept
+      if (target.hurt(golem.damageSources().indirectMagic(this.golem, this.golem), f)) {
+        target.invulnerableTime = 0;
+      }
       target.hurt(golem.damageSources().mobAttack(this.golem), this.golem.getAttackDamage() / 2);
       target.addDeltaMovement(vec3);
       this.resetLaser();
