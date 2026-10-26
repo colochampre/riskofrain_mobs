@@ -92,14 +92,12 @@ public class ModEvents {
   }
 
   private static void playDifficultyChangeSound(MinecraftServer server) {
-    if (RoRConfigs.get().SOUNDS.DIFFICULTY_UPDATE <= 0) return;
+    int volume = RoRConfigs.get().SOUNDS.DIFFICULTY_UPDATE;
+    if (volume <= 0) return;
 
-    FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-    buf.writeResourceLocation(RoRSounds.DIFFICULTY_CHANGE.get().getLocation());
-    buf.writeFloat(RoRConfigs.get().SOUNDS.DIFFICULTY_UPDATE / 100.0F);
-    buf.writeFloat(1.0F);
+    // One buffer per packet: a shared one is consumed by the first reader (e.g. the integrated server's local player)
     for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-      NetworkManager.sendToPlayer(player, RoRNetwork.PLAY_SOUND_S2C, buf);
+      sendPacket(player, RoRSounds.DIFFICULTY_CHANGE.get(), volume);
     }
   }
 

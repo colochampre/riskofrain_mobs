@@ -17,6 +17,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
@@ -329,9 +330,10 @@ public class WispEntity extends Monster {
 
   @Override
   public boolean isInvulnerableTo(DamageSource source) {
-    return source == this.damageSources().hotFloor() ||
-            source == this.damageSources().inFire() ||
-            source == this.damageSources().onFire() ||
+    // Check the damage type: an identity check misses fire damage built from another DamageSource instance
+    return source.is(DamageTypes.HOT_FLOOR) ||
+            source.is(DamageTypes.IN_FIRE) ||
+            source.is(DamageTypes.ON_FIRE) ||
             super.isInvulnerableTo(source);
   }
 
