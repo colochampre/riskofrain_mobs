@@ -1,7 +1,7 @@
 # Review fixes
 
 Objective: apply the fixes found in the full code review (2026-10-20), block by block.
-Branches: block 1 `1.20.1-fixes` (PR #2, merged); block 2 `1.20.1-drones` (PR #3, merged); block 3 `1.20.1-enemies` (from `1.20.1`). Merged branches deleted. Delivery: ask-on-risk. Test runner: none (no unit-test harness in the mod); checks are `./gradlew build`, `./gradlew :fabric:runServer` / `:forge:runServer` and in-game manual tests.
+Branches: block 1 `1.20.1-fixes` (PR #2, merged); block 2 `1.20.1-drones` (PR #3, merged); block 3 `1.20.1-enemies` (PR #4, merged); block 4 `1.20.1-cleanup` (from `1.20.1`). Merged branches deleted. Delivery: ask-on-risk. Test runner: none (no unit-test harness in the mod); checks are `./gradlew build`, `./gradlew :fabric:runServer` / `:forge:runServer` and in-game manual tests.
 
 ## Specs
 
@@ -32,7 +32,17 @@ User: "Hecho el merge. Hagamos limpieza de las ramasa remotas que ya se hayan me
 - S16. Lemurians are not delayed by the time they spent without seeing the target before they start strafing again (they still need 20 ticks of continuous sight, as in vanilla), and aim fireballs from where they spawn, at any range.
 - S17. A Lemurian fireball does not turn into a vanilla small fireball when the chunk is saved and reloaded.
 - S18. Only vanilla difficulty scaling: "Ok, deja solo el escalado de dificultad vanilla". No custom HARD damage multipliers on Beetle, Lemurian, Wisp, Stone Golem melee or laser.
-### Block 4: cleanup and performance (not started, awaiting go-ahead)
+### Block 4: cleanup and performance (in progress)
+User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el bloque 4". Items from the L2 review; none should change gameplay unless noted.
+- S19. The height-above-surface raycast (drones and Wisps, every tick) is limited to a short distance instead of the build height, with the same flight behavior (every caller only compares against heights up to 8).
+- S20. Code duplicated between the Gunner Drone and the Gunner Turret (body color and dyeing, gun spin, ranged attack, target filter, target goals, attack-goal wiring) lives once in `AbstractDroneEntity`. No behavior or save-format change.
+- S21. Remove dead code found in the review (unused Stone Golem loot table constant, empty `registerClientEvents`, leftovers) and name magic numbers that are repeated.
+- S22. Forge registers entity renderers in `EntityRenderersEvent.RegisterRenderers` instead of calling `EntityRenderers.register` from the parallel `FMLClientSetupEvent`.
+- S23. The Beetle has a loot table (contents: user decision, pending).
+- S24. Wisp fire immunity checks the damage type, not the `DamageSource` instance, so fire damage from any source instance is ignored. Same set as before: in fire, on fire, hot floor.
+- S25. Config values saved from the Cloth GUI are clamped like values loaded from disk, so min > max set in the GUI cannot crash spawning before a restart.
+- S26. `fabric.mod.json` has no template leftovers (`"suggests": {"another-mod": "*"}`).
+- S27. The difficulty-change sound packet uses a fresh buffer per player instead of sharing one buffer.
 
 ## Tasks
 
@@ -54,6 +64,13 @@ User: "Hecho el merge. Hagamos limpieza de las ramasa remotas que ya se hayan me
 | T14 | S17 | inline | done | `shouldBeSaved()` false; bytecode: `PersistentEntitySectionManager` filters saved entities with `EntityAccess.shouldBeSaved`. Build green. |
 | T15 | S13 | inline | done | Wisp short unseen memory (see L22). Build green. |
 | T16 | S18 | inline | done | Removed HARD x2 (Beetle, Lemurian, Wisp, laser magic) and x1.5 (golem). Build green. |
+| T17 | S24, S27, S26 | inline | pending | |
+| T18 | S22 | inline | pending | |
+| T19 | S25 | inline | pending | |
+| T20 | S19 | inline | pending | |
+| T21 | S20 | inline | pending | |
+| T22 | S21 | inline | pending | |
+| T23 | S23 | inline | blocked: user decision | |
 
 ## Log
 
@@ -80,3 +97,4 @@ User: "Hecho el merge. Hagamos limpieza de las ramasa remotas que ya se hayan me
 - L21 (2026-10-22): Independent verifier (baseline `fc1f613`, candidate `8e9c9fc`): S12-S17 PASS, no blockers. Advisory A1 taken: the laser only clears the target's invulnerability when its first hit landed, so i-frames from another attacker are kept. S16 wording tightened (A5). Noted, not changed: second laser hit now adds a 0.4 knockback and can be shield-blocked as a fresh hit; Wisp beam shows the old target if the target switches mid-charge (pre-existing); Lemurian `lastSeen` not reset on target change (pre-existing). On Forge, Architectury PLACE fires after the block is set, so the deferral is harmless there. Build green.
 - L22 (2026-10-22): User: "Ok, deja solo el escalado de dificultad vanilla. Lo demás esta bien, pero una consulta con respecto a la corrección del Wisp represalia: Como tuvimos que corregir problemas en este sentido del golem con hurtByTarget, habría que verificar si el goal de "me pegaron" que se medía por tick en el Wisp no era justamente por motivos similares, para hacer un workaround de ese problema". Finding: the golem had the same per-tick `addGoal(hurtByTargetGoal)` pattern; commit `efceff0` replaced it with a target-selector goal plus 20-tick unseen memory, because `HurtByTargetGoal.start` hardcodes 300 ticks. The per-tick add was not a workaround (addGoal deduplicates, so it was one goal from the first tick). Moving it to the target selector at priority 1 exposed the same 300-tick problem, so the Wisp now gets the golem's short memory. HARD custom multipliers removed (also affected non-player targets, which vanilla does not scale).
 - L23 (2026-10-22): User: "Todo correcto". Block 3 in-game checks passed (S12-S18).
+- L24 (2026-10-26): User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el bloque 4". PR #4 merged (`59a0233`); local `1.20.1-enemies` deleted. Block 4 on `1.20.1-cleanup` from `59a0233`. Found while mapping: Forge renderers are registered only from `RoRForgeClient` (`RoREntityRendering` is Fabric-only); Beetle has no loot table JSON, so it uses the default `riskofrain_mobs:entities/beetle` and drops nothing; `StoneGolemEntity.STONE_GOLEM_LOOT_TABLE` points to a missing `stone_golem_entity` table and is unused. Route: inline (no writer reason); independent verifier at the end (risk item 6: no tests, S20 refactor).
