@@ -118,6 +118,11 @@ public class LemurianAttackGoal extends Goal {
     if (target != null) {
       double d0 = this.lemurian.distanceToSqr(target);
       boolean canSee = this.lemurian.getSensing().hasLineOfSight(target);
+      // Restart the count when visibility flips, like vanilla RangedBowAttackGoal: otherwise a long time
+      // out of sight delays strafing by as many ticks once the target is visible again
+      if (canSee != (this.lastSeen > 0)) {
+        this.lastSeen = 0;
+      }
       if (canSee) {
         ++this.lastSeen;
       } else {
@@ -216,16 +221,20 @@ public class LemurianAttackGoal extends Goal {
           this.attackStep = 0;
         }
         if (this.attackStep > 1) {
-          double d1 = entity.getX() - this.lemurian.getX();
-          double d2 = entity.getY(0.6D) - (0.6D + this.lemurian.getY(0.6D));
-          double d3 = entity.getZ() - this.lemurian.getZ();
-          double d4 = Math.sqrt(Math.sqrt((float) distance)) * 0.25F;
           Vec3 vec3 = this.lemurian.getViewVector(1.0F);
+          double spawnX = this.lemurian.getX() + vec3.x * 0.8D;
+          double spawnY = this.lemurian.getY(0.6D) + 0.6D;
+          double spawnZ = this.lemurian.getZ() + vec3.z * 0.8D;
+          // Aim from where the fireball spawns. Scaling only the horizontal part by distance, as before,
+          // skewed the shot up or down at any range other than 16 blocks
+          double d1 = entity.getX() - spawnX;
+          double d2 = entity.getY(0.6D) - spawnY;
+          double d3 = entity.getZ() - spawnZ;
           if (!this.lemurian.isSilent()) {
             this.lemurian.playSound(getFireballSound(), 1.5F, 1.0F);
           }
-          LemurianFireballEntity fireball = new LemurianFireballEntity(this.lemurian.level(), this.lemurian, d1 * d4, d2, d3 * d4);
-          fireball.setPos(fireball.getX() + vec3.x * 0.8D, this.lemurian.getY(0.6D) + 0.6D, fireball.getZ() + vec3.z * 0.8D);
+          LemurianFireballEntity fireball = new LemurianFireballEntity(this.lemurian.level(), this.lemurian, d1, d2, d3);
+          fireball.setPos(spawnX, spawnY, spawnZ);
           this.lemurian.level().addFreshEntity(fireball);
         }
       }

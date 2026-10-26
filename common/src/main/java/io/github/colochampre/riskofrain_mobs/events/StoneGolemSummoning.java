@@ -4,6 +4,8 @@ import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.BlockEvent;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.block.Block;
@@ -23,11 +25,13 @@ public class StoneGolemSummoning {
   private static BlockPattern pattern;
 
   public static void register() {
-    // PLACE fires before the block is in the world, so the pattern check is deferred to the next server task
+    // PLACE fires before the block is in the world, so the pattern check is deferred to a queued server task.
+    // tell() always queues; execute() runs inline when called on the server thread outside a task
     BlockEvent.PLACE.register((level, pos, state, placer) -> {
       if (level instanceof ServerLevel serverLevel && state.is(Blocks.REDSTONE_BLOCK)) {
         BlockPos headPos = pos.immutable();
-        serverLevel.getServer().execute(() -> trySummon(serverLevel, headPos));
+        MinecraftServer server = serverLevel.getServer();
+        server.tell(new TickTask(server.getTickCount(), () -> trySummon(serverLevel, headPos)));
       }
       return EventResult.pass();
     });

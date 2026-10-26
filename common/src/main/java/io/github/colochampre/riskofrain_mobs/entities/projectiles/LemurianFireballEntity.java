@@ -66,6 +66,13 @@ public class LemurianFireballEntity extends Fireball {
     }
   }
 
+  // The fireball reuses the vanilla small fireball type, so a saved one would load back as a plain SmallFireball
+  // and lose this class's behavior (e.g. the grief config). It is short-lived, so it is simply not saved
+  @Override
+  public boolean shouldBeSaved() {
+    return false;
+  }
+
   public boolean isPickable() {
     return false;
   }

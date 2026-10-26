@@ -14,7 +14,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -262,7 +261,8 @@ public class StoneGolemEntity extends Monster {
   }
 
   public float getAttackDamage() {
-    return this.level().getDifficulty() == Difficulty.HARD ? (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE) * 1.5F : (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
+    // Difficulty scaling is left to vanilla, which already multiplies mob damage to players on HARD
+    return (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
   }
 
   public int getAttackTick() {

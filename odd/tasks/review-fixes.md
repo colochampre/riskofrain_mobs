@@ -1,7 +1,7 @@
 # Review fixes
 
 Objective: apply the fixes found in the full code review (2026-10-20), block by block.
-Branches: block 1 `1.20.1-fixes` (PR #2, merged); block 2 `1.20.1-drones` (from `1.20.1`). Delivery: ask-on-risk. Test runner: none (no unit-test harness in the mod); checks are `./gradlew build`, `./gradlew :fabric:runServer` / `:forge:runServer` and in-game manual tests.
+Branches: block 1 `1.20.1-fixes` (PR #2, merged); block 2 `1.20.1-drones` (PR #3, merged); block 3 `1.20.1-enemies` (from `1.20.1`). Merged branches deleted. Delivery: ask-on-risk. Test runner: none (no unit-test harness in the mod); checks are `./gradlew build`, `./gradlew :fabric:runServer` / `:forge:runServer` and in-game manual tests.
 
 ## Specs
 
@@ -23,9 +23,16 @@ User: "Esos arreglalos directamente. Los anteriores solo me causaron dudas por p
 - S9. Only the owner can dye a tamed drone or turret.
 - S10. Drones and turrets do not target players the owner cannot harm (server PvP off, same team without friendly fire), like tamed wolves.
 - S11. `DroneFollowOwnerGoal` stops when the cached owner is no longer the drone's owner, dead, a spectator, or gone.
-### Block 3: enemies (not started, awaiting go-ahead)
+### Block 3: enemies (done)
+User: "Hecho el merge. Hagamos limpieza de las ramasa remotas que ya se hayan mergeado y no hagan más falta. Despues de eso, seguimos con lo dempas".
+- S12. The Wisp charges (sound and beam) before every shot, not only the first; losing sight of the target cancels the charge.
+- S13. The Wisp's retaliation goal (`HurtByTargetGoal`) lives in the target selector, registered once, with the same short unseen-target memory (20 ticks) as the Stone Golem, so a hidden target does not block a visible one.
+- S14. The Stone Golem laser deals both of its hits (magic + half attack), not the larger of the two.
+- S15. The Stone Golem summon check always runs after the redstone block is placed, also when the placement does not come from a player packet.
+- S16. Lemurians are not delayed by the time they spent without seeing the target before they start strafing again (they still need 20 ticks of continuous sight, as in vanilla), and aim fireballs from where they spawn, at any range.
+- S17. A Lemurian fireball does not turn into a vanilla small fireball when the chunk is saved and reloaded.
+- S18. Only vanilla difficulty scaling: "Ok, deja solo el escalado de dificultad vanilla". No custom HARD damage multipliers on Beetle, Lemurian, Wisp, Stone Golem melee or laser.
 ### Block 4: cleanup and performance (not started, awaiting go-ahead)
-Open decision for the user: HARD difficulty damage is scaled twice (vanilla x1.5 plus custom multipliers). Keep or remove.
 
 ## Tasks
 
@@ -34,12 +41,19 @@ Open decision for the user: HARD difficulty damage is scaled twice (vanilla x1.5
 | T1 | S1 | inline | done | RED: Fabric runServer crashes with `Cannot load class net.minecraft.client.resources.sounds.SoundInstance in environment type SERVER`. GREEN: Fabric runServer logs `Initialized RoR Mod` and reaches the EULA prompt. With `eula=true` (authorized by the user): Fabric and Forge dedicated servers load a world (`Done`). Forge needed a follow-up fix (see L7). |
 | T2 | S2 | inline | done | No runnable RED: no unit-test harness; fix is in mobInteract, which needs a live player. Build green. |
 | T3 | S3 | inline | done | No runnable RED without a running world (needs eula=true). `validatePostLoad` clamps spawn rates to 0-100, group sizes to 1-8 and max >= min. Build green. |
-| T4 | S4 | inline | done (in-game check pending) | `f076c86`. No runnable RED: no unit-test harness; needs a reloaded world with a tamed turret. Build green. |
-| T5 | S5 | inline | done (in-game check pending) | `9b7ccc3`. No runnable RED: needs live drones. `canHitEntity` filters same-owner targets. Build green. |
+| T4 | S4 | inline | done | `f076c86`. No runnable RED: no unit-test harness; needs a reloaded world with a tamed turret. Build green. |
+| T5 | S5 | inline | done | `9b7ccc3`. No runnable RED: needs live drones. `canHitEntity` filters same-owner targets. Build green. |
 | T6 | S6, S7 | inline | done | Breakdown moved from the `LIVING_DEATH` event into `AbstractDroneEntity.die`, because vanilla/Fabric `TamableAnimal.die` sends the owner death message before the event can cancel (Forge already deferred it). Commits `d1fcfd0`, verifier fix (see L11). Build green. |
 | T7 | S8 | inline | done | `51b8314`, crit swap (see L13). `ServerLevel.sendParticles`. Build green. |
-| T8 | S9, S10 | inline | done (in-game check pending) | `f6b34af`. `isOwnedBy` on dyeing; restored the wolf-style `canHarmPlayer` check. Build green. |
+| T8 | S9, S10 | inline | done | `f6b34af`. `isOwnedBy` on dyeing; restored the wolf-style `canHarmPlayer` check. Build green. |
 | T9 | S11 | inline | done | `a0c9a37`. Build green. |
+| T10 | S12, S13 | inline | done | RED by reading: after a shot the target goal restores the cleared target, the goal keeps running and `hitScanAttackTick` stays >= duration, so later shots skip the charge. Build green. |
+| T11 | S14 | inline | done | Vanilla `LivingEntity.hurt` applies only `amount - lastHurt` while `invulnerableTime > 10`. Build green. |
+| T12 | S15 | inline | done | Bytecode: `execute()` runs inline on the server thread when not inside a task (`ReentrantBlockableEventLoop.scheduleExecutables`); player placements only worked because packet handling runs as a task. Build green. |
+| T13 | S16 | inline | done | `lastSeen` reset on visibility change, like vanilla `RangedBowAttackGoal`; aim from the spawn point. Build green. |
+| T14 | S17 | inline | done | `shouldBeSaved()` false; bytecode: `PersistentEntitySectionManager` filters saved entities with `EntityAccess.shouldBeSaved`. Build green. |
+| T15 | S13 | inline | done | Wisp short unseen memory (see L22). Build green. |
+| T16 | S18 | inline | done | Removed HARD x2 (Beetle, Lemurian, Wisp, laser magic) and x1.5 (golem). Build green. |
 
 ## Log
 
@@ -62,3 +76,7 @@ Open decision for the user: HARD difficulty damage is scaled twice (vanilla x1.5
 - L17 (2026-10-22): User: "Que otras particulas pueden llegar a quedar bien para los disparos de los drones? De paso ajusta la distancia del gunner turret de 1.0 a 1.2". Turret muzzle offset 1.2. Build green.
 - L18 (2026-10-22): User: "Probemos small flame y smoke a ver que tal". Muzzle flash on turret and Gunner Drone: 4 `SMALL_FLAME` (speed 0.02) plus 1 `SMOKE`. Build green; in-game look pending.
 - L19 (2026-10-22): User: "Cambié las particulas una vez más de manera manual. Y de paso recordé que la entidad Wisp tiene un problema similar con su disparo y las particulas con su hitScan. Podrías corregirlo?". User's manual change committed as `eba83bc` (1 `LAVA` particle at the muzzle). Wisp (pulled forward from block 3): `doHitScanParticles` runs from `WispAttackGoal` (server only) and `hurt` only damages on the server, but both used the client-only `EntityUtils.doParticlesAtEntity`, so the impact and hurt LAVA particles never showed (hurt ones only for the attacking player's melee hits). Added `EntityUtils.sendParticlesAtEntity` (ServerLevel.sendParticles) and used it in both. The client-side beam in `doHitScanParticleEffects` already works. Build green.
+- L20 (2026-10-22): PR #3 merged; remote and local branches `1.20.1-golem`, `1.20.1-fixes`, `1.20.1-drones` deleted (all fully merged). Block 3 started on `1.20.1-enemies` from `fc1f613`. The HARD double-damage decision stays open (laser `f *= 2`, Wisp `getAttackDamage` x2 on top of vanilla difficulty scaling).
+- L21 (2026-10-22): Independent verifier (baseline `fc1f613`, candidate `8e9c9fc`): S12-S17 PASS, no blockers. Advisory A1 taken: the laser only clears the target's invulnerability when its first hit landed, so i-frames from another attacker are kept. S16 wording tightened (A5). Noted, not changed: second laser hit now adds a 0.4 knockback and can be shield-blocked as a fresh hit; Wisp beam shows the old target if the target switches mid-charge (pre-existing); Lemurian `lastSeen` not reset on target change (pre-existing). On Forge, Architectury PLACE fires after the block is set, so the deferral is harmless there. Build green.
+- L22 (2026-10-22): User: "Ok, deja solo el escalado de dificultad vanilla. Lo demás esta bien, pero una consulta con respecto a la corrección del Wisp represalia: Como tuvimos que corregir problemas en este sentido del golem con hurtByTarget, habría que verificar si el goal de "me pegaron" que se medía por tick en el Wisp no era justamente por motivos similares, para hacer un workaround de ese problema". Finding: the golem had the same per-tick `addGoal(hurtByTargetGoal)` pattern; commit `efceff0` replaced it with a target-selector goal plus 20-tick unseen memory, because `HurtByTargetGoal.start` hardcodes 300 ticks. The per-tick add was not a workaround (addGoal deduplicates, so it was one goal from the first tick). Moving it to the target selector at priority 1 exposed the same 300-tick problem, so the Wisp now gets the golem's short memory. HARD custom multipliers removed (also affected non-player targets, which vanilla does not scale).
+- L23 (2026-10-22): User: "Todo correcto". Block 3 in-game checks passed (S12-S18).

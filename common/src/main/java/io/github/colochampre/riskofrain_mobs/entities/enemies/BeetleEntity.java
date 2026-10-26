@@ -5,7 +5,6 @@ import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
@@ -92,8 +91,8 @@ public class BeetleEntity extends Monster {
   }
 
   public float getAttackDamage() {
-    double d0 = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
-    return this.level().getDifficulty() == Difficulty.HARD ? (float) d0 * 2 : (float) d0;
+    // Difficulty scaling is left to vanilla, which already multiplies mob damage to players on HARD
+    return (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
   }
 
   protected boolean isImmobile() {
