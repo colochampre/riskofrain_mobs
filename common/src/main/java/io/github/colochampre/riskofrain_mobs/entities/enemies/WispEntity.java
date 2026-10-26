@@ -47,6 +47,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public class WispEntity extends Monster {
 
   private static final int TARGET_UNSEEN_MEMORY_TICKS = 20;
+  // Shared by the attack goal (server) and the client-side beam effect
+  private static final float ATTACK_RANGE = 16.0F;
   private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData.defineId(WispEntity.class, EntityDataSerializers.INT);
   public static final int MIN_FLIGHT_HEIGHT = 3;
   public static final int MAX_FLIGHT_HEIGHT = 7;
@@ -79,7 +81,7 @@ public class WispEntity extends Monster {
 
   @Override
   protected void registerGoals() {
-    this.goalSelector.addGoal(2, new WispAttackGoal(this, 16.0F));
+    this.goalSelector.addGoal(2, new WispAttackGoal(this, ATTACK_RANGE));
     this.goalSelector.addGoal(3, new WaterAvoidingRandomFlyingGoal(this, 0.5D));
     // Short unseen memory so a hidden target is dropped quickly in favor of a visible one, as for the Stone Golem:
     // at priority 1, a retaliation target kept for vanilla's 300 ticks would block the other target goals
@@ -201,8 +203,7 @@ public class WispEntity extends Monster {
           if (target != null) {
             double distance = this.distanceToSqr(target);
             boolean canSee = this.hasLineOfSight(target);
-            int maxAttackDistance = 16 * 16;
-            if (canSee && distance < maxAttackDistance) {
+            if (canSee && distance < ATTACK_RANGE * ATTACK_RANGE) {
               this.getLookControl().setLookAt(target, 90.0F, 90.0F);
               this.getLookControl().tick();
               double d5 = this.getAttackAnimationScale(0.0F);

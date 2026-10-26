@@ -4,11 +4,9 @@ import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.networking.NetworkManager;
-import dev.architectury.platform.Platform;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.ChatEvent;
 import dev.architectury.event.events.common.EntityEvent;
-import dev.architectury.utils.Env;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoRNetwork;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
@@ -19,8 +17,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.Difficulty;
 import io.github.colochampre.riskofrain_mobs.entities.allies.AbstractDroneEntity;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 
@@ -109,15 +105,8 @@ public class ModEvents {
     NetworkManager.sendToPlayer(player, RoRNetwork.PLAY_SOUND_S2C, buf);
   }
 
-  @Environment(EnvType.CLIENT)
-  public static void registerClientEvents() {
-  }
-
   public static void init() {
     registerEvents();
     StoneGolemSummoning.register();
-    if (Platform.getEnvironment() == Env.CLIENT) {
-      registerClientEvents();
-    }
   }
 }

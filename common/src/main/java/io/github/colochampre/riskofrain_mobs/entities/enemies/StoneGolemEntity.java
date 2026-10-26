@@ -45,7 +45,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class StoneGolemEntity extends Monster {
 
-  private static final ResourceLocation STONE_GOLEM_LOOT_TABLE = new ResourceLocation(RoRMod.MOD_ID, "entities/stone_golem_entity");
   private static final int TARGET_UNSEEN_MEMORY_TICKS = 20;
   private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData.defineId(StoneGolemEntity.class, EntityDataSerializers.INT);
   private LivingEntity clientSideCachedAttackTarget;
