@@ -64,12 +64,12 @@ User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el b
 | T14 | S17 | inline | done | `shouldBeSaved()` false; bytecode: `PersistentEntitySectionManager` filters saved entities with `EntityAccess.shouldBeSaved`. Build green. |
 | T15 | S13 | inline | done | Wisp short unseen memory (see L22). Build green. |
 | T16 | S18 | inline | done | Removed HARD x2 (Beetle, Lemurian, Wisp, laser magic) and x1.5 (golem). Build green. |
-| T17 | S24, S27, S26 | inline | pending | |
-| T18 | S22 | inline | pending | |
-| T19 | S25 | inline | pending | |
-| T20 | S19 | inline | pending | |
-| T21 | S20 | inline | pending | |
-| T22 | S21 | inline | pending | |
+| T17 | S24, S27, S26 | inline | done | `7cc7809`. Build green. |
+| T18 | S22 | inline | done | `a56433b`. Build green. |
+| T19 | S25 | inline | done | `46f8645`. Bytecode (Cloth 11.1.136 `ConfigManager.save`): save listeners run before `serialize`, PASS continues. Build green. |
+| T20 | S19 | inline | done | `f918792`. Ray depth 16 (miss returns 16); callers compare against <= 8. Build green. |
+| T21 | S20 | inline | done | `c756e2f` (also removed the unused `isDroneMoving` and `getStepSound` of S21). Net -187 lines. Build green. |
+| T22 | S21 | inline | done | `3043244`. Removed empty `registerClientEvents`, unused golem loot table constant; Wisp attack range named. Build green. |
 | T23 | S23 | inline | blocked: user decision | |
 
 ## Log
@@ -98,3 +98,4 @@ User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el b
 - L22 (2026-10-22): User: "Ok, deja solo el escalado de dificultad vanilla. Lo demás esta bien, pero una consulta con respecto a la corrección del Wisp represalia: Como tuvimos que corregir problemas en este sentido del golem con hurtByTarget, habría que verificar si el goal de "me pegaron" que se medía por tick en el Wisp no era justamente por motivos similares, para hacer un workaround de ese problema". Finding: the golem had the same per-tick `addGoal(hurtByTargetGoal)` pattern; commit `efceff0` replaced it with a target-selector goal plus 20-tick unseen memory, because `HurtByTargetGoal.start` hardcodes 300 ticks. The per-tick add was not a workaround (addGoal deduplicates, so it was one goal from the first tick). Moving it to the target selector at priority 1 exposed the same 300-tick problem, so the Wisp now gets the golem's short memory. HARD custom multipliers removed (also affected non-player targets, which vanilla does not scale).
 - L23 (2026-10-22): User: "Todo correcto". Block 3 in-game checks passed (S12-S18).
 - L24 (2026-10-26): User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el bloque 4". PR #4 merged (`59a0233`); local `1.20.1-enemies` deleted. Block 4 on `1.20.1-cleanup` from `59a0233`. Found while mapping: Forge renderers are registered only from `RoRForgeClient` (`RoREntityRendering` is Fabric-only); Beetle has no loot table JSON, so it uses the default `riskofrain_mobs:entities/beetle` and drops nothing; `StoneGolemEntity.STONE_GOLEM_LOOT_TABLE` points to a missing `stone_golem_entity` table and is unused. Route: inline (no writer reason); independent verifier at the end (risk item 6: no tests, S20 refactor).
+- L25 (2026-10-26): Independent verifier (baseline `59a0233`, candidate `3043244`): S19-S22, S24-S27 PASS, no blockers, build green. S27 cause corrected from bytecode: Architectury Forge `NetworkManagerImpl.toPacket` does `writeBytes(buf)`, so at baseline every player after the first got an empty payload on Forge; Fabric/vanilla copy the buffer. Comment fixed. Noted: `INSTANCE` would go stale if `holder.load()` were ever called (pre-existing, never called); moving `DATA_BODY_COLOR` shifts synced-data indices (runtime only, same on both sides).

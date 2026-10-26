@@ -91,7 +91,8 @@ public class ModEvents {
     int volume = RoRConfigs.get().SOUNDS.DIFFICULTY_UPDATE;
     if (volume <= 0) return;
 
-    // One buffer per packet: a shared one is consumed by the first reader (e.g. the integrated server's local player)
+    // One buffer per packet: on Forge, Architectury copies the buffer with writeBytes, which consumes it,
+    // so every player after the first would get an empty payload
     for (ServerPlayer player : server.getPlayerList().getPlayers()) {
       sendPacket(player, RoRSounds.DIFFICULTY_CHANGE.get(), volume);
     }
