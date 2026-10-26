@@ -35,10 +35,10 @@ User: "Hecho el merge. Hagamos limpieza de las ramasa remotas que ya se hayan me
 ### Block 4: cleanup and performance (in progress)
 User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el bloque 4". Items from the L2 review; none should change gameplay unless noted.
 - S19. The height-above-surface raycast (drones and Wisps, every tick) is limited to a short distance instead of the build height, with the same flight behavior (every caller only compares against heights up to 8).
-- S20. Code duplicated between the Gunner Drone and the Gunner Turret (body color and dyeing, gun spin, ranged attack, target filter, target goals, attack-goal wiring) lives once in `AbstractDroneEntity`. No behavior or save-format change.
+- S20. Only body color and dyeing move to `AbstractDroneEntity`; goals, targets, gun spin and shooting stay per drone ("Unificar el color y teñido esta bien, pero seguramente los goals, targets, y disparos sean distintos en cada caso"). No behavior or save-format change.
 - S21. Remove dead code found in the review (unused Stone Golem loot table constant, empty `registerClientEvents`, leftovers) and name magic numbers that are repeated.
 - S22. Forge registers entity renderers in `EntityRenderersEvent.RegisterRenderers` instead of calling `EntityRenderers.register` from the parallel `FMLClientSetupEvent`.
-- S23. The Beetle has a loot table (contents: user decision, pending).
+- S23. "El beetle no suelta nada por ahora": no Beetle loot table.
 - S24. Wisp fire immunity checks the damage type, not the `DamageSource` instance, so fire damage from any source instance is ignored. Same set as before: in fire, on fire, hot floor.
 - S25. Config values saved from the Cloth GUI are clamped like values loaded from disk, so min > max set in the GUI cannot crash spawning before a restart.
 - S26. `fabric.mod.json` has no template leftovers (`"suggests": {"another-mod": "*"}`).
@@ -68,9 +68,9 @@ User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el b
 | T18 | S22 | inline | done | `a56433b`. Build green. |
 | T19 | S25 | inline | done | `46f8645`. Bytecode (Cloth 11.1.136 `ConfigManager.save`): save listeners run before `serialize`, PASS continues. Build green. |
 | T20 | S19 | inline | done | `f918792`. Ray depth 16 (miss returns 16); callers compare against <= 8. Build green. |
-| T21 | S20 | inline | done | `c756e2f` (also removed the unused `isDroneMoving` and `getStepSound` of S21). Net -187 lines. Build green. |
+| T21 | S20 | inline | done | `c756e2f` reverted after L26; color/dye-only version (also removes the unused `isDroneMoving` and `getStepSound` of S21): see Log L26. Build green. |
 | T22 | S21 | inline | done | `3043244`. Removed empty `registerClientEvents`, unused golem loot table constant; Wisp attack range named. Build green. |
-| T23 | S23 | inline | blocked: user decision | |
+| T23 | S23 | inline | done | No change, by user decision. |
 
 ## Log
 
@@ -99,3 +99,4 @@ User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el b
 - L23 (2026-10-22): User: "Todo correcto". Block 3 in-game checks passed (S12-S18).
 - L24 (2026-10-26): User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el bloque 4". PR #4 merged (`59a0233`); local `1.20.1-enemies` deleted. Block 4 on `1.20.1-cleanup` from `59a0233`. Found while mapping: Forge renderers are registered only from `RoRForgeClient` (`RoREntityRendering` is Fabric-only); Beetle has no loot table JSON, so it uses the default `riskofrain_mobs:entities/beetle` and drops nothing; `StoneGolemEntity.STONE_GOLEM_LOOT_TABLE` points to a missing `stone_golem_entity` table and is unused. Route: inline (no writer reason); independent verifier at the end (risk item 6: no tests, S20 refactor).
 - L25 (2026-10-26): Independent verifier (baseline `59a0233`, candidate `3043244`): S19-S22, S24-S27 PASS, no blockers, build green. S27 cause corrected from bytecode: Architectury Forge `NetworkManagerImpl.toPacket` does `writeBytes(buf)`, so at baseline every player after the first got an empty payload on Forge; Fabric/vanilla copy the buffer. Comment fixed. Noted: `INSTANCE` would go stale if `holder.load()` were ever called (pre-existing, never called); moving `DATA_BODY_COLOR` shifts synced-data indices (runtime only, same on both sides).
+- L26 (2026-10-26): User: "El beetle no suelta nada por ahora. En cuanto a unificar el código en AbstractDroneEntity, te aviso que en un futuro pretendo implementar drones con comportamientos distintos. Por ejemplo, drones lanzallamas (bolas de fuego), lanzacohetes (fireworks), healers, etc. Unificar el color y teñido esta bien, pero seguramente los goals, targets, y disparos sean distintos en cada caso, y solo coinciden en los dos casos de drones actuales. Por eso estaban duplicados". `c756e2f` reverted; only body color, its save/load and the owner dye interaction moved to `AbstractDroneEntity`. The turret's drop item and item tag read the color through `getBodyColor()`.

@@ -1,21 +1,31 @@
 package io.github.colochampre.riskofrain_mobs.entities.allies;
 
 import io.github.colochampre.riskofrain_mobs.entities.goals.GunnerTurretAttackGoal;
+import io.github.colochampre.riskofrain_mobs.entities.projectiles.BulletEntity;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
+import io.github.colochampre.riskofrain_mobs.utils.EntityUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
+import net.minecraft.world.entity.animal.Wolf;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -25,12 +35,18 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.Nullable;
 
-public class GunnerTurretEntity extends AbstractDroneEntity {
+public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAttackMob {
 
   private static final EntityDataAccessor<Integer> DATA_ID_HURT = SynchedEntityData.defineId(GunnerTurretEntity.class, EntityDataSerializers.INT);
   private static final EntityDataAccessor<Integer> DATA_ID_HURTDIR = SynchedEntityData.defineId(GunnerTurretEntity.class, EntityDataSerializers.INT);
   private static final EntityDataAccessor<Float> DATA_ID_DAMAGE = SynchedEntityData.defineId(GunnerTurretEntity.class, EntityDataSerializers.FLOAT);
+  private static final float MAX_ROTATION_SPEED = Mth.PI * 0.3F;
+  private static final float ROTATION_ACCELERATION = 0.16F;
+  private static final float ROTATION_DECELERATION = 0.012F;
   private final GunnerTurretAttackGoal attackGoal = new GunnerTurretAttackGoal(this, 24.0F);
+  private float gunAngle;
+  private float prevGunAngle;
+  private float gunSpeed;
   private float sitProgress;
   private float prevSitProgress;
   private float tameProgress;
@@ -52,6 +68,15 @@ public class GunnerTurretEntity extends AbstractDroneEntity {
   }
 
   @Override
+  protected void registerGoals() {
+    this.targetSelector.addGoal(1, new OwnerHurtByTargetGoal(this));
+    this.targetSelector.addGoal(2, new OwnerHurtTargetGoal(this));
+    this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
+    this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Mob.class, 5, false, false, (entity)
+            -> entity instanceof Enemy && !(DO_NOT_ATTACK.contains(entity.getType()))));
+  }
+
+  @Override
   public int getDroneType() {
     return TYPE_LAND;
   }
@@ -62,16 +87,17 @@ public class GunnerTurretEntity extends AbstractDroneEntity {
   }
 
   @Override
-  protected Goal getAttackGoal() {
-    return this.attackGoal;
-  }
-
-  @Override
   protected void defineSynchedData() {
     super.defineSynchedData();
     this.entityData.define(DATA_ID_HURT, 0);
     this.entityData.define(DATA_ID_HURTDIR, 1);
     this.entityData.define(DATA_ID_DAMAGE, 0.0F);
+  }
+
+  @Override
+  public void aiStep() {
+    super.aiStep();
+    this.updateGun();
   }
 
   @Override
@@ -88,6 +114,20 @@ public class GunnerTurretEntity extends AbstractDroneEntity {
       this.setXRot(this.getXRot() + 0.25F);
     }
     super.tick();
+  }
+
+  @Override
+  public void setTame(boolean tamed) {
+    super.setTame(tamed);
+    if (tamed) {
+      this.goalSelector.addGoal(3, attackGoal);
+    }
+  }
+
+  @Override
+  public void removeGoals() {
+    super.removeGoals();
+    this.goalSelector.removeGoal(attackGoal);
   }
 
   @Override
@@ -179,6 +219,48 @@ public class GunnerTurretEntity extends AbstractDroneEntity {
     this.setDamage(this.getDamage() * 11.0F);
   }
 
+
+  @Override
+  public void performRangedAttack(LivingEntity target, float velocity) {
+    BulletEntity bullet = new BulletEntity(this.level(), this);
+    double d0 = target.getX() - this.getX();
+    double d1 = target.getEyeY() - bullet.getY();
+    double d2 = target.getZ() - this.getZ();
+    bullet.shoot(d0, d1, d2, 3.0F, 1.0F);
+    this.level().addFreshEntity(bullet);
+  }
+
+  @Override
+  public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+    if (target instanceof Wolf) {
+      Wolf wolf = (Wolf) target;
+      return !wolf.isTame() || wolf.getOwner() != owner;
+    } else if (target instanceof Player player && owner instanceof Player ownerPlayer && !ownerPlayer.canHarmPlayer(player)) {
+      // Respects server PvP and team friendly fire, like tamed wolves
+      return false;
+    } else if (target instanceof AbstractHorse && ((AbstractHorse) target).isTamed()) {
+      return false;
+    } else if (target instanceof AbstractDroneEntity && ((AbstractDroneEntity) target).isTame()) {
+      return false;
+    } else {
+      return !(target instanceof TamableAnimal) || !((TamableAnimal) target).isTame();
+    }
+  }
+
+  private void updateGun() {
+    LivingEntity target = this.getActiveAttackTarget();
+    this.prevGunAngle = this.gunAngle;
+    if (target != null && this.isTame()) {
+      this.gunSpeed = Math.min(this.gunSpeed + ROTATION_ACCELERATION, MAX_ROTATION_SPEED);
+    } else {
+      this.gunSpeed = Math.max(this.gunSpeed - ROTATION_DECELERATION, 0.0F);
+      if (this.gunSpeed == 0) {
+        gunAngle = EntityUtils.normalizeAngle(this.gunAngle);
+      }
+    }
+    this.gunAngle += this.gunSpeed;
+  }
+
   private void setHurtTime(int time) {
     this.entityData.set(DATA_ID_HURT, time);
   }
@@ -193,6 +275,18 @@ public class GunnerTurretEntity extends AbstractDroneEntity {
 
   public float getHurtDir() {
     return this.entityData.get(DATA_ID_HURTDIR);
+  }
+
+  public float getGunAngle() {
+    return this.gunAngle;
+  }
+
+  public float getPrevGunAngle() {
+    return this.prevGunAngle;
+  }
+
+  public float getGunSpeed() {
+    return this.gunSpeed;
   }
 
   public void setSitProgress(float progress) {
