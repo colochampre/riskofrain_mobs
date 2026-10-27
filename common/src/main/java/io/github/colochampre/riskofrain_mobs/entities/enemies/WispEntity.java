@@ -297,8 +297,11 @@ public class WispEntity extends Monster {
   @Override
   public boolean hurt(DamageSource source, float amount) {
     boolean flag = super.hurt(source, amount);
-    // hurt only does damage on the server, so send the particles from there to every nearby player
-    EntityUtils.sendParticlesAtEntity(this, ParticleTypes.LAVA, 3);
+    // hurt only does damage on the server, so send the particles from there to every nearby player.
+    // Skip them when no damage was dealt, such as from a magma block the wisp is immune to
+    if (flag) {
+      EntityUtils.sendParticlesAtEntity(this, ParticleTypes.LAVA, 3);
+    }
     return flag;
   }
 
