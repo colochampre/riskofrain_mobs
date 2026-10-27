@@ -3,10 +3,12 @@ package io.github.colochampre.riskofrain_mobs.registry;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigData;
+import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionResult;
 
 @Config(name = RoRMod.MOD_ID)
 public class RoRConfigs implements ConfigData {
@@ -23,7 +25,14 @@ public class RoRConfigs implements ConfigData {
 
     public static void init() {
         AutoConfig.register(RoRConfigs.class, GsonConfigSerializer::new);
-        INSTANCE = AutoConfig.getConfigHolder(RoRConfigs.class).getConfig();
+        ConfigHolder<RoRConfigs> holder = AutoConfig.getConfigHolder(RoRConfigs.class);
+        // Only loading runs validatePostLoad; the GUI saves the live instance, so clamp it on save too.
+        // Save listeners run before the file is written, so the clamped values are what gets saved
+        holder.registerSaveListener((configHolder, config) -> {
+            config.validatePostLoad();
+            return InteractionResult.PASS;
+        });
+        INSTANCE = holder.getConfig();
     }
 
     public static RoRConfigs get() {

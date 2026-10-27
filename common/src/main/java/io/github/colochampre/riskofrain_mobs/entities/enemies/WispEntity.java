@@ -17,6 +17,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
@@ -46,6 +47,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public class WispEntity extends Monster {
 
   private static final int TARGET_UNSEEN_MEMORY_TICKS = 20;
+  // Shared by the attack goal (server) and the client-side beam effect
+  private static final float ATTACK_RANGE = 16.0F;
   private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData.defineId(WispEntity.class, EntityDataSerializers.INT);
   public static final int MIN_FLIGHT_HEIGHT = 3;
   public static final int MAX_FLIGHT_HEIGHT = 7;
@@ -78,7 +81,7 @@ public class WispEntity extends Monster {
 
   @Override
   protected void registerGoals() {
-    this.goalSelector.addGoal(2, new WispAttackGoal(this, 16.0F));
+    this.goalSelector.addGoal(2, new WispAttackGoal(this, ATTACK_RANGE));
     this.goalSelector.addGoal(3, new WaterAvoidingRandomFlyingGoal(this, 0.5D));
     // Short unseen memory so a hidden target is dropped quickly in favor of a visible one, as for the Stone Golem:
     // at priority 1, a retaliation target kept for vanilla's 300 ticks would block the other target goals
@@ -200,8 +203,7 @@ public class WispEntity extends Monster {
           if (target != null) {
             double distance = this.distanceToSqr(target);
             boolean canSee = this.hasLineOfSight(target);
-            int maxAttackDistance = 16 * 16;
-            if (canSee && distance < maxAttackDistance) {
+            if (canSee && distance < ATTACK_RANGE * ATTACK_RANGE) {
               this.getLookControl().setLookAt(target, 90.0F, 90.0F);
               this.getLookControl().tick();
               double d5 = this.getAttackAnimationScale(0.0F);
@@ -295,8 +297,11 @@ public class WispEntity extends Monster {
   @Override
   public boolean hurt(DamageSource source, float amount) {
     boolean flag = super.hurt(source, amount);
-    // hurt only does damage on the server, so send the particles from there to every nearby player
-    EntityUtils.sendParticlesAtEntity(this, ParticleTypes.LAVA, 3);
+    // hurt only does damage on the server, so send the particles from there to every nearby player.
+    // Skip them when no damage was dealt, such as from a magma block the wisp is immune to
+    if (flag) {
+      EntityUtils.sendParticlesAtEntity(this, ParticleTypes.LAVA, 3);
+    }
     return flag;
   }
 
@@ -329,9 +334,10 @@ public class WispEntity extends Monster {
 
   @Override
   public boolean isInvulnerableTo(DamageSource source) {
-    return source == this.damageSources().hotFloor() ||
-            source == this.damageSources().inFire() ||
-            source == this.damageSources().onFire() ||
+    // Check the damage type: an identity check misses fire damage built from another DamageSource instance
+    return source.is(DamageTypes.HOT_FLOOR) ||
+            source.is(DamageTypes.IN_FIRE) ||
+            source.is(DamageTypes.ON_FIRE) ||
             super.isInvulnerableTo(source);
   }
 

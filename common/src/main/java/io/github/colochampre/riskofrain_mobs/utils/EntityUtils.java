@@ -34,14 +34,17 @@ public class EntityUtils {
     }
   }
 
+  // Callers only compare the result against flight heights of a few blocks, so the ray stops at this depth
+  // instead of walking down to the bottom of the world every tick
+  private static final double MAX_SURFACE_SEARCH_DEPTH = 16.0D;
+
   public static double getHeightAboveSurface(LivingEntity entity) {
     Level level = entity.level();
     Vec3 entityPos = entity.position();
-    Vec3 rayStart = new Vec3(entityPos.x, entityPos.y, entityPos.z);
-    Vec3 rayEnd = new Vec3(entityPos.x, entityPos.y - level.getMaxBuildHeight(), entityPos.z);
-    BlockHitResult blockHitResult = level.clip(new ClipContext(rayStart, rayEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, entity));
+    Vec3 rayEnd = entityPos.subtract(0.0D, MAX_SURFACE_SEARCH_DEPTH, 0.0D);
+    BlockHitResult blockHitResult = level.clip(new ClipContext(entityPos, rayEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, entity));
     if (blockHitResult.getType() == BlockHitResult.Type.MISS) {
-      return 64; // If no block is detected, return a high value
+      return MAX_SURFACE_SEARCH_DEPTH; // No surface within reach: higher than any flight height
     }
     BlockPos pos = blockHitResult.getBlockPos();
     return entityPos.y - pos.getY();

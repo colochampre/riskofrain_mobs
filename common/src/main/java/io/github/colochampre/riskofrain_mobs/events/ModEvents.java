@@ -4,11 +4,9 @@ import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.networking.NetworkManager;
-import dev.architectury.platform.Platform;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.ChatEvent;
 import dev.architectury.event.events.common.EntityEvent;
-import dev.architectury.utils.Env;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoRNetwork;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
@@ -19,8 +17,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.Difficulty;
 import io.github.colochampre.riskofrain_mobs.entities.allies.AbstractDroneEntity;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 
@@ -92,14 +88,13 @@ public class ModEvents {
   }
 
   private static void playDifficultyChangeSound(MinecraftServer server) {
-    if (RoRConfigs.get().SOUNDS.DIFFICULTY_UPDATE <= 0) return;
+    int volume = RoRConfigs.get().SOUNDS.DIFFICULTY_UPDATE;
+    if (volume <= 0) return;
 
-    FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-    buf.writeResourceLocation(RoRSounds.DIFFICULTY_CHANGE.get().getLocation());
-    buf.writeFloat(RoRConfigs.get().SOUNDS.DIFFICULTY_UPDATE / 100.0F);
-    buf.writeFloat(1.0F);
+    // One buffer per packet: on Forge, Architectury copies the buffer with writeBytes, which consumes it,
+    // so every player after the first would get an empty payload
     for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-      NetworkManager.sendToPlayer(player, RoRNetwork.PLAY_SOUND_S2C, buf);
+      sendPacket(player, RoRSounds.DIFFICULTY_CHANGE.get(), volume);
     }
   }
 
@@ -111,15 +106,8 @@ public class ModEvents {
     NetworkManager.sendToPlayer(player, RoRNetwork.PLAY_SOUND_S2C, buf);
   }
 
-  @Environment(EnvType.CLIENT)
-  public static void registerClientEvents() {
-  }
-
   public static void init() {
     registerEvents();
     StoneGolemSummoning.register();
-    if (Platform.getEnvironment() == Env.CLIENT) {
-      registerClientEvents();
-    }
   }
 }

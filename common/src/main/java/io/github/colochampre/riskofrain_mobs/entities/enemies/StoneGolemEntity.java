@@ -16,6 +16,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
@@ -45,7 +46,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class StoneGolemEntity extends Monster {
 
-  private static final ResourceLocation STONE_GOLEM_LOOT_TABLE = new ResourceLocation(RoRMod.MOD_ID, "entities/stone_golem_entity");
   private static final int TARGET_UNSEEN_MEMORY_TICKS = 20;
   private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData.defineId(StoneGolemEntity.class, EntityDataSerializers.INT);
   private LivingEntity clientSideCachedAttackTarget;
@@ -337,12 +337,13 @@ public class StoneGolemEntity extends Monster {
 
   @Override
   public boolean isInvulnerableTo(DamageSource source) {
-    return source == this.damageSources().freeze() ||
-            source == this.damageSources().hotFloor() ||
-            source == this.damageSources().inWall() ||
-            source == this.damageSources().inFire() ||
-            source == this.damageSources().lava() ||
-            source == this.damageSources().onFire() ||
+    // Check the damage type: an identity check misses damage built from another DamageSource instance
+    return source.is(DamageTypes.FREEZE) ||
+            source.is(DamageTypes.HOT_FLOOR) ||
+            source.is(DamageTypes.IN_WALL) ||
+            source.is(DamageTypes.IN_FIRE) ||
+            source.is(DamageTypes.LAVA) ||
+            source.is(DamageTypes.ON_FIRE) ||
             super.isInvulnerableTo(source);
   }
 

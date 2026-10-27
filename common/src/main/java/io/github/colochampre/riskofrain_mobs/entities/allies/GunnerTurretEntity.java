@@ -14,8 +14,6 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -29,20 +27,16 @@ import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAttackMob {
 
-  private static final EntityDataAccessor<Integer> DATA_BODY_COLOR = SynchedEntityData.defineId(GunnerTurretEntity.class, EntityDataSerializers.INT);
   private static final EntityDataAccessor<Integer> DATA_ID_HURT = SynchedEntityData.defineId(GunnerTurretEntity.class, EntityDataSerializers.INT);
   private static final EntityDataAccessor<Integer> DATA_ID_HURTDIR = SynchedEntityData.defineId(GunnerTurretEntity.class, EntityDataSerializers.INT);
   private static final EntityDataAccessor<Float> DATA_ID_DAMAGE = SynchedEntityData.defineId(GunnerTurretEntity.class, EntityDataSerializers.FLOAT);
@@ -95,24 +89,9 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   @Override
   protected void defineSynchedData() {
     super.defineSynchedData();
-    this.entityData.define(DATA_BODY_COLOR, DyeColor.LIGHT_BLUE.getId());
     this.entityData.define(DATA_ID_HURT, 0);
     this.entityData.define(DATA_ID_HURTDIR, 1);
     this.entityData.define(DATA_ID_DAMAGE, 0.0F);
-  }
-
-  @Override
-  public void addAdditionalSaveData(@NotNull CompoundTag tag) {
-    super.addAdditionalSaveData(tag);
-    tag.putByte("BodyColor", (byte) this.getBodyColor().getId());
-  }
-
-  @Override
-  public void readAdditionalSaveData(@NotNull CompoundTag tag) {
-    super.readAdditionalSaveData(tag);
-    if (tag.contains("BodyColor", 99)) {
-      this.setBodyColor(DyeColor.byId(tag.getInt("BodyColor")));
-    }
   }
 
   @Override
@@ -173,24 +152,6 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   }
 
   @Override
-  public @NotNull InteractionResult mobInteract(Player player, InteractionHand hand) {
-    ItemStack itemstack = player.getItemInHand(hand);
-    Item item = itemstack.getItem();
-    // Set body color
-    if (item instanceof DyeItem && this.isTame() && this.isOwnedBy(player)) {
-      DyeColor dyecolor = ((DyeItem) item).getDyeColor();
-      if (dyecolor != this.getBodyColor()) {
-        this.setBodyColor(dyecolor);
-        if (!player.getAbilities().instabuild) {
-          itemstack.shrink(1);
-        }
-        return InteractionResult.SUCCESS;
-      }
-    }
-    return super.mobInteract(player, hand);
-  }
-
-  @Override
   public boolean hurt(DamageSource source, float damage) {
     if (this.isInvulnerableTo(source)) {
       return false;
@@ -231,9 +192,7 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   }
 
   private Item getDropItem() {
-    int colorId = this.entityData.get(DATA_BODY_COLOR);
-    DyeColor color = DyeColor.byId(colorId);
-    return RoRItems.getTurretItemForColor(color);
+    return RoRItems.getTurretItemForColor(this.getBodyColor());
   }
 
   private void tagItemStack(ItemStack stack) {
@@ -242,17 +201,8 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
     if (this.getOwnerUUID() != null) {
       tag.putUUID("OwnerUUID", this.getOwnerUUID());
     }
-    int colorId = this.entityData.get(DATA_BODY_COLOR);
-    tag.putInt("BodyColor", colorId);
+    tag.putInt("BodyColor", this.getBodyColor().getId());
     stack.setTag(tag);
-  }
-
-  public DyeColor getBodyColor() {
-    return DyeColor.byId(this.entityData.get(DATA_BODY_COLOR));
-  }
-
-  public void setBodyColor(DyeColor color) {
-    this.entityData.set(DATA_BODY_COLOR, color.getId());
   }
 
   public void setDamage(float damage) {

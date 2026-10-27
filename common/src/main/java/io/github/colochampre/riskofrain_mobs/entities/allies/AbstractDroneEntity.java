@@ -34,6 +34,7 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -68,6 +69,8 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   private static final EntityDataAccessor<Integer> DATA_PRICE = SynchedEntityData.defineId(AbstractDroneEntity.class,
           EntityDataSerializers.INT);
   private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData
+          .defineId(AbstractDroneEntity.class, EntityDataSerializers.INT);
+  private static final EntityDataAccessor<Integer> DATA_BODY_COLOR = SynchedEntityData
           .defineId(AbstractDroneEntity.class, EntityDataSerializers.INT);
   private static final Map<Item, Integer> dronePriceMap = new HashMap<>();
   private LivingEntity clientSideCachedAttackTarget;
@@ -111,6 +114,7 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     super.defineSynchedData();
     this.entityData.define(DATA_PRICE, this.getInitialGoldPrice());
     this.entityData.define(DATA_ID_ATTACK_TARGET, 0);
+    this.entityData.define(DATA_BODY_COLOR, DyeColor.LIGHT_BLUE.getId());
   }
 
   private int getInitialGoldPrice() {
@@ -122,6 +126,7 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   public void addAdditionalSaveData(@NotNull CompoundTag tag) {
     super.addAdditionalSaveData(tag);
     tag.putByte("GoldPrice", (byte) this.getCurrentGoldPrice());
+    tag.putByte("BodyColor", (byte) this.getBodyColor().getId());
   }
 
   @Override
@@ -129,6 +134,9 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     super.readAdditionalSaveData(tag);
     if (tag.contains("GoldPrice", 99)) {
       this.setCurrentGoldPrice(tag.getInt("GoldPrice"));
+    }
+    if (tag.contains("BodyColor", 99)) {
+      this.setBodyColor(DyeColor.byId(tag.getInt("BodyColor")));
     }
   }
 
@@ -318,6 +326,14 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     ItemStack itemstack = player.getItemInHand(hand);
     Item item = itemstack.getItem();
     if (this.isTame()) {
+      // Set body color
+      if (item instanceof DyeItem dyeItem && this.isOwnedBy(player) && dyeItem.getDyeColor() != this.getBodyColor()) {
+        this.setBodyColor(dyeItem.getDyeColor());
+        if (!player.getAbilities().instabuild) {
+          itemstack.shrink(1);
+        }
+        return InteractionResult.SUCCESS;
+      }
       // Repair
       if (this.getHealth() < this.getMaxHealth()) {
         if (REPAIR_ITEMS.contains(itemstack.getItem())) {
@@ -432,10 +448,6 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     return super.canBeAffected(effect);
   }
 
-  public boolean isDroneMoving() {
-    return this.getX() != this.xOld || this.getY() != this.yOld || this.getZ() != this.zOld;
-  }
-
   public boolean isFlying() {
     return this.getDroneType() == TYPE_FLYING && !this.onGround();
   }
@@ -541,8 +553,12 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     return RoRSounds.DRONE_FLYING.get();
   }
 
-  protected SoundEvent getStepSound() {
-    return null;
+  public DyeColor getBodyColor() {
+    return DyeColor.byId(this.entityData.get(DATA_BODY_COLOR));
+  }
+
+  public void setBodyColor(DyeColor color) {
+    this.entityData.set(DATA_BODY_COLOR, color.getId());
   }
 
   public float getBodyXRot() {
