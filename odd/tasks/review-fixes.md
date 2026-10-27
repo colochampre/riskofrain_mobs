@@ -72,7 +72,7 @@ User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el b
 | T21 | S20 | inline | done | `c756e2f` reverted after L26; color/dye-only version (also removes the unused `isDroneMoving` and `getStepSound` of S21): see Log L26. Build green. |
 | T22 | S21 | inline | done | `3043244`. Removed empty `registerClientEvents`, unused golem loot table constant; Wisp attack range named. Build green. |
 | T23 | S23 | inline | done | No change, by user decision. |
-| T24 | S28 | inline | done | RED by reading: `WispEntity.hurt` sent particles even when `super.hurt` returned false (immune). Build green. |
+| T24 | S28 | inline | done | `2896cfa`. RED by reading: `WispEntity.hurt` sent particles even when `super.hurt` returned false (immune). Build green. |
 
 ## Log
 
