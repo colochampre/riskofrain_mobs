@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[47,)"
+loaderVersion = "[47,48)"
 license = "MIT"
 
 [[mods]]
@@ -16,21 +16,21 @@ config = "riskofrain_mobs.mixins.json"
 [[dependencies.riskofrain_mobs]]
     modId="forge"
     mandatory=true
-    versionRange="[47,)"
+    versionRange="[47,48)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.riskofrain_mobs]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.20.1,)"
+    versionRange="[1.20.1,1.20.2)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.riskofrain_mobs]]
     modId="architectury"
     mandatory=true
-    versionRange="[9.2.14,)"
+    versionRange="[9.2.14,10)"
     ordering="AFTER"
     side="BOTH"
 
