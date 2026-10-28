@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[47,48)"
+loaderVersion = "[2,)"
 license = "MIT"
 
 [[mods]]
@@ -14,33 +14,29 @@ logoFile = "logo.png"
 config = "riskofrain_mobs.mixins.json"
 
 [[dependencies.riskofrain_mobs]]
-    modId="forge"
+    modId="neoforge"
     mandatory=true
-    versionRange="[47,48)"
+    versionRange="[20.4,20.5)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.riskofrain_mobs]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.20.1,1.20.2)"
+    versionRange="[1.20.4,1.20.5)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.riskofrain_mobs]]
     modId="architectury"
     mandatory=true
-    versionRange="[9.2.14,10)"
+    versionRange="[11.1.17,12)"
     ordering="AFTER"
     side="BOTH"
 
 [[dependencies.riskofrain_mobs]]
     modId="cloth_config"
     mandatory=true
-    versionRange="[11.1.136,12)"
+    versionRange="[13.0.138,14)"
     ordering="AFTER"
     side="BOTH"
-
-[[extensions.riskofrain_mobs]]
-type = "forge:display_test"
-value = "MATCH_VERSION"

@@ -1,17 +1,17 @@
-package io.github.colochampre.riskofrain_mobs.forge.client;
+package io.github.colochampre.riskofrain_mobs.neoforge.client;
 
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.client.models.*;
 import io.github.colochampre.riskofrain_mobs.client.renderer.*;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.EntityRenderersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
 @Mod.EventBusSubscriber(modid = RoRMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-public class RoRForgeClient {
+public class RoRNeoForgeClient {
 
   // FMLClientSetupEvent runs mods in parallel, and EntityRenderers.register writes to an unsynchronized map
   @SubscribeEvent

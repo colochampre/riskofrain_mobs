@@ -11,4 +11,4 @@ rootProject.name = 'riskofrain_mobs'
 
 include 'common'
 include 'fabric'
-include 'forge'
+include 'neoforge'

@@ -46,8 +46,18 @@ subprojects {
         // for more information about repositories.
     }
 
+    // One run directory per Minecraft version, so switching branches never upgrades another version's test world.
+    // Read outside the loom block: inside it, `rootProject` resolves to the extension's isRootProject()
+    def versionRunDir = "run/${rootProject.minecraft_version}"
+
     loom {
         silentMojangMappingsLicense()
+
+        runs {
+            configureEach {
+                runDir versionRunDir
+            }
+        }
     }
 
     dependencies {
@@ -58,7 +68,10 @@ subprojects {
         }
 
         modCompileOnly "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_version}"
-        modCompileOnly "com.terraformersmc:modmenu:${rootProject.mod_menu_version}"
+        modCompileOnly("com.terraformersmc:modmenu:${rootProject.mod_menu_version}") {
+            // Mod Menu bundles placeholder-api in its own jar; its Maven repository is not needed
+            exclude group: "eu.pb4"
+        }
     }
 
     java {
@@ -97,12 +110,14 @@ subprojects {
 project(":fabric") {
     dependencies {
         modImplementation "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_version}"
-        modImplementation "com.terraformersmc:modmenu:${rootProject.mod_menu_version}"
+        modImplementation("com.terraformersmc:modmenu:${rootProject.mod_menu_version}") {
+            exclude group: "eu.pb4"
+        }
     }
 }
 
-project(":forge") {
+project(":neoforge") {
     dependencies {
-        modImplementation "me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_version}"
+        modImplementation "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_config_version}"
     }
 }
