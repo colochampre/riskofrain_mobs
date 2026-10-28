@@ -131,7 +131,8 @@ public class StoneGolemAttackGoal extends Goal {
   }
 
   private void meleeAttackTick(LivingEntity target) {
-    double distance = this.golem.getPerceivedTargetDistanceSquareForMeleeAttack(target);
+    // 1.20.2 removed getPerceivedTargetDistanceSquareForMeleeAttack; it only differed from this while the target rode a vehicle
+    double distance = this.golem.distanceToSqr(target);
     this.ticksUntilNextPathRecalculation = Math.max(this.ticksUntilNextPathRecalculation - 1, 0);
     if ((this.followingTargetEvenIfNotSeen || this.golem.getSensing().hasLineOfSight(target)) && this.ticksUntilNextPathRecalculation <= 0 && (this.pathedTargetX == 0.0D && this.pathedTargetY == 0.0D && this.pathedTargetZ == 0.0D || target.distanceToSqr(this.pathedTargetX, this.pathedTargetY, this.pathedTargetZ) >= 1.0D || this.golem.getRandom().nextFloat() < 0.05F)) {
       this.pathedTargetX = target.getX();
