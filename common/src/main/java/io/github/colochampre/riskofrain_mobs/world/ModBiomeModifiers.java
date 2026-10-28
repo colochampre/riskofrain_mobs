@@ -12,6 +12,8 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 
+import java.util.List;
+
 public class ModBiomeModifiers {
 
   public static void init() {
@@ -23,7 +25,11 @@ public class ModBiomeModifiers {
           ResourceKey<Biome> key = ResourceKey.create(Registries.BIOME, keyOpt.get());
           if (ctx.hasTag(BiomeTags.IS_OVERWORLD) && !key.equals(Biomes.DEEP_DARK) && !key.equals(Biomes.THE_VOID)) {
             int droneSpawnRate = configs.DRONES.DRONES_SPAWN_RATE;
-            if (droneSpawnRate > 0) {
+            // Skip biomes without creatures of their own (rivers, badlands, snowy beaches): there every creature
+            // spawn would be a drone, which piles them up along river banks
+            boolean hasCreatures = !ctx.getProperties().getSpawnProperties().getSpawners()
+                    .getOrDefault(MobCategory.CREATURE, List.of()).isEmpty();
+            if (droneSpawnRate > 0 && hasCreatures) {
               mutable.getSpawnProperties().addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(
                       RoREntityTypes.GUNNER_DRONE.get(), droneSpawnRate, 1, 1));
               mutable.getSpawnProperties().addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(
