@@ -44,6 +44,7 @@ User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el b
 - S26. `fabric.mod.json` has no template leftovers (`"suggests": {"another-mod": "*"}`).
 - S27. The difficulty-change sound packet uses a fresh buffer per player instead of sharing one buffer.
 - S28. "El Wisp no recibe daño del bloque de magma, pero emite particulas como si si lo estuviera recibiendo": hurt particles only when damage is dealt. "el golem tambien tiene una forma de evitar daño por bloque de magma, magma, fuego, etc. Si consideras cambiar eso tambien, para que sean consistentes": golem immunity checks the damage type, same set (freeze, hot floor, in wall, in fire, lava, on fire).
+- S29. "No se escucha al cambiar la dificultad": the difficulty-change sound plays when the difficulty changes from the pause menu in single player, not only from `/difficulty`.
 
 ## Tasks
 
@@ -72,6 +73,7 @@ User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el b
 | T21 | S20 | inline | done | `c756e2f` reverted after L26; color/dye-only version (also removes the unused `isDroneMoving` and `getStepSound` of S21): see Log L26. Build green. |
 | T22 | S21 | inline | done | `3043244`. Removed empty `registerClientEvents`, unused golem loot table constant; Wisp attack range named. Build green. |
 | T23 | S23 | inline | done | No change, by user decision. |
+| T25 | S29 | inline | done | Branch `1.20.1-difficulty-sound`. RED from the user's Forge log (paused 23:14:00, left 23:14:01) and bytecode: paused `IntegratedServer.tickServer` calls `tickPaused` and returns, so `SERVER_POST` never ran. Mixin on `MinecraftServer.setDifficulty`. Build green; refmap in both jars. |
 | T24 | S28 | inline | done | `2896cfa`. RED by reading: `WispEntity.hurt` sent particles even when `super.hurt` returned false (immune). Build green. |
 
 ## Log
@@ -103,3 +105,5 @@ User: "Hecho el merge y eliminada la rama del repo. Por favor, continua con el b
 - L25 (2026-10-26): Independent verifier (baseline `59a0233`, candidate `3043244`): S19-S22, S24-S27 PASS, no blockers, build green. S27 cause corrected from bytecode: Architectury Forge `NetworkManagerImpl.toPacket` does `writeBytes(buf)`, so at baseline every player after the first got an empty payload on Forge; Fabric/vanilla copy the buffer. Comment fixed. Noted: `INSTANCE` would go stale if `holder.load()` were ever called (pre-existing, never called); moving `DATA_BODY_COLOR` shifts synced-data indices (runtime only, same on both sides).
 - L26 (2026-10-26): User: "El beetle no suelta nada por ahora. En cuanto a unificar el código en AbstractDroneEntity, te aviso que en un futuro pretendo implementar drones con comportamientos distintos. Por ejemplo, drones lanzallamas (bolas de fuego), lanzacohetes (fireworks), healers, etc. Unificar el color y teñido esta bien, pero seguramente los goals, targets, y disparos sean distintos en cada caso, y solo coinciden en los dos casos de drones actuales. Por eso estaban duplicados". `c756e2f` reverted; only body color, its save/load and the owner dye interaction moved to `AbstractDroneEntity`. The turret's drop item and item tag read the color through `getBodyColor()`.
 - L27 (2026-10-27): User in-game checks: "El Wisp no recibe daño del bloque de magma, pero emite particulas como si si lo estuviera recibiendo. Fijate ademas que el golem tambien tiene una forma de evitar daño por bloque de magma, magma, fuego, etc. Si consideras cambiar eso tambien, para que sean consistentes los metodos para evitar daños especificos. El resto esta todo ok". Added S28 / T24.
+- L28 (2026-10-27): PR #5 merged. User: "Hecho el merge. Lo hice antes de testear el sonido de dificultad. Parece que no se reproduce. Activé por si acaso los subtitulos de sonidos, para ver si aparecia ahí, pero ni siquiera. No se escucha al cambiar la dificultad". Pre-existing, not caused by block 4 (packet format unchanged). Per-tick polling replaced by a `MinecraftServer.setDifficulty` mixin (HEAD remembers, TAIL compares; TAIL skips the locked early return). Added S29 / T25.
+- L29 (2026-10-27): User: "Revisado, en Forge y Fabric, ahora si funciona correctamente". S29 confirmed in game on both loaders (`d929764`).
