@@ -1,6 +1,5 @@
 package io.github.colochampre.riskofrain_mobs.events;
 
-import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.networking.NetworkManager;
@@ -15,7 +14,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.Difficulty;
 import io.github.colochampre.riskofrain_mobs.entities.allies.AbstractDroneEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -26,7 +24,6 @@ import java.util.UUID;
 
 public class ModEvents {
 
-  private static Difficulty lastDifficulty = null;
   private static final Map<UUID, Integer> playerLevels = new HashMap<>();
 
   public static void registerEvents() {
@@ -58,10 +55,6 @@ public class ModEvents {
       return EventResult.pass();
     });
 
-    LifecycleEvent.SERVER_STARTED.register(server -> {
-      lastDifficulty = server.overworld().getDifficulty();
-    });
-
     PlayerEvent.PLAYER_ADVANCEMENT.register((player, advancement) -> {
       if (configs.SOUNDS.ADVANCEMENT > 0) {
         sendPacket(player, RoRSounds.ADVANCEMENT.get(), configs.SOUNDS.ADVANCEMENT);
@@ -71,11 +64,6 @@ public class ModEvents {
     PlayerEvent.PLAYER_QUIT.register(player -> playerLevels.remove(player.getUUID()));
 
     TickEvent.SERVER_POST.register(server -> {
-      Difficulty currentDifficulty = server.overworld().getDifficulty();
-      if (lastDifficulty != null && currentDifficulty != lastDifficulty) {
-        playDifficultyChangeSound(server);
-        lastDifficulty = currentDifficulty;
-      }
       for (ServerPlayer player : server.getPlayerList().getPlayers()) {
         int currentLevel = player.experienceLevel;
         int lastLevel = playerLevels.getOrDefault(player.getUUID(), currentLevel);
@@ -87,7 +75,8 @@ public class ModEvents {
     });
   }
 
-  private static void playDifficultyChangeSound(MinecraftServer server) {
+  // Called from MinecraftServerMixin when the difficulty actually changes
+  public static void playDifficultyChangeSound(MinecraftServer server) {
     int volume = RoRConfigs.get().SOUNDS.DIFFICULTY_UPDATE;
     if (volume <= 0) return;
 
