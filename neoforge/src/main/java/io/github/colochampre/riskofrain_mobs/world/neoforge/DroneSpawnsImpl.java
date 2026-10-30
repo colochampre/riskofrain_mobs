@@ -1,4 +1,4 @@
-package io.github.colochampre.riskofrain_mobs.world.forge;
+package io.github.colochampre.riskofrain_mobs.world.neoforge;
 
 import dev.architectury.registry.level.biome.BiomeModifications;
 import io.github.colochampre.riskofrain_mobs.world.DroneSpawns;
