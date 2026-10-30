@@ -16,19 +16,13 @@ public class ModBiomeModifiers {
 
   public static void init() {
     LifecycleEvent.SETUP.register(() -> {
+      DroneSpawns.register();
       BiomeModifications.addProperties((ctx, mutable) -> {
         var keyOpt = ctx.getKey();
         if (keyOpt.isPresent()) {
           var configs = RoRConfigs.get().MOBS;
           ResourceKey<Biome> key = ResourceKey.create(Registries.BIOME, keyOpt.get());
           if (ctx.hasTag(BiomeTags.IS_OVERWORLD) && !key.equals(Biomes.DEEP_DARK) && !key.equals(Biomes.THE_VOID)) {
-            int droneSpawnRate = configs.DRONES.DRONES_SPAWN_RATE;
-            if (droneSpawnRate > 0) {
-              mutable.getSpawnProperties().addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(
-                      RoREntityTypes.GUNNER_DRONE.get(), droneSpawnRate, 1, 1));
-              mutable.getSpawnProperties().addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(
-                      RoREntityTypes.GUNNER_TURRET.get(), droneSpawnRate, 1, 1));
-            }
             if (!key.equals(Biomes.MUSHROOM_FIELDS)) {
               if (configs.BEETLES.OVERWORLD_SPAWN_RATE > 0) {
                 mutable.getSpawnProperties().addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(
