@@ -65,6 +65,8 @@ public class GunnerTurretAttackGoal extends Goal {
         if (distance < (double) this.maxAttackDistance) {
           shootTarget(target);
         }
+      } else {
+        this.drone.setActiveAttackTarget(0);
       }
     }
   }

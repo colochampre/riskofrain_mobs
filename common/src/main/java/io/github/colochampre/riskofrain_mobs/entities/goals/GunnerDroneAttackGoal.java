@@ -63,6 +63,7 @@ public class GunnerDroneAttackGoal extends Goal {
       boolean canSee = this.drone.getSensing().hasLineOfSight(target);
       double distance = this.drone.distanceToSqr(target);
       if (!canSee) {
+        this.drone.setActiveAttackTarget(0);
         this.drone.getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), 0.8D);
       } else {
         this.drone.getLookControl().setLookAt(target, 30.0F, 90.0F);
