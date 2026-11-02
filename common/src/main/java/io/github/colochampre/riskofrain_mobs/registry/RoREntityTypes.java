@@ -95,7 +95,7 @@ public class RoREntityTypes {
             Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, LemurianEntity::checkMonsterSpawnRules);
     SpawnPlacementsRegistry.register(RoREntityTypes.STONE_GOLEM, SpawnPlacements.Type.ON_GROUND,
             Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, StoneGolemEntity::checkMonsterSpawnRules);
-    SpawnPlacementsRegistry.register(RoREntityTypes.WISP, SpawnPlacements.Type.NO_RESTRICTIONS,
+    SpawnPlacementsRegistry.register(RoREntityTypes.WISP, SpawnPlacements.Type.ON_GROUND,
             Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, WispEntity::checkWispSpawnRules);
     // Allies
     SpawnPlacementsRegistry.register(RoREntityTypes.GUNNER_TURRET, SpawnPlacements.Type.ON_GROUND,
