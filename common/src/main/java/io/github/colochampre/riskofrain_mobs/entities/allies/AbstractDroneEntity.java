@@ -61,6 +61,7 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   public static final int MIN_FLIGHT_HEIGHT = 3;
   public static final int MAX_FLIGHT_HEIGHT = 8;
   private static final double ATTACKER_SEARCH_RADIUS = 64.0D;
+  private static final int TARGET_UNSEEN_MEMORY_TICKS = 20;
   public static final Set<EntityType<?>> DO_NOT_ATTACK = Sets.newHashSet(EntityType.CREEPER, EntityType.PIGLIN,
           EntityType.PIGLIN_BRUTE, EntityType.ZOMBIFIED_PIGLIN, EntityType.HOGLIN, EntityType.ZOGLIN);
   private static final Set<Item> TAME_ITEMS = Sets.newHashSet(Items.GOLD_BLOCK, Items.RAW_GOLD_BLOCK, Items.GOLD_INGOT,
@@ -82,6 +83,7 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
   private float bodyZRot;
   private int flyingSound;
   private int underWaterTicks;
+  private int targetUnseenTicks;
 
   static {
     dronePriceMap.put(Items.GOLD_BLOCK, 81);
@@ -220,6 +222,25 @@ public abstract class AbstractDroneEntity extends TamableAnimal {
     } else {
       return super.getWalkTargetValue(pos, level);
     }
+  }
+
+  @Override
+  protected void customServerAiStep() {
+    super.customServerAiStep();
+    LivingEntity target = this.getTarget();
+    boolean isTargetHidden = target != null && !this.getSensing().hasLineOfSight(target);
+    this.targetUnseenTicks = isTargetHidden ? this.targetUnseenTicks + 1 : 0;
+  }
+
+  // The owner-defense and nearest-enemy goals ignore line of sight once they hold a target, which would keep a hidden
+  // one and block the search for a visible one. Running target goals only let go once canAttack fails
+  @Override
+  public boolean canAttack(LivingEntity target) {
+    return super.canAttack(target) && this.targetUnseenTicks <= this.getTargetUnseenMemoryTicks();
+  }
+
+  protected int getTargetUnseenMemoryTicks() {
+    return TARGET_UNSEEN_MEMORY_TICKS;
   }
 
   @Override
