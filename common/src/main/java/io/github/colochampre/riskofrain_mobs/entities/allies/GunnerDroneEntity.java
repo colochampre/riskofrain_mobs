@@ -47,6 +47,12 @@ public class GunnerDroneEntity extends AbstractDroneEntity implements RangedAtta
     super(entityType, level);
   }
 
+  // Unlike the turret, it can fly around whatever hides the target, so it keeps looking for a while
+  @Override
+  protected int getTargetUnseenMemoryTicks() {
+    return 60;
+  }
+
   @Override
   public int getDroneType() {
     return TYPE_FLYING;
