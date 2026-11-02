@@ -52,7 +52,8 @@ public class StoneGolemSummoning {
       for (int j = 0; j < match.getHeight(); j++) {
         BlockInWorld block = match.getBlock(i, j, 0);
         BlockState state = block.getState();
-        if (state.isAir()) continue;
+        // Leave whatever fills the gaps around the T (grass, water...) in place
+        if (state.canBeReplaced()) continue;
         level.setBlock(block.getPos(), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
         level.levelEvent(2001, block.getPos(), Block.getId(state));
       }
@@ -73,7 +74,8 @@ public class StoneGolemSummoning {
               .aisle("~^~", "###", "~#~")
               .where('^', BlockInWorld.hasState(BlockStatePredicate.forBlock(Blocks.REDSTONE_BLOCK)))
               .where('#', BlockInWorld.hasState(BlockStatePredicate.forBlock(Blocks.BLACKSTONE)))
-              .where('~', block -> block.getState().isAir())
+              // Unlike the vanilla iron golem, the gaps also accept replaceable blocks such as grass, dead bushes or water
+              .where('~', block -> block.getState().canBeReplaced())
               .build();
     }
     return pattern;
