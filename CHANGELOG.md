@@ -7,6 +7,7 @@
 - **In-game config screen** (Cloth Config, via Mod Menu on Fabric). Note: settings from the previous version are not carried over.
 - **New drops:** Lemurians drop a fire charge and Wisps drop charcoal (both affected by Looting).
 - **Muzzle flashes** on drone and turret shots.
+- **Simplified Chinese** translation, now complete (mob names follow the Chinese localization of Risk of Rain 2).
 
 ### Changed
 - **Natural spawns rebalanced.** Enemies now share each biome's monster spawn weight instead of being added on top of it, so they no longer crowd out vanilla monsters. Biomes with too few monsters (such as mushroom fields and the Deep Dark) get none.
