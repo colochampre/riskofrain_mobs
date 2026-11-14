@@ -1,5 +1,10 @@
 package io.github.colochampre.riskofrain_mobs.entities.enemies;
 
+import io.github.colochampre.riskofrain_mobs.utils.ItemPickup;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.npc.InventoryCarrier;
+import net.minecraft.world.item.ItemStack;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.entities.goals.WispAttackGoal;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
@@ -44,7 +49,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class WispEntity extends Monster {
+public class WispEntity extends Monster implements InventoryCarrier {
+  private final SimpleContainer inventory = ItemPickup.createInventory();
 
   private static final int TARGET_UNSEEN_MEMORY_TICKS = 20;
   // Shared by the attack goal (server) and the client-side beam effect
@@ -324,8 +330,54 @@ public class WispEntity extends Monster {
   }
 
   @Override
+  public void addAdditionalSaveData(CompoundTag nbt) {
+    super.addAdditionalSaveData(nbt);
+    ItemPickup.save(this, nbt);
+  }
+
+  @Override
+  public void readAdditionalSaveData(CompoundTag nbt) {
+    super.readAdditionalSaveData(nbt);
+    ItemPickup.load(this, this, nbt);
+  }
+
+  @Override
+  public SimpleContainer getInventory() {
+    return this.inventory;
+  }
+
+  // Read at runtime so a change in the config GUI applies without a restart
+  @Override
+  public boolean canPickUpLoot() {
+    return ItemPickup.enemiesCanPickUp();
+  }
+
+  @Override
+  public boolean wantsToPickUp(ItemStack stack) {
+    return ItemPickup.wantsToPickUp(this, stack);
+  }
+
+  @Override
+  protected void pickUpItem(ItemEntity itemEntity) {
+    ItemPickup.pickUp(this, this, itemEntity);
+  }
+
+  @Override
+  protected void dropEquipment() {
+    super.dropEquipment();
+    ItemPickup.dropAll(this, this);
+  }
+
+  @Override
+  public void checkDespawn() {
+    ItemPickup.dropBeforePeacefulDespawn(this, this);
+    super.checkDespawn();
+  }
+
+  @Override
   public boolean removeWhenFarAway(double distance) {
-    return RoRConfigs.get().MOBS.WISPS.ENABLE_DESPAWN;
+    // A mob that carries an item never despawns, whatever the setting says
+    return !ItemPickup.hasItems(this) && RoRConfigs.get().MOBS.WISPS.ENABLE_DESPAWN;
   }
 
   public boolean isFlying() {
