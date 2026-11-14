@@ -1,9 +1,9 @@
 # Changelog
 
-## 1.3.0 - Minecraft 1.20.1 (Fabric & Forge)
+## 1.3.0 - Minecraft 1.20.4 (Fabric & NeoForge)
 
 ### New
-- **Fabric support.** The mod now runs on both Fabric and Forge (requires Architectury API and Cloth Config; Fabric API on Fabric).
+- **Minecraft 1.20.4 support.** First release for 1.20.4, on Fabric and NeoForge (requires Architectury API and Cloth Config; Fabric API on Fabric).
 - **In-game config screen** (Cloth Config, via Mod Menu on Fabric). Note: settings from the previous version are not carried over.
 - **New drops:** Lemurians drop a fire charge and Wisps drop charcoal (both affected by Looting).
 - **Muzzle flashes** on drone and turret shots.
