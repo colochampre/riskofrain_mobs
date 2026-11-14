@@ -30,6 +30,7 @@ public class BeetleRenderer extends MobRenderer<BeetleEntity, BeetleModel<Beetle
     poseStack.scale(scale, scale, scale);
     super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     poseStack.popPose();
+    CarriedItemsRenderer.render(entity, this.shouldShowName(entity), scale, poseStack, buffer);
   }
 
   @Override

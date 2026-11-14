@@ -1,5 +1,6 @@
 package io.github.colochampre.riskofrain_mobs.client.renderer;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.client.models.GunnerDroneModel;
 import io.github.colochampre.riskofrain_mobs.client.renderer.layers.GunnerDroneEyeLayer;
@@ -7,6 +8,7 @@ import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerDroneEntity;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
@@ -24,6 +26,12 @@ public class GunnerDroneRenderer extends MobRenderer<GunnerDroneEntity, GunnerDr
   public GunnerDroneRenderer(EntityRendererProvider.Context context) {
     super(context, new GunnerDroneModel<>(context.bakeLayer(RoREntityRendering.GUNNER_DRONE_LAYER)), 0.30F);
     this.addLayer(new GunnerDroneEyeLayer(this));
+  }
+
+  @Override
+  public void render(@NotNull GunnerDroneEntity entity, float entityYaw, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource buffer, int packedLight) {
+    super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+    CarriedItemsRenderer.render(entity, this.shouldShowName(entity), 1.0F, poseStack, buffer);
   }
 
   @Override

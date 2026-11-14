@@ -35,6 +35,7 @@ public class GunnerTurretRenderer extends MobRenderer<GunnerTurretEntity, Gunner
     poseStack.scale(scale, scale, scale);
     super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     poseStack.popPose();
+    CarriedItemsRenderer.render(entity, this.shouldShowName(entity), scale, poseStack, buffer);
   }
 
   @Override
