@@ -11,6 +11,8 @@ import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
@@ -31,7 +33,7 @@ import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import org.jetbrains.annotations.Nullable;
 
 public class BeetleEntity extends Monster implements InventoryCarrier, CarriedItemsSource {
-  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = ItemPickup.defineCarriedItems(BeetleEntity.class);
+  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = SynchedEntityData.defineId(BeetleEntity.class, EntityDataSerializers.COMPOUND_TAG);
   private final SimpleContainer inventory = ItemPickup.createInventory(this, DATA_CARRIED_ITEMS);
 
   private int attackTick;

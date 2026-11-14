@@ -84,7 +84,7 @@ public abstract class AbstractDroneEntity extends TamableAnimal implements Inven
   private final DroneFollowOwnerGoal followOwnerGoal = new DroneFollowOwnerGoal(this, 1.0D, 8.0F, 4.0F, true);
   private final WaterAvoidingRandomFlyingGoal randomFlyingGoal = new WaterAvoidingRandomFlyingGoal(this, 0.5D);
   private final SitWhenOrderedToGoal sitGoal = new SitWhenOrderedToGoal(this);
-  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = ItemPickup.defineCarriedItems(AbstractDroneEntity.class);
+  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = SynchedEntityData.defineId(AbstractDroneEntity.class, EntityDataSerializers.COMPOUND_TAG);
   private final SimpleContainer inventory = ItemPickup.createInventory(this, DATA_CARRIED_ITEMS);
   private float bodyXRot;
   private float bodyZRot;

@@ -6,8 +6,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.Difficulty;
@@ -40,11 +38,7 @@ public final class ItemPickup {
   private ItemPickup() {
   }
 
-  // Each entity class needs its own accessor, as defineId is keyed by the class that calls it
-  public static EntityDataAccessor<CompoundTag> defineCarriedItems(Class<? extends Entity> owner) {
-    return SynchedEntityData.defineId(owner, EntityDataSerializers.COMPOUND_TAG);
-  }
-
+  // Each entity class defines its own accessor with SynchedEntityData.defineId, which must be called from that class
   public static void registerCarriedItems(Entity entity, EntityDataAccessor<CompoundTag> accessor) {
     entity.getEntityData().define(accessor, new CompoundTag());
   }

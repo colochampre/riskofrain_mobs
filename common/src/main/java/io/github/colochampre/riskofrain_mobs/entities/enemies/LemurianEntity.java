@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class LemurianEntity extends Monster implements InventoryCarrier, CarriedItemsSource {
-  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = ItemPickup.defineCarriedItems(LemurianEntity.class);
+  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = SynchedEntityData.defineId(LemurianEntity.class, EntityDataSerializers.COMPOUND_TAG);
   private final SimpleContainer inventory = ItemPickup.createInventory(this, DATA_CARRIED_ITEMS);
 
   private static final EntityDataAccessor<Integer> DATA_TYPE_ID = SynchedEntityData.defineId(LemurianEntity.class, EntityDataSerializers.INT);

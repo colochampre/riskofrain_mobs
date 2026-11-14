@@ -51,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class WispEntity extends Monster implements InventoryCarrier, CarriedItemsSource {
-  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = ItemPickup.defineCarriedItems(WispEntity.class);
+  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = SynchedEntityData.defineId(WispEntity.class, EntityDataSerializers.COMPOUND_TAG);
   private final SimpleContainer inventory = ItemPickup.createInventory(this, DATA_CARRIED_ITEMS);
 
   private static final int TARGET_UNSEEN_MEMORY_TICKS = 20;
