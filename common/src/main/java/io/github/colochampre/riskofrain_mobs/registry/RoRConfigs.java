@@ -52,6 +52,7 @@ public class RoRConfigs implements ConfigData {
         MOBS.STONE_GOLEMS.clampSpawns();
         MOBS.WISPS.clampSpawns();
         ITEM_PICKUP.INVENTORY_SLOTS = Mth.clamp(ITEM_PICKUP.INVENTORY_SLOTS, 1, 27);
+        ITEM_PICKUP.DISPLAY_DISTANCE = Mth.clamp(ITEM_PICKUP.DISPLAY_DISTANCE, 1, 64);
     }
 
     private static int clampSpawnRate(int rate) {
@@ -197,5 +198,9 @@ public class RoRConfigs implements ConfigData {
         public boolean DRONES_CAN_PICK_UP = false;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 27)
         public int INVENTORY_SLOTS = 8;
+        // Read by the client only: the icons above carrying mobs
+        public boolean SHOW_CARRIED_ITEMS = true;
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 64)
+        public int DISPLAY_DISTANCE = 16;
     }
 }
