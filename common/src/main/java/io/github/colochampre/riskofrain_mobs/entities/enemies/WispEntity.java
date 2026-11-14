@@ -1,6 +1,7 @@
 package io.github.colochampre.riskofrain_mobs.entities.enemies;
 
 import io.github.colochampre.riskofrain_mobs.utils.ItemPickup;
+import io.github.colochampre.riskofrain_mobs.utils.CarriedItemsSource;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.InventoryCarrier;
@@ -49,8 +50,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class WispEntity extends Monster implements InventoryCarrier {
-  private final SimpleContainer inventory = ItemPickup.createInventory();
+public class WispEntity extends Monster implements InventoryCarrier, CarriedItemsSource {
+  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = ItemPickup.defineCarriedItems(WispEntity.class);
+  private final SimpleContainer inventory = ItemPickup.createInventory(this, DATA_CARRIED_ITEMS);
 
   private static final int TARGET_UNSEEN_MEMORY_TICKS = 20;
   // Shared by the attack goal (server) and the client-side beam effect
@@ -128,6 +130,7 @@ public class WispEntity extends Monster implements InventoryCarrier {
   protected void defineSynchedData() {
     super.defineSynchedData();
     this.entityData.define(DATA_ID_ATTACK_TARGET, 0);
+    ItemPickup.registerCarriedItems(this, DATA_CARRIED_ITEMS);
   }
 
   @Override
@@ -339,6 +342,11 @@ public class WispEntity extends Monster implements InventoryCarrier {
   public void readAdditionalSaveData(CompoundTag nbt) {
     super.readAdditionalSaveData(nbt);
     ItemPickup.load(this, this, nbt);
+  }
+
+  @Override
+  public CompoundTag getCarriedItemsTag() {
+    return this.entityData.get(DATA_CARRIED_ITEMS);
   }
 
   @Override

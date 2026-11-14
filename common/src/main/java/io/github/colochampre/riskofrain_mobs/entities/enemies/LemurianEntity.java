@@ -1,6 +1,7 @@
 package io.github.colochampre.riskofrain_mobs.entities.enemies;
 
 import io.github.colochampre.riskofrain_mobs.utils.ItemPickup;
+import io.github.colochampre.riskofrain_mobs.utils.CarriedItemsSource;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.InventoryCarrier;
@@ -44,8 +45,9 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class LemurianEntity extends Monster implements InventoryCarrier {
-  private final SimpleContainer inventory = ItemPickup.createInventory();
+public class LemurianEntity extends Monster implements InventoryCarrier, CarriedItemsSource {
+  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = ItemPickup.defineCarriedItems(LemurianEntity.class);
+  private final SimpleContainer inventory = ItemPickup.createInventory(this, DATA_CARRIED_ITEMS);
 
   private static final EntityDataAccessor<Integer> DATA_TYPE_ID = SynchedEntityData.defineId(LemurianEntity.class, EntityDataSerializers.INT);
   private static final float FIREBALL_ATTACK_RANGE = 20;
@@ -88,6 +90,7 @@ public class LemurianEntity extends Monster implements InventoryCarrier {
   protected void defineSynchedData() {
     super.defineSynchedData();
     this.entityData.define(DATA_TYPE_ID, 0);
+    ItemPickup.registerCarriedItems(this, DATA_CARRIED_ITEMS);
   }
 
   @Override
@@ -212,6 +215,11 @@ public class LemurianEntity extends Monster implements InventoryCarrier {
     } else {
       super.handleEntityEvent(b);
     }
+  }
+
+  @Override
+  public CompoundTag getCarriedItemsTag() {
+    return this.entityData.get(DATA_CARRIED_ITEMS);
   }
 
   @Override

@@ -1,6 +1,7 @@
 package io.github.colochampre.riskofrain_mobs.entities.enemies;
 
 import io.github.colochampre.riskofrain_mobs.utils.ItemPickup;
+import io.github.colochampre.riskofrain_mobs.utils.CarriedItemsSource;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.InventoryCarrier;
@@ -9,6 +10,7 @@ import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
@@ -28,8 +30,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import org.jetbrains.annotations.Nullable;
 
-public class BeetleEntity extends Monster implements InventoryCarrier {
-  private final SimpleContainer inventory = ItemPickup.createInventory();
+public class BeetleEntity extends Monster implements InventoryCarrier, CarriedItemsSource {
+  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = ItemPickup.defineCarriedItems(BeetleEntity.class);
+  private final SimpleContainer inventory = ItemPickup.createInventory(this, DATA_CARRIED_ITEMS);
 
   private int attackTick;
 
@@ -60,6 +63,12 @@ public class BeetleEntity extends Monster implements InventoryCarrier {
     this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
     this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolem.class, true));
     this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, WanderingTrader.class, true));
+  }
+
+  @Override
+  protected void defineSynchedData() {
+    super.defineSynchedData();
+    ItemPickup.registerCarriedItems(this, DATA_CARRIED_ITEMS);
   }
 
   @Override
@@ -135,6 +144,11 @@ public class BeetleEntity extends Monster implements InventoryCarrier {
   public void readAdditionalSaveData(CompoundTag nbt) {
     super.readAdditionalSaveData(nbt);
     ItemPickup.load(this, this, nbt);
+  }
+
+  @Override
+  public CompoundTag getCarriedItemsTag() {
+    return this.entityData.get(DATA_CARRIED_ITEMS);
   }
 
   @Override
