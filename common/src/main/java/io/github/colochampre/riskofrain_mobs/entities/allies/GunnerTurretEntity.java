@@ -4,6 +4,7 @@ import io.github.colochampre.riskofrain_mobs.entities.goals.GunnerTurretAttackGo
 import io.github.colochampre.riskofrain_mobs.entities.projectiles.BulletEntity;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoRItems;
+import io.github.colochampre.riskofrain_mobs.utils.ItemPickup;
 import io.github.colochampre.riskofrain_mobs.utils.EntityUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -170,6 +171,8 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
           if (!isCreativeMode && this.level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
             this.dropAsItem();
           }
+          // discard() does not go through the death drops, and the item only keeps health, owner and color
+          ItemPickup.dropAll(this, this);
           this.discard();
         }
       }
