@@ -59,6 +59,8 @@ public final class ItemPickup {
   // overflow is dropped at the mob's position instead
   public static void load(Mob mob, InventoryCarrier carrier, CompoundTag tag) {
     SimpleContainer inventory = carrier.getInventory();
+    // Loading can run again on a live mob (/data merge), so start empty as vanilla fromTag does, or items double
+    inventory.clearContent();
     ListTag list = tag.getList(InventoryCarrier.TAG_INVENTORY, 10);
     for (int i = 0; i < list.size(); i++) {
       ItemStack stack = ItemStack.of(list.getCompound(i));
