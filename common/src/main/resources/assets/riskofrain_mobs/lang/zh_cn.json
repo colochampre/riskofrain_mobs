@@ -84,5 +84,11 @@
   "text.autoconfig.riskofrain_mobs.option.SOUNDS.CHAT_MESSAGE": "聊天消息",
   "text.autoconfig.riskofrain_mobs.option.SOUNDS.DIFFICULTY_UPDATE": "难度变化",
   "text.autoconfig.riskofrain_mobs.option.SOUNDS.LEVEL_UP": "等级变化",
-  "text.autoconfig.riskofrain_mobs.option.SOUNDS.PLAYER_DEATH_SOUND": "玩家死亡音效"
+  "text.autoconfig.riskofrain_mobs.option.SOUNDS.PLAYER_DEATH_SOUND": "玩家死亡音效",
+
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP": "物品拾取",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.@Tooltip": "生物会从地面拾取雨中冒险物品并获得其被动效果。携带的物品会在死亡时掉落。",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.ENEMIES_CAN_PICK_UP": "敌人可拾取物品",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DRONES_CAN_PICK_UP": "无人机可拾取物品",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.INVENTORY_SLOTS": "物品栏格数"
 }

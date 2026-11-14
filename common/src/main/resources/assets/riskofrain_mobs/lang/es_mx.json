@@ -84,5 +84,11 @@
     "text.autoconfig.riskofrain_mobs.option.SOUNDS.CHAT_MESSAGE": "Mensaje de Chat",
     "text.autoconfig.riskofrain_mobs.option.SOUNDS.DIFFICULTY_UPDATE": "Actualización de Dificultad",
     "text.autoconfig.riskofrain_mobs.option.SOUNDS.LEVEL_UP": "Nuevo Nivel",
-    "text.autoconfig.riskofrain_mobs.option.SOUNDS.PLAYER_DEATH_SOUND": "Sonido de Muerte del Jugador"
+    "text.autoconfig.riskofrain_mobs.option.SOUNDS.PLAYER_DEATH_SOUND": "Sonido de Muerte del Jugador",
+
+    "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP": "Recogida de objetos",
+    "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.@Tooltip": "Los mobs recogen objetos de Risk of Rain del suelo y obtienen sus efectos pasivos. Los objetos que llevan se sueltan al morir.",
+    "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.ENEMIES_CAN_PICK_UP": "Los Enemigos Pueden Recoger Objetos",
+    "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DRONES_CAN_PICK_UP": "Los Drones Pueden Recoger Objetos",
+    "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.INVENTORY_SLOTS": "Espacios de Inventario"
 }

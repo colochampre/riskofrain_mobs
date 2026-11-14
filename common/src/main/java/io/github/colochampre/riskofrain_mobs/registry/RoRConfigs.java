@@ -23,6 +23,10 @@ public class RoRConfigs implements ConfigData {
     @ConfigEntry.Gui.Tooltip
     public SoundsConfig SOUNDS = new SoundsConfig();
 
+    @ConfigEntry.Gui.CollapsibleObject(startExpanded = false)
+    @ConfigEntry.Gui.Tooltip
+    public ItemPickupConfig ITEM_PICKUP = new ItemPickupConfig();
+
     public static void init() {
         AutoConfig.register(RoRConfigs.class, GsonConfigSerializer::new);
         ConfigHolder<RoRConfigs> holder = AutoConfig.getConfigHolder(RoRConfigs.class);
@@ -47,6 +51,7 @@ public class RoRConfigs implements ConfigData {
         MOBS.LEMURIANS.clampSpawns();
         MOBS.STONE_GOLEMS.clampSpawns();
         MOBS.WISPS.clampSpawns();
+        ITEM_PICKUP.INVENTORY_SLOTS = Mth.clamp(ITEM_PICKUP.INVENTORY_SLOTS, 1, 27);
     }
 
     private static int clampSpawnRate(int rate) {
@@ -185,5 +190,12 @@ public class RoRConfigs implements ConfigData {
         public int LEVEL_UP = 0;
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int PLAYER_DEATH_SOUND = 0;
+    }
+
+    public static class ItemPickupConfig implements ConfigData {
+        public boolean ENEMIES_CAN_PICK_UP = true;
+        public boolean DRONES_CAN_PICK_UP = false;
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 27)
+        public int INVENTORY_SLOTS = 8;
     }
 }
