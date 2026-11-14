@@ -20,9 +20,9 @@ User request (2026-11-14): "se podría hacer que los mobs de riskofrain_mobs ten
 
 ## Tasks
 
-- [ ] T1 S6-S8: `ITEM_PICKUP` config, bounds and clamp in `validatePostLoad`, labels and tooltip in the four lang files.
-- [ ] T2 S1-S5, S7: shared pickup support (inventory, NBT, tag check, pickup, despawn rule, death drop, overflow on load) for the four enemies; tag file `item_users.json`.
-- [ ] T3 S2, S5: the same for Gunner Drone and Gunner Turret, plus drops on break-down and on turret pick-up.
+- [x] T1 S6-S8 (`a879107`): `ITEM_PICKUP` config, bounds and clamp in `validatePostLoad`, labels and tooltip in the four lang files.
+- [x] T2 S1-S5, S7 (`8a0509a`): shared pickup support (inventory, NBT, tag check, pickup, despawn rule, death drop, overflow on load) for the four enemies; tag file `item_users.json`.
+- [x] T3 S2, S5 (`a106dbd`): the same for Gunner Drone and Gunner Turret, plus drops on break-down and on turret pick-up.
 - [ ] T4: build, both servers, and a console check with riskofrain_items loaded in the dev run (local jar, git-ignored): a dropped item is picked up, a damaged Beetle with Bustling Fungus heals, the item drops on kill, a drone does not pick up by default.
 - [ ] T5: user in-game test on Fabric and Forge with both mods (closes T4 of the items side too).
 
@@ -32,3 +32,4 @@ Risk: item 6 (no automated test covers pickup or drops).
 
 - L1 (2026-11-14), user: design agreed in conversation. Ground pickup only; Infusion, Golden Gun, Smart Shopper ("y cualquier item que no aplique a mobs") picked up without effect; Soldier's Syringe without effect on mobs ("Rompería animaciónes timeadas para que coincidan con el sonido"); Goat Hoof and Rose Buckler trigger while moving on mobs. "Tenes razon. Vamos por la 1": descriptive config name instead of Artifact of Evolution.
 - L2: findings before writing. The four enemies override `removeWhenFarAway` with their `ENABLE_DESPAWN` setting, so S4 goes there. No entity picks up anything today. Later, out of scope: "Más adelante ajustamos además el momento en que se aplica el daño del hit de la animación".
+- L3: T1-T3 done, `./gradlew build` passes. Shared logic is `utils/ItemPickup` (tag, container, pickup, NBT, drops); each entity keeps only thin overrides of `getInventory`, `canPickUpLoot`, `wantsToPickUp`, `pickUpItem`, `dropEquipment`, save/load. `canPickUpLoot` reads the config at runtime, so the GUI applies without a restart; the container size is fixed at construction. Findings: vanilla `SimpleContainer.fromTag` (and so `readInventoryFromTag`) loses stacks that do not fit, so S7 uses its own load that drops the overflow at the mob. `dropEquipment` runs from `dropAllDeathLoot` outside the `doMobLoot` rule (as for Villager), so carried items drop even with mob loot off. `Animal.removeWhenFarAway` already returns false, so drones need no S4 override. Decisions where the spec was silent: drones pick up only while tamed (an untamed one is an inert shop item); the break-down path drops the items itself because it cancels `die()`; the turret pick-up drops them before `discard()`, also in creative, since the item only keeps health, owner and color; hostile mobs drop their items before the Peaceful discard in `checkDespawn`, otherwise S4 would not hold there. Open: the overflow drop on load happens while the entity is being loaded, to be watched in T4/T5; no server run yet.
