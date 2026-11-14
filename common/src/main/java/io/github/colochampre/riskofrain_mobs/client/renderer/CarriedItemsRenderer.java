@@ -40,9 +40,13 @@ public final class CarriedItemsRenderer {
   private static final float ICON_SIZE = 0.4F;
   private static final float ICON_GAP = 0.12F;
   private static final float COUNT_GAP = 0.04F;
-  private static final float ROW_HEIGHT = 0.45F;
-  private static final float TEXT_SCALE = 0.03F;
+  private static final float ROW_GAP = 0.05F;
+  // The count text is drawn at this fraction of the size it had at 0.03 per pixel
+  private static final float COUNT_TEXT_RATIO = 2.0F / 3.0F;
+  private static final float TEXT_SCALE = 0.03F * COUNT_TEXT_RATIO;
   private static final float FONT_HEIGHT = 8.0F;
+  // Rows are as tall as their tallest element, so a smaller text tightens them when it is the taller one
+  private static final float ROW_HEIGHT = Math.max(ICON_SIZE, FONT_HEIGHT * TEXT_SCALE) + ROW_GAP;
   // Vanilla name tags hang this far below their anchor (9 px at 0.025 per px)
   private static final float NAME_TAG_HEIGHT = 0.225F;
   private static final float GAP_ABOVE_MODEL = 0.2F;
