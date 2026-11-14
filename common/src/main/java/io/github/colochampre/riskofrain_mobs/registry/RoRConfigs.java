@@ -7,6 +7,7 @@ import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
+import me.shedaniel.clothconfig2.gui.entries.SelectionListEntry;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionResult;
 
@@ -53,6 +54,10 @@ public class RoRConfigs implements ConfigData {
         MOBS.WISPS.clampSpawns();
         ITEM_PICKUP.INVENTORY_SLOTS = Mth.clamp(ITEM_PICKUP.INVENTORY_SLOTS, 1, 27);
         ITEM_PICKUP.DISPLAY_DISTANCE = Mth.clamp(ITEM_PICKUP.DISPLAY_DISTANCE, 1, 64);
+        // Files written before this entry existed, or with an unknown value, load it as null
+        if (ITEM_PICKUP.DISPLAY_MODE == null) {
+            ITEM_PICKUP.DISPLAY_MODE = CarriedItemsDisplayMode.WHEN_LOOKING;
+        }
     }
 
     private static int clampSpawnRate(int rate) {
@@ -202,5 +207,18 @@ public class RoRConfigs implements ConfigData {
         public boolean SHOW_CARRIED_ITEMS = true;
         @ConfigEntry.BoundedDiscrete(min = 1, max = 64)
         public int DISPLAY_DISTANCE = 16;
+        @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
+        public CarriedItemsDisplayMode DISPLAY_MODE = CarriedItemsDisplayMode.WHEN_LOOKING;
+    }
+
+    public enum CarriedItemsDisplayMode implements SelectionListEntry.Translatable {
+        ALWAYS,
+        WHEN_LOOKING;
+
+        // AutoConfig's default name provider translates the key returned here, otherwise it would show the raw toString
+        @Override
+        public String getKey() {
+            return "text.autoconfig." + RoRMod.MOD_ID + ".option.ITEM_PICKUP.DISPLAY_MODE." + name();
+        }
     }
 }

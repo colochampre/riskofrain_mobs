@@ -7,6 +7,7 @@ import io.github.colochampre.riskofrain_mobs.utils.CarriedItemsSource;
 import io.github.colochampre.riskofrain_mobs.utils.ItemPickup;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
@@ -21,7 +22,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,6 +58,8 @@ public final class CarriedItemsRenderer {
   private static final float NAME_TAG_HEIGHT = 0.225F;
   private static final float GAP_ABOVE_MODEL = 0.2F;
   private static final float GAP_ABOVE_NAME = 0.05F;
+  // How far past the bounding box the view ray may pass and still count as looking at the mob
+  private static final double LOOK_MARGIN = 0.5D;
   private static final int MAX_CACHED_ENTITIES = 128;
 
   private record Carried(ItemStack stack, String label) {
@@ -84,6 +93,9 @@ public final class CarriedItemsRenderer {
     if (minecraft.getEntityRenderDispatcher().distanceToSqr(entity) > maxDistance * maxDistance) {
       return;
     }
+    if (config.DISPLAY_MODE != RoRConfigs.CarriedItemsDisplayMode.ALWAYS && !isLookedAt(entity, minecraft, maxDistance)) {
+      return;
+    }
 
     Font font = minecraft.font;
     float baseY = nameShown
@@ -112,6 +124,30 @@ public final class CarriedItemsRenderer {
       }
     }
     poseStack.popPose();
+  }
+
+  /**
+   * Whether the camera's view ray, within the display distance, reaches the mob's box widened by {@link #LOOK_MARGIN}
+   * with no block in between. Cheap math first, the block clip only for a mob that is already being aimed at.
+   */
+  private static boolean isLookedAt(Entity entity, Minecraft minecraft, double maxDistance) {
+    Camera camera = minecraft.gameRenderer.getMainCamera();
+    Entity cameraEntity = camera.getEntity();
+    if (cameraEntity == null) {
+      return false;
+    }
+    Vec3 from = camera.getPosition();
+    Vector3f look = camera.getLookVector();
+    Vec3 to = new Vec3(from.x + look.x() * maxDistance, from.y + look.y() * maxDistance, from.z + look.z() * maxDistance);
+    AABB box = entity.getBoundingBox().inflate(LOOK_MARGIN);
+    // A camera inside the widened box has no entry point, and nothing can stand between it and the mob
+    Vec3 hit = box.contains(from) ? from : box.clip(from, to).orElse(null);
+    if (hit == null) {
+      return false;
+    }
+    // The hit point sits on the view ray, so a block before it means the mob is behind that block
+    BlockHitResult block = entity.level().clip(new ClipContext(from, hit, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, cameraEntity));
+    return block.getType() == HitResult.Type.MISS;
   }
 
   private static float rowWidth(List<Carried> row, Font font) {

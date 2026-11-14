@@ -92,5 +92,8 @@
   "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DRONES_CAN_PICK_UP": "Drones Can Pick Up Items",
   "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.INVENTORY_SLOTS": "Inventory Slots",
   "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.SHOW_CARRIED_ITEMS": "Show Carried Items",
-  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_DISTANCE": "Carried Items Display Distance"
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_DISTANCE": "Carried Items Display Distance",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_MODE": "Carried Items Display Mode",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_MODE.ALWAYS": "Always",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_MODE.WHEN_LOOKING": "When Looking"
 }

@@ -92,5 +92,8 @@
   "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DRONES_CAN_PICK_UP": "无人机可拾取物品",
   "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.INVENTORY_SLOTS": "物品栏格数",
   "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.SHOW_CARRIED_ITEMS": "显示携带的物品",
-  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_DISTANCE": "携带物品显示距离"
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_DISTANCE": "携带物品显示距离",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_MODE": "携带物品显示模式",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_MODE.ALWAYS": "始终",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_MODE.WHEN_LOOKING": "注视时"
 }
