@@ -51,8 +51,13 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
 
   private static final EntityDataAccessor<Integer> DATA_TYPE_ID = SynchedEntityData.defineId(LemurianEntity.class, EntityDataSerializers.INT);
   private static final float FIREBALL_ATTACK_RANGE = 20;
-  public static final int ATTACK_DURATION = 10;
-  public static final int ATTACK_IMPACT_TICK = 5;
+  // Punch timing in ticks since the attack started, read by the server hit and the client model (S6):
+  // wind-up 0-6 (fist pulled back), strike 6-8 (punch driven forward), contact at 8, hold 8-9, recovery 9-14.
+  // The attack cooldown (LemurianAttackGoal, 20) must stay at least ATTACK_DURATION.
+  public static final int ATTACK_WINDUP_END = 6;
+  public static final int ATTACK_IMPACT_TICK = 8;
+  public static final int ATTACK_HOLD_END = 9;
+  public static final int ATTACK_DURATION = 14;
   private int attackTick;
   // Server only, not saved: an attack in progress is lost on unload
   @Nullable
@@ -203,6 +208,11 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
   public boolean getIsRightHandSelected() {
     //this.armSelected = ++this.armSelected % 2;
     this.rightHandSelected = !this.rightHandSelected;
+    return this.rightHandSelected;
+  }
+
+  /** Current value of the hand flag without flipping it, so the client model can read it every frame. */
+  public boolean peekRightHandSelected() {
     return this.rightHandSelected;
   }
 

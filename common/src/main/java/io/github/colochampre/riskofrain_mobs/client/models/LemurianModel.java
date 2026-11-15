@@ -2,6 +2,7 @@ package io.github.colochampre.riskofrain_mobs.client.models;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.colochampre.riskofrain_mobs.client.animation.AttackAnimation;
 import io.github.colochampre.riskofrain_mobs.entities.enemies.LemurianEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -13,6 +14,35 @@ import net.minecraft.util.Mth;
 
 @Environment(EnvType.CLIENT)
 public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
+  // Punch pose angles in radians. Axis conventions (model space: +X is the Lemurian's left, -Z is front, +Y is down,
+  // rotation order Rz*Ry*Rx), derived from the geometry and the old punch:
+  //  - arm/forearm xRot: negative swings the limb forward and up, positive back. The forearm xRot is relative to
+  //    the arm, so arm + forearm is where the forearm points; 0 is a straight arm.
+  //  - arm yRot: with the arm raised forward, positive sweeps the fist toward the entity's right (-X). "side" below
+  //    is +1 for the left arm and -1 for the right arm, so inward yaw is side * value.
+  //  - rib cage / stomach yRot: positive turns the chest toward the entity's right and moves the right shoulder
+  //    back, so the turn that pulls the punching shoulder back is -side * value and into the punch is +side * value.
+  //  - rib cage xRot: positive leans the chest forward.
+  // Wind-up keyframe: punching shoulder back, elbow bent with the fist near the chest, elbow slightly out.
+  private static final float WINDUP_ARM_X = 0.5F;
+  private static final float WINDUP_FOREARM_X = -2.5F;
+  private static final float WINDUP_ARM_YAW_OUT = 0.15F;
+  private static final float WINDUP_RIB_YAW = 0.4F;
+  private static final float WINDUP_STOMACH_YAW = 0.2F;
+  private static final float WINDUP_RIB_X = -0.05F;
+  // Guard arm (the one that does not punch) comes forward and bends a little as a counterbalance.
+  private static final float WINDUP_GUARD_ARM_X = -0.5F;
+  private static final float WINDUP_GUARD_FOREARM_X = -0.5F;
+  // Strike keyframe (contact): arm level with the shoulders and straight, fist slightly toward the middle.
+  private static final float STRIKE_ARM_X = -1.4F;
+  private static final float STRIKE_FOREARM_X = -0.05F;
+  private static final float STRIKE_ARM_YAW_IN = 0.12F;
+  private static final float STRIKE_RIB_YAW = 0.45F;
+  private static final float STRIKE_STOMACH_YAW = 0.25F;
+  private static final float STRIKE_RIB_X = 0.15F;
+  private static final float STRIKE_GUARD_ARM_X = 0.1F;
+  private static final float STRIKE_GUARD_FOREARM_X = -0.2F;
+
 
   private final ModelPart core;
   private final ModelPart stomach_axis;
@@ -61,7 +91,10 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
   private final ModelPart right_leg_3;
   private final ModelPart right_foot_axis;
   private final ModelPart right_foot;
-  private boolean rightHandSelected;
+  // Attack progress in elapsed ticks for the current frame, or -1 when not attacking. Set in prepareMobModel.
+  private float attackElapsed = -1.0F;
+  // Arm that punches in the current attack: +1 left arm (+X), -1 right arm. Set in prepareMobModel.
+  private float punchSide = 1.0F;
 
   public LemurianModel(ModelPart root) {
     this.core = root.getChild("core");
@@ -178,27 +211,43 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
     getLookAnim(headYaw, headPitch);
     getIdleAnim(entity, ageInTicks);
     getWalkAnim(limbSwing, limbSwingAmount);
+    // After walking: the punch is blended onto the walk/rest values, so it starts and ends without a snap.
+    if (this.attackElapsed >= 0.0F) {
+      getAttackAnim(this.attackElapsed, this.punchSide);
+    }
   }
 
   @Override
-  public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float ageInTicks) {
-    int i = entity.getAttackTick();
-    if (i > 0) {
-      getAttackAnim(entity, i, ageInTicks);
+  public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
+    // Rest/walk values of every part the punch touches, set every frame so nothing stays stuck after an attack.
+    this.left_arm_axis.xRot = -0.08726646F + Mth.cos(limbSwing) * 0.90F * limbSwingAmount;
+    this.left_forearm_axis.xRot = -0.2617994F + Mth.cos(limbSwing) * 0.75F * limbSwingAmount;
+    this.right_arm_axis.xRot = -0.08726646F - Mth.cos(limbSwing) * 0.90F * limbSwingAmount;
+    this.right_forearm_axis.xRot = -0.2617994F - Mth.cos(limbSwing) * 0.75F * limbSwingAmount;
+    this.head_axis.xRot = -0.5235988F - Mth.cos(limbSwing * 2F) * 0.3F * limbSwingAmount;
+    this.neck_axis.xRot = 0.2617994F + Mth.cos(limbSwing * 2F) * 0.3F * limbSwingAmount;
+    this.left_arm_axis.zRot = 0.0F;
+    this.right_arm_axis.zRot = 0.0F;
+    this.rib_cage_axis.xRot = 0.17453292F;
+    this.rib_cage_axis.zRot = 0.0F;
+    this.stomach_axis.xRot = 0.08726646F;
+    this.stomach_axis.zRot = 0.0F;
+
+    int attackTick = entity.getAttackTick();
+    if (attackTick > 0) {
+      // The hand is chosen once, on the first frame of the attack, and kept until it ends: the entity flips its
+      // flag only while "selecting", and selecting is re-armed on every frame without an attack. The flag is read
+      // from the entity (not stored in this shared model) so several Lemurians do not mix hands.
+      // As before, the flag is true when the left arm punches (the names are inverted but behavior is kept).
+      if (entity.getIsSelectedHand()) {
+        entity.getIsRightHandSelected();
+        entity.setIsSelectingHand(false);
+      }
+      this.punchSide = entity.peekRightHandSelected() ? 1.0F : -1.0F;
+      this.attackElapsed = AttackAnimation.progress(attackTick, partialTick, LemurianEntity.ATTACK_DURATION);
     } else {
       entity.setIsSelectingHand(true);
-      this.left_arm_axis.xRot = -0.08726646F + Mth.cos(limbSwing) * 0.90F * limbSwingAmount;
-      this.left_forearm_axis.xRot = -0.2617994F + Mth.cos(limbSwing) * 0.75F * limbSwingAmount;
-      this.right_arm_axis.xRot = -0.08726646F - Mth.cos(limbSwing) * 0.90F * limbSwingAmount;
-      this.right_forearm_axis.xRot = -0.2617994F - Mth.cos(limbSwing) * 0.75F * limbSwingAmount;
-      this.head_axis.xRot = -0.5235988F - Mth.cos(limbSwing * 2F) * 0.3F * limbSwingAmount;
-      this.neck_axis.xRot = 0.2617994F + Mth.cos(limbSwing * 2F) * 0.3F * limbSwingAmount;
-      this.left_arm_axis.zRot = 0.0F;
-      this.right_arm_axis.zRot = 0.0F;
-      this.rib_cage_axis.xRot = 0.17453292F;
-      this.rib_cage_axis.zRot = 0.0F;
-      this.stomach_axis.xRot = 0.08726646F;
-      this.stomach_axis.zRot = 0.0F;
+      this.attackElapsed = -1.0F;
     }
   }
 
@@ -256,56 +305,44 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
     this.tail_3_axis.zRot = Mth.cos(limbSwing * 0.75F) * 0.33F * limbSwingAmount;
   }
 
-  private void getAttackAnim(LemurianEntity entity, int attackTick, float ageInTicks) {
-    //int random = entity.getRandom().nextIntBetweenInclusive(1, 3);
-    if (entity.getIsSelectedHand()) {
-      this.rightHandSelected = entity.getIsRightHandSelected();
-      entity.setIsSelectingHand(false);
-    }
-    // right arm anims
-    if (this.rightHandSelected) {
-      //switch(random) {
-      //case 1:
-      rightPunch(attackTick, ageInTicks);
-      //break;
-      //case 2:
-      //break;
-      //case 3:
-      //break;
-      //}
-      // left arm anims
-    } else {
-      //switch(random) {
-      //case 1:
-      leftPunch(attackTick, ageInTicks);
-      //break;
-      //case 2:
-      //break;
-      //case 3:
-      //break;
-      //}
-    }
-  }
 
-  private void rightPunch(int i, float ageInTicks) {
-    this.left_arm_axis.xRot = -0.75F + 0.75F * Mth.triangleWave((float) i - ageInTicks, 10.0F);
-    this.left_arm_axis.zRot = -0.5F + 0.5F * Mth.triangleWave((float) i - ageInTicks, 10.0F);
-    this.left_forearm_axis.xRot = 0.0F + -1.25F + 1.25F * Mth.triangleWave((float) i - ageInTicks, 5.0F);
-    this.right_arm_axis.zRot = -(-0.1F + 0.1F * Mth.triangleWave((float) i - ageInTicks, 10.0F));
-    this.rib_cage_axis.xRot = -(-0.25F + 0.25F * Mth.triangleWave((float) i - ageInTicks, 5.0F));
-    this.rib_cage_axis.zRot = -0.1F + 0.1F * Mth.triangleWave((float) i - ageInTicks, 10.0F);
-    this.stomach_axis.xRot = -(-0.1F + 0.1F * Mth.triangleWave((float) i - ageInTicks, 10.0F));
-    this.stomach_axis.zRot = -0.1F + 0.1F * Mth.triangleWave((float) i - ageInTicks, 10.0F);
-  }
+  /**
+   * Punch as phases over the elapsed ticks (LemurianEntity ATTACK_* constants): wind-up (fist pulled back, torso
+   * turned away), strike (arm driven forward and straightened, torso turned into the punch), hold, recovery.
+   * Every value is the walk/rest value blended to the pose by a weight that is 0 at the start and at the end.
+   *
+   * @param side +1 when the left arm punches, -1 when the right arm punches
+   */
+  private void getAttackAnim(float elapsed, float side) {
+    float windupEnd = LemurianEntity.ATTACK_WINDUP_END;
+    float impact = LemurianEntity.ATTACK_IMPACT_TICK;
+    float holdEnd = LemurianEntity.ATTACK_HOLD_END;
+    float end = LemurianEntity.ATTACK_DURATION;
 
-  private void leftPunch(int i, float ageInTicks) {
-    this.right_arm_axis.xRot = -0.75F + 0.75F * Mth.triangleWave((float) i - ageInTicks, 10.0F);
-    this.right_arm_axis.zRot = -(-0.5F + 0.5F * Mth.triangleWave((float) i - ageInTicks, 10.0F));
-    this.right_forearm_axis.xRot = 0.0F + -1.25F + 1.25F * Mth.triangleWave((float) i - ageInTicks, 5.0F);
-    this.left_arm_axis.zRot = -0.1F + 0.1F * Mth.triangleWave((float) i - ageInTicks, 10.0F);
-    this.rib_cage_axis.xRot = -(-0.25F + 0.25F * Mth.triangleWave((float) i - ageInTicks, 5.0F));
-    this.rib_cage_axis.zRot = -(-0.1F + 0.1F * Mth.triangleWave((float) i - ageInTicks, 10.0F));
-    this.stomach_axis.xRot = -(-0.1F + 0.1F * Mth.triangleWave((float) i - ageInTicks, 10.0F));
-    this.stomach_axis.zRot = -(-0.1F + 0.1F * Mth.triangleWave((float) i - ageInTicks, 10.0F));
+    float windup = AttackAnimation.easeInOut(AttackAnimation.segment(elapsed, 0.0F, windupEnd));
+    float recovery = AttackAnimation.easeInOut(AttackAnimation.segment(elapsed, holdEnd, end));
+    // 0 = wind-up pose, 1 = full extension. Ease in: the punch builds speed and lands at impact.
+    float strike = AttackAnimation.easeIn(AttackAnimation.segment(elapsed, windupEnd, impact));
+    float weight = windup * (1.0F - recovery);
+
+    ModelPart punchArm = side > 0 ? this.left_arm_axis : this.right_arm_axis;
+    ModelPart punchForearm = side > 0 ? this.left_forearm_axis : this.right_forearm_axis;
+    ModelPart guardArm = side > 0 ? this.right_arm_axis : this.left_arm_axis;
+    ModelPart guardForearm = side > 0 ? this.right_forearm_axis : this.left_forearm_axis;
+
+    punchArm.xRot = AttackAnimation.lerp(weight, punchArm.xRot, AttackAnimation.lerp(strike, WINDUP_ARM_X, STRIKE_ARM_X));
+    punchForearm.xRot = AttackAnimation.lerp(weight, punchForearm.xRot, AttackAnimation.lerp(strike, WINDUP_FOREARM_X, STRIKE_FOREARM_X));
+    // The walk swings both arms sideways; blend that out so the fist goes straight ahead, with the yaw
+    // out in the wind-up and slightly inward at contact.
+    float armYaw = side * AttackAnimation.lerp(strike, -WINDUP_ARM_YAW_OUT, STRIKE_ARM_YAW_IN);
+    punchArm.yRot = AttackAnimation.lerp(weight, punchArm.yRot, armYaw);
+
+    guardArm.xRot = AttackAnimation.lerp(weight, guardArm.xRot, AttackAnimation.lerp(strike, WINDUP_GUARD_ARM_X, STRIKE_GUARD_ARM_X));
+    guardForearm.xRot = AttackAnimation.lerp(weight, guardForearm.xRot, AttackAnimation.lerp(strike, WINDUP_GUARD_FOREARM_X, STRIKE_GUARD_FOREARM_X));
+
+    // Torso: turns away from the punching side in the wind-up and into it at contact.
+    this.rib_cage_axis.yRot += weight * side * AttackAnimation.lerp(strike, -WINDUP_RIB_YAW, STRIKE_RIB_YAW);
+    this.stomach_axis.yRot += weight * side * AttackAnimation.lerp(strike, -WINDUP_STOMACH_YAW, STRIKE_STOMACH_YAW);
+    this.rib_cage_axis.xRot += weight * AttackAnimation.lerp(strike, WINDUP_RIB_X, STRIKE_RIB_X);
   }
 }
