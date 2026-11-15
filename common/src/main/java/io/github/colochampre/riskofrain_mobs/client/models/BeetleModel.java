@@ -37,7 +37,10 @@ public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
   private float attackElapsed = -1.0F;
   /** Capped walk cycle position and swing amount of the entity being rendered, set in prepareMobModel. */
   private float walkPosition;
-  private float walkAmount;
+  // Walk swing amounts: it walks on four limbs (the front legs are the left_arm_*/right_arm_*/*_forearm_* parts), all
+  // four use the raw limbSwingAmount; the body (core, chest, head, hips) is capped at BeetleEntity.WALK_MAX_AMOUNT.
+  private float legAmount;
+  private float bodyAmount;
 
   protected final ModelPart core;
   private final ModelPart chest_axis;
@@ -171,17 +174,16 @@ public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
 
   @Override
   public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
-    // Walk inputs are capped (see BeetleEntity.WALK_MAX_AMOUNT): the model never reads the raw limbSwing values.
-    this.walkPosition = entity.walkClock.position(partialTick);
-    this.walkAmount = Math.min(limbSwingAmount, BeetleEntity.WALK_MAX_AMOUNT);
-    limbSwing = this.walkPosition;
-    limbSwingAmount = this.walkAmount;
+    // Vanilla cadence; legs free, body capped (see the field comment).
+    this.walkPosition = limbSwing;
+    this.legAmount = limbSwingAmount;
+    this.bodyAmount = Math.min(limbSwingAmount, BeetleEntity.WALK_MAX_AMOUNT);
     // Rest/walk values of every part the ram touches, set every frame so nothing stays stuck after an attack.
-    this.core.z = 0 - Mth.cos(limbSwing) * 5.50F * limbSwingAmount;
-    this.head.z = 0 - Mth.cos(limbSwing) * 2.00F * limbSwingAmount;
+    this.core.z = 0 - Mth.cos(this.walkPosition) * 5.50F * this.bodyAmount;
+    this.head.z = 0 - Mth.cos(this.walkPosition) * 2.00F * this.bodyAmount;
     this.head_axis.z = NECK_REST_Z;
-    this.chest_axis.xRot = 0.0873F + Mth.cos(limbSwing) * 0.40F * limbSwingAmount;
-    this.head_axis.xRot = -0.0873F - Mth.cos(limbSwing) * 0.38F * limbSwingAmount;
+    this.chest_axis.xRot = 0.0873F + Mth.cos(this.walkPosition) * 0.40F * this.bodyAmount;
+    this.head_axis.xRot = -0.0873F - Mth.cos(this.walkPosition) * 0.38F * this.bodyAmount;
 
     int attackTick = entity.getAttackTick();
     this.attackElapsed = attackTick > 0
@@ -193,7 +195,7 @@ public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
   public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float headYaw, float headPitch) {
     getLookAnim(entity, headYaw, headPitch);
     getIdleAnim(entity, ageInTicks);
-    getWalkAnim(entity, this.walkPosition, this.walkAmount);
+    getWalkAnim(entity, this.walkPosition, this.legAmount, this.bodyAmount);
     if (this.attackElapsed >= 0.0F) {
       getAttackAnim(this.attackElapsed);
     }
@@ -221,18 +223,18 @@ public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
     }
   }
 
-  private void getWalkAnim(BeetleEntity entity, float limbSwing, float limbSwingAmount) {
-    this.core.y = 12 - Mth.cos(limbSwing) * 2.50F * limbSwingAmount;
-    this.chest_shell_axis.xRot = 0 - Mth.cos(limbSwing) * 0.20F * limbSwingAmount;
-    this.left_arm_axis.xRot = 0.0436F + Mth.cos(limbSwing) * 1.25F * limbSwingAmount;
-    this.left_forearm_axis.xRot = 0.1745F - Mth.cos(limbSwing) * 1.25F * limbSwingAmount;
-    this.right_arm_axis.xRot = 0.0436F + Mth.cos(limbSwing) * 0.65F * limbSwingAmount;
-    this.right_forearm_axis.xRot = 0.1745F - Mth.cos(limbSwing) * 0.65F * limbSwingAmount;
-    this.hips_axis.xRot = 0 - Mth.cos(limbSwing) * 0.40F * limbSwingAmount;
-    this.left_leg_1_axis.xRot = -0.3491F - Mth.cos(limbSwing) * 0.15F * limbSwingAmount;
-    this.left_leg_2_axis.xRot = 0 - Mth.cos(limbSwing) * 0.35F * limbSwingAmount;
-    this.right_leg_1_axis.xRot = -0.3491F - Mth.cos(limbSwing) * 0.20F * limbSwingAmount;
-    this.right_leg_2_axis.xRot = 0 - Mth.cos(limbSwing) * 0.30F * limbSwingAmount;
+  private void getWalkAnim(BeetleEntity entity, float limbSwing, float legAmount, float bodyAmount) {
+    this.core.y = 12 - Mth.cos(limbSwing) * 2.50F * bodyAmount;
+    this.chest_shell_axis.xRot = 0 - Mth.cos(limbSwing) * 0.20F * bodyAmount;
+    this.left_arm_axis.xRot = 0.0436F + Mth.cos(limbSwing) * 1.25F * legAmount;
+    this.left_forearm_axis.xRot = 0.1745F - Mth.cos(limbSwing) * 1.25F * legAmount;
+    this.right_arm_axis.xRot = 0.0436F + Mth.cos(limbSwing) * 0.65F * legAmount;
+    this.right_forearm_axis.xRot = 0.1745F - Mth.cos(limbSwing) * 0.65F * legAmount;
+    this.hips_axis.xRot = 0 - Mth.cos(limbSwing) * 0.40F * bodyAmount;
+    this.left_leg_1_axis.xRot = -0.3491F - Mth.cos(limbSwing) * 0.15F * legAmount;
+    this.left_leg_2_axis.xRot = 0 - Mth.cos(limbSwing) * 0.35F * legAmount;
+    this.right_leg_1_axis.xRot = -0.3491F - Mth.cos(limbSwing) * 0.20F * legAmount;
+    this.right_leg_2_axis.xRot = 0 - Mth.cos(limbSwing) * 0.30F * legAmount;
   }
 
   /**
