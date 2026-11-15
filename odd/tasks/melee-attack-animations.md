@@ -1,0 +1,35 @@
+# Melee attack animations and hit timing
+
+Objective: the Stone Golem, Beetle and Lemurian melee attacks deal their damage at the moment of contact in the animation, not when the attack starts, and the animations get a wind-up before the strike.
+Branch: `1.20.1-melee-attack-animations` from `1.20.1` (`c900f8e`). Delivery: ask-on-risk. Push, PR and merge are the user's.
+Test runner: none in the project. Checks are `./gradlew build`, dedicated servers stopped through rcon (no client classes loaded on the server), and the user's in-game test on Fabric and Forge.
+
+## Specs
+
+User requests (2026-11-14, 2026-11-15): "Más adelante ajustamos además el momento en que se aplica el daño del hit de la animación". On the golem: "la animación del golem es como un aplauso. Junta los brazos. [...] me hubiera gustado que abra los brazos y luego los cierre por delante como lo hace". On the Beetle: "me hubiera gustado que haga un pequeño retroceso con el cuello antes de embestir". On the Lemurian: "da un golpe con el puño, también hacia adelante sin impulso".
+
+- S1: Starting a melee attack starts the animation only. The damage (and the golem's strong knockback) is applied on the server at the impact tick, the tick where the animation reaches contact.
+- S2: "Si, que falle si salió del alcance." At the impact tick the hit is checked again with the same reach formula the attack goal uses. It misses (no damage, no knockback) if the target is out of reach, dead or removed. The attack is dropped if the attacker dies before the impact tick.
+- S3: Animations are built from explicit phases (wind-up, strike, recovery) over the attack progress, through a small client helper shared by the three models, instead of `Mth.triangleWave`. Phases:
+  - Stone Golem: opens both arms to the sides, then closes them fast in front of the body into a clap; contact is when the hands meet.
+  - Beetle: pulls its neck and head back, then rams forward with the head; contact is the end of the ram.
+  - Lemurian: pulls the punching fist back with a slight torso turn, then throws the punch; contact is full extension. It keeps alternating hands as today.
+- S4: "Si hay que alargar la animación incluso, se hace." Attack durations may grow. Each attack cooldown stays at least as long as its animation, so attacks never overlap.
+- S5: "El sonido de los ataques incluyen el momento de preparación, asique no se tienen en cuenta. [...] El sonido luego lo ajusto yo." Attack sounds keep playing when the attack starts; their timing is out of scope.
+- S6: The impact tick and the duration of each mob are one constant pair in the entity class, read by both the server hit and the client model, so changing the timing moves both.
+- S7 (assumption): taking damage during the wind-up does not cancel the attack. The golem and the Beetle stay immobile for the whole animation, as today; the Lemurian keeps moving, as today.
+
+## Tasks
+
+- [ ] T1 S1, S2, S4, S6: deferred hit on the server for the three mobs (pending target, impact tick, reach check, golem knockback moved with the hit), durations and cooldowns checked.
+- [ ] T2 S3: shared phase helper and the Stone Golem clap.
+- [ ] T3 S3: Beetle neck pull-back and ram.
+- [ ] T4 S3: Lemurian wind-up and punch, both hands.
+- [ ] T5: build, and both dedicated servers start and stop (no client class on the server); a summoned golem, Beetle and Lemurian attack a mob without server errors.
+- [ ] T6: user in-game test on Fabric and Forge: timing of the hit against the animation, misses when stepping out of reach, look of each animation. Angle and timing tweaks are expected here.
+
+Risk: item 6 (no automated test covers animation or hit timing; the look can only be judged in game).
+
+## Log
+
+- L1 (2026-11-15), findings before writing. All three mobs apply damage inside `doHurtTarget`, called by the attack goal in the same tick the attack starts (golem: `StoneGolemAttackGoal.checkAndPerformAttack`, which also calls `strongKnockback`; Lemurian: `LemurianAttackGoal`; Beetle: vanilla `MeleeAttackGoal`). The client animation starts from entity event `4` (`handleEntityEvent`). Current durations: golem 15 ticks (cooldown 40), Beetle 16 (vanilla cooldown 20), Lemurian 10 (cooldown 20); the Lemurian sets `attackTick` on the client only. The models pass `attackTick - partialTick` (the parameter is named `ageInTicks` in `prepareMobModel`, but it is the partial tick) to `Mth.triangleWave(x, period)`, a linear zigzag that is +1 at the ends of the period and -1 in the middle, so a part with the attack's period peaks halfway. Golem parts with period 10 (shoulder `zRot`) start at their extreme instead of rest, which the phase rewrite removes. Animation cost is a few float operations per part per frame on the client only.
