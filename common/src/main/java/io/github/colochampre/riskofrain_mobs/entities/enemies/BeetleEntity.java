@@ -46,7 +46,7 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
   public static final int ATTACK_DURATION = 18;
   private int attackTick;
   /**
-   * Cap for the walk swing amount of the body (the four legs are not capped): the steady-state
+   * Cap for the walk swing amount of every part, legs and body: the steady-state
    * `min(distance * 4, 1)` at the normal chase speed (speed 0.21 x 1.0, about 0.381).
    */
   public static final float WALK_MAX_AMOUNT = 0.39F;
