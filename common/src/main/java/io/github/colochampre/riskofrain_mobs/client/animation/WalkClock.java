@@ -40,6 +40,14 @@ public final class WalkClock {
    * has its leg extremes (a footfall) every {@code PI / k} units with offset 0.
    */
   public boolean crossedContact(float interval, float offset) {
-    return Mth.floor((this.position - offset) / interval) > Mth.floor((this.positionOld - offset) / interval);
+    return crossedContact(this.positionOld, this.position, interval, offset);
+  }
+
+  /**
+   * Whether a walk position moving from {@code previous} to {@code current} crossed a foot contact, see
+   * {@link #crossedContact(float, float)}. Usable with any position, such as vanilla's walk animation position.
+   */
+  public static boolean crossedContact(float previous, float current, float interval, float offset) {
+    return Mth.floor((current - offset) / interval) > Mth.floor((previous - offset) / interval);
   }
 }

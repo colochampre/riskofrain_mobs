@@ -47,9 +47,8 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
   private float attackElapsed = -1.0F;
   /** Capped walk cycle position and swing amount of the entity being rendered, set in prepareMobModel. */
   private float walkPosition;
-  // Walk swing amounts: the legs follow the raw limbSwingAmount, the torso and arms are capped (WALK_MAX_AMOUNT)
-  private float legAmount;
-  private float bodyAmount;
+  // Walk swing amount, capped at StoneGolemEntity.WALK_MAX_AMOUNT for every walk part
+  private float walkAmount;
   protected final ModelPart core;
   protected ModelPart torso_axis;
   protected ModelPart torso;
@@ -332,7 +331,7 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
   public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float headYaw, float headPitch) {
     getLookAnim(headYaw, headPitch);
     getIdleAnim(ageInTicks);
-    getWalkingAnim(this.walkPosition, this.legAmount, this.bodyAmount);
+    getWalkingAnim(this.walkPosition, this.walkAmount);
     // After walking: the attack is added on top of the walk/rest values, so it starts and ends without a snap.
     if (this.attackElapsed >= 0.0F) {
       getAttackAnim(this.attackElapsed);
@@ -341,21 +340,20 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
 
   @Override
   public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
-    // Vanilla cadence. Legs: hip_axis and left/right_leg_*, free amplitude. Everything else (torso, shoulders, arms,
-    // forearms, hands) uses the amount capped at StoneGolemEntity.WALK_MAX_AMOUNT so a speed boost does not exaggerate it.
+    // Vanilla cadence. Every walk part (legs, torso, shoulders, arms, forearms, hands) uses the amount capped at
+    // StoneGolemEntity.WALK_MAX_AMOUNT so a speed boost does not exaggerate it.
     this.walkPosition = limbSwing;
-    this.legAmount = limbSwingAmount;
-    this.bodyAmount = Math.min(limbSwingAmount, StoneGolemEntity.WALK_MAX_AMOUNT);
+    this.walkAmount = Math.min(limbSwingAmount, StoneGolemEntity.WALK_MAX_AMOUNT);
     // Rest/walk values of every part the attack touches, set every frame so nothing stays stuck after an attack.
     this.torso_axis.xRot = 0.0F;
-    this.left_shoulder_axis.xRot = Mth.cos(this.walkPosition * 0.50F) * 0.8F * this.bodyAmount;
-    this.left_arm_1_axis.xRot = Mth.cos(this.walkPosition * 0.50F) * 0.8F * this.bodyAmount;
-    this.left_forearm_axis.xRot = -Mth.cos(this.walkPosition * 0.75F) * 0.8F * this.bodyAmount;
-    this.left_hand_1_axis.xRot = -Mth.cos(this.walkPosition * 0.75F) * 0.8F * this.bodyAmount;
-    this.right_shoulder_axis.xRot = -Mth.cos(this.walkPosition * 0.50F) * 0.8F * this.bodyAmount;
-    this.right_arm_axis.xRot = -Mth.cos(this.walkPosition * 0.50F) * 0.8F * this.bodyAmount;
-    this.right_forearm_axis.xRot = Mth.cos(this.walkPosition * 0.75F) * 0.8F * this.bodyAmount;
-    this.right_hand_1_axis.xRot = Mth.cos(this.walkPosition * 0.75F) * 0.8F * this.bodyAmount;
+    this.left_shoulder_axis.xRot = Mth.cos(this.walkPosition * 0.50F) * 0.8F * this.walkAmount;
+    this.left_arm_1_axis.xRot = Mth.cos(this.walkPosition * 0.50F) * 0.8F * this.walkAmount;
+    this.left_forearm_axis.xRot = -Mth.cos(this.walkPosition * 0.75F) * 0.8F * this.walkAmount;
+    this.left_hand_1_axis.xRot = -Mth.cos(this.walkPosition * 0.75F) * 0.8F * this.walkAmount;
+    this.right_shoulder_axis.xRot = -Mth.cos(this.walkPosition * 0.50F) * 0.8F * this.walkAmount;
+    this.right_arm_axis.xRot = -Mth.cos(this.walkPosition * 0.50F) * 0.8F * this.walkAmount;
+    this.right_forearm_axis.xRot = Mth.cos(this.walkPosition * 0.75F) * 0.8F * this.walkAmount;
+    this.right_hand_1_axis.xRot = Mth.cos(this.walkPosition * 0.75F) * 0.8F * this.walkAmount;
     this.left_shoulder_axis.yRot = 0.0F;
     this.left_shoulder_axis.zRot = 0.0F;
     this.left_arm_1_axis.zRot = 0.5235988F;
@@ -390,16 +388,16 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
   }
 
   // field_f = xRot | field_g = yRot | field_h = zRot
-  private void getWalkingAnim(float limbSwing, float legAmount, float bodyAmount) {
-    this.torso_axis.y = -2.5F + Mth.cos(limbSwing) * 2.8F * bodyAmount;
-    this.torso_axis.yRot = -Mth.cos(limbSwing * 0.5F) * 1.6F * bodyAmount;
-    this.left_shoulder_axis.yRot = -0.08726646F - Mth.cos(limbSwing * 0.5F) * 0.4F * bodyAmount;
-    this.right_shoulder_axis.yRot = -0.08726646F - Mth.cos(limbSwing * 0.5F) * 0.4F * bodyAmount;
-    this.hip_axis.yRot = Mth.cos(limbSwing * 0.5F) * 0.8F * legAmount;
-    this.left_leg_axis.xRot = 0.0F - Mth.cos(limbSwing * 0.5F) * 1.2F * legAmount;
-    this.left_leg_2_axis.xRot = 0.0F + Mth.cos(limbSwing) * 0.6F * legAmount;
-    this.right_leg_axis.xRot = 0.0F + Mth.cos(limbSwing * 0.5F) * 1.2F * legAmount;
-    this.right_leg_2_axis.xRot = 0.0F + Mth.cos(limbSwing) * 0.6F * legAmount;
+  private void getWalkingAnim(float limbSwing, float walkAmount) {
+    this.torso_axis.y = -2.5F + Mth.cos(limbSwing) * 2.8F * walkAmount;
+    this.torso_axis.yRot = -Mth.cos(limbSwing * 0.5F) * 1.6F * walkAmount;
+    this.left_shoulder_axis.yRot = -0.08726646F - Mth.cos(limbSwing * 0.5F) * 0.4F * walkAmount;
+    this.right_shoulder_axis.yRot = -0.08726646F - Mth.cos(limbSwing * 0.5F) * 0.4F * walkAmount;
+    this.hip_axis.yRot = Mth.cos(limbSwing * 0.5F) * 0.8F * walkAmount;
+    this.left_leg_axis.xRot = 0.0F - Mth.cos(limbSwing * 0.5F) * 1.2F * walkAmount;
+    this.left_leg_2_axis.xRot = 0.0F + Mth.cos(limbSwing) * 0.6F * walkAmount;
+    this.right_leg_axis.xRot = 0.0F + Mth.cos(limbSwing * 0.5F) * 1.2F * walkAmount;
+    this.right_leg_2_axis.xRot = 0.0F + Mth.cos(limbSwing) * 0.6F * walkAmount;
   }
 
   /**
