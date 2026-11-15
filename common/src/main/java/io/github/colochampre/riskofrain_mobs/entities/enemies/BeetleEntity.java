@@ -36,8 +36,13 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
   private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = SynchedEntityData.defineId(BeetleEntity.class, EntityDataSerializers.COMPOUND_TAG);
   private final SimpleContainer inventory = ItemPickup.createInventory(this, DATA_CARRIED_ITEMS);
 
-  public static final int ATTACK_DURATION = 16;
-  public static final int ATTACK_IMPACT_TICK = 8;
+  // Ram timing in ticks since the attack started, read by the server hit and the client model (S6):
+  // wind-up 0-8 (neck and head pulled back), strike 8-10 (fast ram), contact at 10, hold 10-11, recovery 11-18.
+  // The vanilla MeleeAttackGoal cooldown (20) must stay at least ATTACK_DURATION.
+  public static final int ATTACK_WINDUP_END = 8;
+  public static final int ATTACK_IMPACT_TICK = 10;
+  public static final int ATTACK_HOLD_END = 11;
+  public static final int ATTACK_DURATION = 18;
   private int attackTick;
   // Server only, not saved: an attack in progress is lost on unload
   @Nullable
