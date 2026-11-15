@@ -42,9 +42,14 @@ public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
   // foot contact is every PI (BeetleEntity.STEP_INTERVAL) with offset 0. Each pair swings forward while p moves from
   // its landing back to the next one: the front pair for p in (0, PI), the hind pair for p in (PI, 2 PI).
   private static final float HIND_PHASE = (float) Math.PI;
-  // Front legs (arm_axis) swing, the forearm lifts the claw only while the leg swings forward.
+  // Front legs: arm_axis swings; while the leg swings forward the arm also raises forward (reach) and the forearm
+  // lifts the claw, so the leg 'reaches' for the next step. Each side has a factor on purpose: identical front legs
+  // looked unnatural, so the left one moves wider than the right as a deliberate imperfection.
   private static final float FRONT_SWING = 0.95F;
+  private static final float FRONT_REACH = 1.0F;
   private static final float FRONT_LIFT = 1.0F;
+  private static final float FRONT_LEFT_FACTOR = 1.3F;
+  private static final float FRONT_RIGHT_FACTOR = 0.7F;
   // Hind legs: leg_1 swings, leg_2 folds (foot lifted) only while the leg swings forward.
   private static final float HIND_SWING = 0.30F;
   private static final float HIND_FOLD = 1.6F;
@@ -250,14 +255,15 @@ public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
     this.core.y = 12 + Mth.cos(limbSwing * 2.0F) * BODY_BOB * walkAmount;
     this.chest_shell_axis.xRot = Mth.cos(limbSwing) * SHELL_PITCH * walkAmount;
     this.hips_axis.xRot = Mth.cos(limbSwing) * HIPS_PITCH * walkAmount;
-    walkFrontLeg(this.left_arm_axis, this.left_forearm_axis, limbSwing, walkAmount);
-    walkFrontLeg(this.right_arm_axis, this.right_forearm_axis, limbSwing, walkAmount);
+    walkFrontLeg(this.left_arm_axis, this.left_forearm_axis, limbSwing, walkAmount * FRONT_LEFT_FACTOR);
+    walkFrontLeg(this.right_arm_axis, this.right_forearm_axis, limbSwing, walkAmount * FRONT_RIGHT_FACTOR);
     walkHindLeg(this.left_leg_1_axis, this.left_leg_2_axis, limbSwing, walkAmount);
     walkHindLeg(this.right_leg_1_axis, this.right_leg_2_axis, limbSwing, walkAmount);
   }
 
   private static void walkFrontLeg(ModelPart arm, ModelPart forearm, float limbSwing, float walkAmount) {
-    arm.xRot = 0.0436F + WalkCycle.swing(limbSwing, 0.0F) * FRONT_SWING * walkAmount;
+    arm.xRot = 0.0436F + WalkCycle.swing(limbSwing, 0.0F) * FRONT_SWING * walkAmount
+        - WalkCycle.fold(limbSwing, 0.0F) * FRONT_REACH * walkAmount;
     forearm.xRot = 0.1745F - WalkCycle.fold(limbSwing, 0.0F) * FRONT_LIFT * walkAmount;
   }
 
