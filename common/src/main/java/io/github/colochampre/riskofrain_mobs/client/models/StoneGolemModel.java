@@ -2,6 +2,7 @@ package io.github.colochampre.riskofrain_mobs.client.models;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.colochampre.riskofrain_mobs.client.animation.AttackAnimation;
 import io.github.colochampre.riskofrain_mobs.entities.enemies.StoneGolemEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -14,6 +15,33 @@ import org.jetbrains.annotations.NotNull;
 
 @Environment(EnvType.CLIENT)
 public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> {
+  // Melee attack pose angles in radians. Each one is an offset added on top of the rest/walk value of that part,
+  // so 0 means "unchanged". Axis conventions (model space: +X is the golem's left, -Z is front, +Y is down):
+  //  - shoulder xRot: negative raises the arm forward.
+  //  - shoulder yRot: with the arm raised, left positive / right negative sweeps it inward; the opposite opens it.
+  //  - arm/forearm/hand zRot: with the arm raised forward these act as a horizontal bend; left positive and
+  //    right negative bend inward.
+  // Strike keyframe ("clap"): the hands meet in front of the body.
+  private static final float CLAP_TORSO_X = 0.2F;
+  private static final float CLAP_SHOULDER_X = -1.5F;
+  private static final float CLAP_LEFT_SHOULDER_Z = -0.6F;
+  private static final float CLAP_RIGHT_SHOULDER_Z = 0.6F;
+  private static final float CLAP_LEFT_ARM_Z = 0.48F;
+  private static final float CLAP_RIGHT_ARM_Z = -0.61F;
+  private static final float CLAP_LEFT_FOREARM_Z = 0.41F;
+  private static final float CLAP_RIGHT_FOREARM_Z = -0.5F;
+  private static final float CLAP_FOREARM_X = -0.5F;
+  private static final float CLAP_LEFT_HAND_Z = -1.0F;
+  private static final float CLAP_RIGHT_HAND_Z = 1.0F;
+  // Wind-up keyframe ("open"): arms raised partly and spread to the sides, torso leaning back.
+  private static final float OPEN_TORSO_X = -0.15F;
+  private static final float OPEN_SHOULDER_X = -0.9F;
+  private static final float OPEN_SHOULDER_YAW = 1.3F;
+  // Strike timing: the arms (arm, forearm, hand) start this many ticks after the shoulders and arrive together at impact.
+  private static final float ARM_STRIKE_DELAY = 1.0F;
+
+  // Attack progress in elapsed ticks for the current frame, or -1 when not attacking. Set in prepareMobModel.
+  private float attackElapsed = -1.0F;
   protected final ModelPart core;
   protected ModelPart torso_axis;
   protected ModelPart torso;
@@ -297,33 +325,39 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
     getLookAnim(headYaw, headPitch);
     getIdleAnim(ageInTicks);
     getWalkingAnim(limbSwing, limbSwingAmount);
+    // After walking: the attack is added on top of the walk/rest values, so it starts and ends without a snap.
+    if (this.attackElapsed >= 0.0F) {
+      getAttackAnim(this.attackElapsed);
+    }
   }
 
   @Override
   public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
-    int i = entity.getAttackTick();
-    if (i > 0) {
-      getAttackAnim(i, partialTick);
-    } else {
-      this.left_shoulder_axis.xRot = Mth.cos(limbSwing * 0.50F) * 0.8F * limbSwingAmount;
-      this.left_arm_1_axis.xRot = Mth.cos(limbSwing * 0.50F) * 0.8F * limbSwingAmount;
-      this.left_forearm_axis.xRot = -Mth.cos(limbSwing * 0.75F) * 0.8F * limbSwingAmount;
-      this.left_hand_1_axis.xRot = -Mth.cos(limbSwing * 0.75F) * 0.8F * limbSwingAmount;
-      this.right_shoulder_axis.xRot = -Mth.cos(limbSwing * 0.50F) * 0.8F * limbSwingAmount;
-      this.right_arm_axis.xRot = -Mth.cos(limbSwing * 0.50F) * 0.8F * limbSwingAmount;
-      this.right_forearm_axis.xRot = Mth.cos(limbSwing * 0.75F) * 0.8F * limbSwingAmount;
-      this.right_hand_1_axis.xRot = Mth.cos(limbSwing * 0.75F) * 0.8F * limbSwingAmount;
-      this.left_shoulder_axis.yRot = 0.0F;
-      this.left_shoulder_axis.zRot = 0.0F;
-      this.left_arm_1_axis.zRot = 0.5235988F;
-      this.left_forearm_axis.zRot = 0.08726646F;
-      this.left_hand_1_axis.zRot = 0.0F;
-      this.right_shoulder_axis.yRot = 0.0F;
-      this.right_shoulder_axis.zRot = 0.0F;
-      this.right_elbow_axis.zRot = -0.3926991F;
-      this.right_forearm_axis.zRot = 0.0F;
-      this.right_hand_1_axis.zRot = 0.0F;
-    }
+    // Rest/walk values of every part the attack touches, set every frame so nothing stays stuck after an attack.
+    this.torso_axis.xRot = 0.0F;
+    this.left_shoulder_axis.xRot = Mth.cos(limbSwing * 0.50F) * 0.8F * limbSwingAmount;
+    this.left_arm_1_axis.xRot = Mth.cos(limbSwing * 0.50F) * 0.8F * limbSwingAmount;
+    this.left_forearm_axis.xRot = -Mth.cos(limbSwing * 0.75F) * 0.8F * limbSwingAmount;
+    this.left_hand_1_axis.xRot = -Mth.cos(limbSwing * 0.75F) * 0.8F * limbSwingAmount;
+    this.right_shoulder_axis.xRot = -Mth.cos(limbSwing * 0.50F) * 0.8F * limbSwingAmount;
+    this.right_arm_axis.xRot = -Mth.cos(limbSwing * 0.50F) * 0.8F * limbSwingAmount;
+    this.right_forearm_axis.xRot = Mth.cos(limbSwing * 0.75F) * 0.8F * limbSwingAmount;
+    this.right_hand_1_axis.xRot = Mth.cos(limbSwing * 0.75F) * 0.8F * limbSwingAmount;
+    this.left_shoulder_axis.yRot = 0.0F;
+    this.left_shoulder_axis.zRot = 0.0F;
+    this.left_arm_1_axis.zRot = 0.5235988F;
+    this.left_forearm_axis.zRot = 0.08726646F;
+    this.left_hand_1_axis.zRot = 0.0F;
+    this.right_shoulder_axis.yRot = 0.0F;
+    this.right_shoulder_axis.zRot = 0.0F;
+    this.right_elbow_axis.zRot = -0.3926991F;
+    this.right_forearm_axis.zRot = 0.0F;
+    this.right_hand_1_axis.zRot = 0.0F;
+
+    int attackTick = entity.getAttackTick();
+    this.attackElapsed = attackTick > 0
+        ? AttackAnimation.progress(attackTick, partialTick, StoneGolemEntity.ATTACK_DURATION)
+        : -1.0F;
   }
 
   private void getLookAnim(float headYaw, float headPitch) {
@@ -355,26 +389,50 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
     this.right_leg_2_axis.xRot = 0.0F + Mth.cos(limbSwing) * 0.6F * limbSwingAmount;
   }
 
-  private void getAttackAnim(int i, float ageInTicks) {
-    if (i > 0) {
-      this.torso_axis.xRot = -(-0.1F + 0.1F * Mth.triangleWave((float) i - ageInTicks, 15.0F));
-      this.left_shoulder_axis.xRot = -0.75F + 0.75F * Mth.triangleWave((float) i - ageInTicks, 15.0F);
-      //this.left_shoulder_axis.yRot = -(-0.25F + 0.25F * Mth.triangleWave((float) i - ageInTicks, 10.0F));
-      this.left_shoulder_axis.zRot = -0.60F + 0.60F * Mth.triangleWave((float) i - ageInTicks, 10.0F);
-      this.left_forearm_axis.xRot = -0.25F + 0.25F * Mth.triangleWave((float) i - ageInTicks, 15.0F);
-      this.left_forearm_axis.zRot = -(-0.25F + 0.25F * Mth.triangleWave((float) i - ageInTicks, 15.0F));
-      this.left_hand_1_axis.zRot = -0.5F + 0.5F * Mth.triangleWave((float) i - ageInTicks, 15.0F);
+  /**
+   * Melee attack as phases over the elapsed ticks (StoneGolemEntity ATTACK_* constants): wind-up (arms open),
+   * strike (arms sweep to the front and the hands meet at impact), hold, recovery. Every value is rest + offset * weight
+   * and the weights are 0 at the start and at the end, so the pose matches the rest pose there.
+   */
+  private void getAttackAnim(float elapsed) {
+    float windupEnd = StoneGolemEntity.ATTACK_WINDUP_END;
+    float impact = StoneGolemEntity.ATTACK_IMPACT_TICK;
+    float holdEnd = StoneGolemEntity.ATTACK_HOLD_END;
+    float end = StoneGolemEntity.ATTACK_DURATION;
 
-      this.right_shoulder_axis.xRot = -0.75F + 0.75F * Mth.triangleWave((float) i - ageInTicks, 15.0F);
-      //this.right_shoulder_axis.yRot = -0.25F + 0.25F * Mth.triangleWave((float) i - ageInTicks, 10.0F);
-      this.right_shoulder_axis.zRot = -(-0.60F + 0.60F * Mth.triangleWave((float) i - ageInTicks, 10.0F));
-      this.right_elbow_axis.zRot = -0.5F + 0.5F * Mth.triangleWave((float) i - ageInTicks, 15.0F);
-      this.left_arm_1_axis.zRot = -(-0.5F + 0.5F * Mth.triangleWave((float) i - ageInTicks, 15.0F));
-      this.right_forearm_axis.xRot = -0.25F + 0.25F * Mth.triangleWave((float) i - ageInTicks, 15.0F);
-      this.right_forearm_axis.zRot = -0.25F + 0.25F * Mth.triangleWave((float) i - ageInTicks, 15.0F);
-      this.right_hand_1_axis.zRot = -(-0.5F + 0.5F * Mth.triangleWave((float) i - ageInTicks, 15.0F));
-    }
-    //if (i > 0 && i < 8) {
-    //}
+    float windup = AttackAnimation.easeInOut(AttackAnimation.segment(elapsed, 0.0F, windupEnd));
+    float recovery = AttackAnimation.easeInOut(AttackAnimation.segment(elapsed, holdEnd, end));
+    // Shoulders are slower (they use the whole strike window, ease in and out); arms are faster (they start later
+    // and ease in) so the hands catch up and meet at impact. 0 = open pose, 1 = clap pose.
+    float shoulderStrike = AttackAnimation.easeInOut(AttackAnimation.segment(elapsed, windupEnd, impact));
+    float armStrike = AttackAnimation.easeIn(AttackAnimation.segment(elapsed, windupEnd + ARM_STRIKE_DELAY, impact));
+    // How much of the pose shows: grows in the wind-up, shrinks in the recovery.
+    float weight = windup * (1.0F - recovery);
+    float clapWeight = 1.0F - recovery;
+
+    // Shoulders: raised and spread while open, then raised further and swept to the front
+    float shoulderX = AttackAnimation.lerp(shoulderStrike, OPEN_SHOULDER_X, CLAP_SHOULDER_X) * weight;
+    float yaw = AttackAnimation.lerp(shoulderStrike, OPEN_SHOULDER_YAW, 0.0F) * weight;
+    float roll = shoulderStrike * clapWeight;
+    this.left_shoulder_axis.xRot += shoulderX;
+    this.right_shoulder_axis.xRot += shoulderX;
+    this.left_shoulder_axis.yRot -= yaw;
+    this.right_shoulder_axis.yRot += yaw;
+    this.left_shoulder_axis.zRot += CLAP_LEFT_SHOULDER_Z * roll;
+    this.right_shoulder_axis.zRot += CLAP_RIGHT_SHOULDER_Z * roll;
+
+    // Arms stay at rest while open, bend inward during the strike and go back to rest in the recovery
+    float arm = armStrike * clapWeight;
+    this.left_arm_1_axis.zRot += CLAP_LEFT_ARM_Z * arm;
+    this.right_elbow_axis.zRot += CLAP_RIGHT_ARM_Z * arm;
+    this.left_forearm_axis.zRot += CLAP_LEFT_FOREARM_Z * arm;
+    this.right_forearm_axis.zRot += CLAP_RIGHT_FOREARM_Z * arm;
+    this.left_forearm_axis.xRot += CLAP_FOREARM_X * arm;
+    this.right_forearm_axis.xRot += CLAP_FOREARM_X * arm;
+    this.left_hand_1_axis.zRot += CLAP_LEFT_HAND_Z * arm;
+    this.right_hand_1_axis.zRot += CLAP_RIGHT_HAND_Z * arm;
+
+    // Torso: leans back while open, forward on the clap
+    this.torso_axis.xRot += AttackAnimation.lerp(shoulderStrike, OPEN_TORSO_X, CLAP_TORSO_X) * weight;
   }
 }

@@ -58,8 +58,13 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
   private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData.defineId(StoneGolemEntity.class, EntityDataSerializers.INT);
   private LivingEntity clientSideCachedAttackTarget;
   public int clientSideAttackTime;
-  public static final int ATTACK_DURATION = 15;
-  public static final int ATTACK_IMPACT_TICK = 8;
+  // Melee attack timeline in ticks since the attack started; the model reads these, so retiming is done here.
+  // Wind-up (arms open) 0..ATTACK_WINDUP_END, strike (arms close) ..ATTACK_IMPACT_TICK, hold ..ATTACK_HOLD_END,
+  // then recovery to the rest pose until ATTACK_DURATION. The attack goal cooldown (40) must stay above the duration.
+  public static final int ATTACK_WINDUP_END = 9;
+  public static final int ATTACK_IMPACT_TICK = 13;
+  public static final int ATTACK_HOLD_END = 15;
+  public static final int ATTACK_DURATION = 22;
   private int attackTick;
   // Server only, not saved: an attack in progress is lost on unload
   @Nullable
