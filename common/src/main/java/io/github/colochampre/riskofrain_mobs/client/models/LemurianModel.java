@@ -93,7 +93,7 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
   private final ModelPart right_foot;
   // Attack progress in elapsed ticks for the current frame, or -1 when not attacking. Set in prepareMobModel.
   private float attackElapsed = -1.0F;
-  /** Capped walk cycle position and swing amount of the entity being rendered, set in prepareMobModel. */
+  /** Walk position and capped swing amount of the entity being rendered, set in prepareMobModel. */
   private float walkPosition;
   private float walkAmount;
   // Arm that punches in the current attack: +1 left arm (+X), -1 right arm. Set in prepareMobModel.
@@ -222,8 +222,8 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
 
   @Override
   public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
-    // Walk inputs are capped (see LemurianEntity.WALK_MAX_AMOUNT): the model never reads the raw limbSwing values.
-    this.walkPosition = entity.walkClock.position(partialTick);
+    // Vanilla cadence, but the swing amount is capped (see LemurianEntity.WALK_MAX_AMOUNT).
+    this.walkPosition = limbSwing;
     this.walkAmount = Math.min(limbSwingAmount, LemurianEntity.WALK_MAX_AMOUNT);
     limbSwing = this.walkPosition;
     limbSwingAmount = this.walkAmount;

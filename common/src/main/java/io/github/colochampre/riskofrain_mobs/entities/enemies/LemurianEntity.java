@@ -65,13 +65,11 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
    * chase speed (speed 0.26 x 1.0, about 0.584), so a speed boost does not exaggerate the walk.
    */
   public static final float WALK_MAX_AMOUNT = 0.59F;
-  /** Client only: walk cycle position advanced by the capped walk speed. Plain data, unused on the server. */
-  public final WalkClock walkClock = new WalkClock();
-  /** Clock units between footfalls: the legs use cos(clock), period 2 PI, one footfall per leg extreme every PI. */
+  /** Walk position units between footfalls: the legs use cos(position), period 2 PI, a footfall per leg extreme. */
   public static final float STEP_INTERVAL = (float) Math.PI;
-  /** Clock units of the first footfall, so a contact lands at a leg extreme. */
+  /** Walk position of the first footfall, so a contact lands at a leg extreme. */
   public static final float STEP_OFFSET = 0.0F;
-  /** Volume of the walking step, played by {@link #playClockStep()} instead of the vanilla distance based step. */
+  /** Volume of the walking step, played by {@link #playWalkStep()} instead of the vanilla distance based step. */
   private static final float STEP_VOLUME = 0.2F;
   // Server only, not saved: an attack in progress is lost on unload
   @Nullable
@@ -135,8 +133,7 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
   public void aiStep() {
     super.aiStep();
     if (this.level().isClientSide) {
-      this.walkClock.tick(this.walkAnimation.speed(), WALK_MAX_AMOUNT);
-      this.playClockStep();
+      this.playWalkStep();
     }
     this.tickPendingHit();
     if (this.attackTick > 0) {
@@ -257,20 +254,24 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
     return RoRSounds.LEMURIAN_STEP.get();
   }
 
-  /** Vanilla's distance based walking step is off: steps follow the walk clock, see {@link #playClockStep()}. */
+  /** Vanilla's distance based walking step is off: steps follow the walk animation, see {@link #playWalkStep()}. */
   @Override
   protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState blockState) {
   }
 
   /**
    * Client only. Entity.playSound has a null player and is silent on the client, so the step is played locally when
-   * the walk clock crosses a foot contact. The server keeps emitting the step game event (sculk vibrations).
+   * the vanilla walk position crosses a foot contact. aiStep has already advanced the position this tick (travel
+   * calls calculateEntityAnimation), so the previous position is position - speed. The server keeps emitting the
+   * step game event (sculk vibrations).
    */
-  private void playClockStep() {
-    if (this.isSilent() || !this.onGround() || this.walkAnimation.speed() <= WalkClock.MIN_STEP_SPEED) {
+  private void playWalkStep() {
+    float speed = this.walkAnimation.speed();
+    if (this.isSilent() || !this.onGround() || speed <= WalkClock.MIN_STEP_SPEED) {
       return;
     }
-    if (this.walkClock.crossedContact(STEP_INTERVAL, STEP_OFFSET)) {
+    float position = this.walkAnimation.position();
+    if (WalkClock.crossedContact(position - speed, position, STEP_INTERVAL, STEP_OFFSET)) {
       this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), this.getStepSound(), this.getSoundSource(),
           STEP_VOLUME, 1.0F, false);
     }
