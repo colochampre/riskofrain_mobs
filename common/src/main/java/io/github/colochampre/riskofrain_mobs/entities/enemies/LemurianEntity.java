@@ -67,6 +67,12 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
   public static final float WALK_MAX_AMOUNT = 0.59F;
   /** Client only: walk cycle position advanced by the capped walk speed. Plain data, unused on the server. */
   public final WalkClock walkClock = new WalkClock();
+  /** Clock units between footfalls: the legs use cos(clock), period 2 PI, one footfall per leg extreme every PI. */
+  public static final float STEP_INTERVAL = (float) Math.PI;
+  /** Clock units of the first footfall, so a contact lands at a leg extreme. */
+  public static final float STEP_OFFSET = 0.0F;
+  /** Volume of the walking step, played by {@link #playClockStep()} instead of the vanilla distance based step. */
+  private static final float STEP_VOLUME = 0.2F;
   // Server only, not saved: an attack in progress is lost on unload
   @Nullable
   private LivingEntity pendingTarget;
@@ -130,6 +136,7 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
     super.aiStep();
     if (this.level().isClientSide) {
       this.walkClock.tick(this.walkAnimation.speed(), WALK_MAX_AMOUNT);
+      this.playClockStep();
     }
     this.tickPendingHit();
     if (this.attackTick > 0) {
@@ -250,8 +257,23 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
     return RoRSounds.LEMURIAN_STEP.get();
   }
 
+  /** Vanilla's distance based walking step is off: steps follow the walk clock, see {@link #playClockStep()}. */
+  @Override
   protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState blockState) {
-    this.playSound(this.getStepSound(), 0.2F, 1.0F);
+  }
+
+  /**
+   * Client only. Entity.playSound has a null player and is silent on the client, so the step is played locally when
+   * the walk clock crosses a foot contact. The server keeps emitting the step game event (sculk vibrations).
+   */
+  private void playClockStep() {
+    if (this.isSilent() || !this.onGround() || this.walkAnimation.speed() <= WalkClock.MIN_STEP_SPEED) {
+      return;
+    }
+    if (this.walkClock.crossedContact(STEP_INTERVAL, STEP_OFFSET)) {
+      this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), this.getStepSound(), this.getSoundSource(),
+          STEP_VOLUME, 1.0F, false);
+    }
   }
 
   protected SoundEvent getSpawnSound() {

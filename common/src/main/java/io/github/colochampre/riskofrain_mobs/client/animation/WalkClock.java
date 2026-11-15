@@ -11,6 +11,12 @@ import net.minecraft.util.Mth;
  * entity (after the vanilla walk animation was updated) and read it from the model with the render partial tick.
  */
 public final class WalkClock {
+  /**
+   * Walk speed (vanilla smoothed {@code walkAnimation.speed()}) under which no step sound is played, so a mob that is
+   * stopping does not click while its legs barely move.
+   */
+  public static final float MIN_STEP_SPEED = 0.1F;
+
   private float positionOld;
   private float position;
 
@@ -26,5 +32,14 @@ public final class WalkClock {
   /** Position for the model, interpolated between the last two ticks. */
   public float position(float partialTick) {
     return Mth.lerp(partialTick, this.positionOld, this.position);
+  }
+
+  /**
+   * Whether the last {@link #tick} moved the clock across a foot contact. Contacts are at
+   * {@code offset + n * interval} clock units for any integer n, so a model whose legs use {@code cos(clock * k)}
+   * has its leg extremes (a footfall) every {@code PI / k} units with offset 0.
+   */
+  public boolean crossedContact(float interval, float offset) {
+    return Mth.floor((this.position - offset) / interval) > Mth.floor((this.positionOld - offset) / interval);
   }
 }
