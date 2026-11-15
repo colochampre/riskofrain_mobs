@@ -51,7 +51,12 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
 
   private static final EntityDataAccessor<Integer> DATA_TYPE_ID = SynchedEntityData.defineId(LemurianEntity.class, EntityDataSerializers.INT);
   private static final float FIREBALL_ATTACK_RANGE = 20;
+  public static final int ATTACK_DURATION = 10;
+  public static final int ATTACK_IMPACT_TICK = 5;
   private int attackTick;
+  // Server only, not saved: an attack in progress is lost on unload
+  @Nullable
+  private LivingEntity pendingTarget;
   private boolean selectingHand = true;
   private boolean rightHandSelected = true;
 
@@ -110,6 +115,7 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
   @Override
   public void aiStep() {
     super.aiStep();
+    this.tickPendingHit();
     if (this.attackTick > 0) {
       --this.attackTick;
     }
@@ -124,11 +130,44 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
 
   @Override
   public boolean doHurtTarget(Entity entity) {
+    this.attackTick = ATTACK_DURATION;
+    this.pendingTarget = entity instanceof LivingEntity living ? living : null;
     this.level().broadcastEntityEvent(this, (byte) 4);
-    float f = this.getAttackDamage();
-    boolean flag = entity.hurt(this.damageSources().mobAttack(this), f);
     this.playSound(RoRSounds.LEMURIAN_ATTACK.get(), 1.0F, 1.0F);
-    return flag;
+    return true;
+  }
+
+  /**
+   * Server only. Runs in aiStep before the attackTick decrement, so on the tick doHurtTarget starts the attack
+   * the elapsed time is 0, and the hit fires ATTACK_IMPACT_TICK ticks after that tick.
+   */
+  private void tickPendingHit() {
+    if (this.pendingTarget == null) {
+      return;
+    }
+    if (!this.isAlive()) {
+      this.pendingTarget = null;
+    } else if (ATTACK_DURATION - this.attackTick >= ATTACK_IMPACT_TICK) {
+      LivingEntity target = this.pendingTarget;
+      this.pendingTarget = null;
+      this.performHit(target);
+    }
+  }
+
+  private void performHit(LivingEntity target) {
+    if (!target.isAlive() || target.isRemoved() || !this.isInMeleeReach(target)) {
+      return;
+    }
+    target.hurt(this.damageSources().mobAttack(this), this.getAttackDamage());
+  }
+
+  /** Single source of the melee reach, shared by the attack goal and the deferred hit check. */
+  public double getAttackReachSqr(LivingEntity target) {
+    return this.getBbWidth() * 2.0F * this.getBbWidth() * 2.0F + target.getBbWidth();
+  }
+
+  public boolean isInMeleeReach(LivingEntity target) {
+    return this.getPerceivedTargetDistanceSquareForMeleeAttack(target) <= this.getAttackReachSqr(target);
   }
 
   @Nullable
@@ -210,7 +249,7 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
   @Override
   public void handleEntityEvent(byte b) {
     if (b == 4) {
-      this.attackTick = 10;
+      this.attackTick = ATTACK_DURATION;
       this.playSound(RoRSounds.LEMURIAN_ATTACK.get(), 1.0F, 1.0F);
     } else {
       super.handleEntityEvent(b);

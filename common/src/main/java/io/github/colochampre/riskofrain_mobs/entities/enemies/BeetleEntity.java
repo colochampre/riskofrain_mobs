@@ -36,7 +36,12 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
   private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = SynchedEntityData.defineId(BeetleEntity.class, EntityDataSerializers.COMPOUND_TAG);
   private final SimpleContainer inventory = ItemPickup.createInventory(this, DATA_CARRIED_ITEMS);
 
+  public static final int ATTACK_DURATION = 16;
+  public static final int ATTACK_IMPACT_TICK = 8;
   private int attackTick;
+  // Server only, not saved: an attack in progress is lost on unload
+  @Nullable
+  private LivingEntity pendingTarget;
 
   public BeetleEntity(EntityType<? extends Monster> type, Level level) {
     super(type, level);
@@ -76,6 +81,7 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
   @Override
   public void aiStep() {
     super.aiStep();
+    this.tickPendingHit();
     if (this.isAlive()) {
       if (this.isImmobile()) {
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
@@ -99,12 +105,44 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
 
   @Override
   public boolean doHurtTarget(Entity target) {
-    this.attackTick = 16;
+    this.attackTick = ATTACK_DURATION;
+    this.pendingTarget = target instanceof LivingEntity living ? living : null;
     this.level().broadcastEntityEvent(this, (byte) 4);
-    float f = this.getAttackDamage();
-    boolean flag = target.hurt(this.damageSources().mobAttack(this), f);
     this.playSound(this.getAttackSound(), 1.0F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
-    return flag;
+    return true;
+  }
+
+  /**
+   * Server only. Runs in aiStep before the attackTick decrement, so on the tick doHurtTarget starts the attack
+   * the elapsed time is 0, and the hit fires ATTACK_IMPACT_TICK ticks after that tick.
+   */
+  private void tickPendingHit() {
+    if (this.pendingTarget == null) {
+      return;
+    }
+    if (!this.isAlive()) {
+      this.pendingTarget = null;
+    } else if (ATTACK_DURATION - this.attackTick >= ATTACK_IMPACT_TICK) {
+      LivingEntity target = this.pendingTarget;
+      this.pendingTarget = null;
+      this.performHit(target);
+    }
+  }
+
+  private void performHit(LivingEntity target) {
+    if (!target.isAlive() || target.isRemoved() || !this.isInMeleeReach(target)) {
+      return;
+    }
+    target.hurt(this.damageSources().mobAttack(this), this.getAttackDamage());
+  }
+
+  /**
+   * Same reach and distance measure as vanilla 1.20.1 MeleeAttackGoal, which drives this mob:
+   * getPerceivedTargetDistanceSquareForMeleeAttack(target) <= bbWidth * 2 * bbWidth * 2 + target.bbWidth.
+   */
+  public boolean isInMeleeReach(LivingEntity target) {
+    double reachSqr = this.getBbWidth() * 2.0F * this.getBbWidth() * 2.0F + target.getBbWidth();
+    return this.getPerceivedTargetDistanceSquareForMeleeAttack(target) <= reachSqr;
   }
 
   public float getAttackDamage() {
@@ -130,7 +168,7 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
   @Override
   public void handleEntityEvent(byte b) {
     if (b == 4) {
-      this.attackTick = 16;
+      this.attackTick = ATTACK_DURATION;
     } else {
       super.handleEntityEvent(b);
     }

@@ -58,7 +58,12 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
   private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData.defineId(StoneGolemEntity.class, EntityDataSerializers.INT);
   private LivingEntity clientSideCachedAttackTarget;
   public int clientSideAttackTime;
+  public static final int ATTACK_DURATION = 15;
+  public static final int ATTACK_IMPACT_TICK = 8;
   private int attackTick;
+  // Server only, not saved: an attack in progress is lost on unload
+  @Nullable
+  private LivingEntity pendingTarget;
 
   public StoneGolemEntity(EntityType<? extends Monster> type, Level level) {
     super(type, level);
@@ -117,6 +122,7 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
   @Override
   public void aiStep() {
     super.aiStep();
+    this.tickPendingHit();
     if (this.isAlive()) {
       if (this.isImmobile()) {
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
@@ -160,12 +166,45 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
 
   @Override
   public boolean doHurtTarget(Entity target) {
-    this.attackTick = 15;
+    this.attackTick = ATTACK_DURATION;
+    this.pendingTarget = target instanceof LivingEntity living ? living : null;
     this.level().broadcastEntityEvent(this, (byte) 4);
-    float f = this.getAttackDamage();
-    boolean flag = target.hurt(this.damageSources().mobAttack(this), f);
     this.playSound(RoRSounds.STONE_GOLEM_CLAP.get(), 3.0F, 1.0F);
-    return flag;
+    return true;
+  }
+
+  /**
+   * Server only. Runs in aiStep before the attackTick decrement, so on the tick doHurtTarget starts the attack
+   * the elapsed time is 0, and the hit fires ATTACK_IMPACT_TICK ticks after that tick.
+   */
+  private void tickPendingHit() {
+    if (this.pendingTarget == null) {
+      return;
+    }
+    if (!this.isAlive()) {
+      this.pendingTarget = null;
+    } else if (ATTACK_DURATION - this.attackTick >= ATTACK_IMPACT_TICK) {
+      LivingEntity target = this.pendingTarget;
+      this.pendingTarget = null;
+      this.performHit(target);
+    }
+  }
+
+  private void performHit(LivingEntity target) {
+    if (!target.isAlive() || target.isRemoved() || !this.isInMeleeReach(target)) {
+      return;
+    }
+    target.hurt(this.damageSources().mobAttack(this), this.getAttackDamage());
+    this.strongKnockback(target);
+  }
+
+  /** Single source of the melee reach, shared by the attack goal and the deferred hit check. */
+  public double getAttackReachSqr(LivingEntity target) {
+    return this.getBbWidth() * 1.5F * this.getBbWidth() * 1.5F + target.getBbWidth();
+  }
+
+  public boolean isInMeleeReach(LivingEntity target) {
+    return this.getPerceivedTargetDistanceSquareForMeleeAttack(target) <= this.getAttackReachSqr(target);
   }
 
   private void doFloorParticleEffect() {
@@ -337,7 +376,7 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
   @Override
   public void handleEntityEvent(byte b) {
     if (b == 4) {
-      this.attackTick = 15;
+      this.attackTick = ATTACK_DURATION;
       this.playSound(RoRSounds.STONE_GOLEM_CLAP.get(), 3.0F, 1.0F);
     } else {
       super.handleEntityEvent(b);
