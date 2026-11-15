@@ -1,5 +1,6 @@
 package io.github.colochampre.riskofrain_mobs.client.renderer;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.client.models.LemurianModel;
 import io.github.colochampre.riskofrain_mobs.client.renderer.layers.LemurianEyesLayer;
@@ -7,6 +8,7 @@ import io.github.colochampre.riskofrain_mobs.entities.enemies.LemurianEntity;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
@@ -22,6 +24,12 @@ public class LemurianRenderer extends MobRenderer<LemurianEntity, LemurianModel<
   public LemurianRenderer(EntityRendererProvider.Context context) {
     super(context, new LemurianModel<>(context.bakeLayer(RoREntityRendering.LEMURIAN_LAYER)), 0.4F);
     this.addLayer(new LemurianEyesLayer(this));
+  }
+
+  @Override
+  public void render(@NotNull LemurianEntity entity, float entityYaw, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource buffer, int packedLight) {
+    super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+    CarriedItemsRenderer.render(entity, this.shouldShowName(entity), 1.0F, poseStack, buffer);
   }
 
   @Override

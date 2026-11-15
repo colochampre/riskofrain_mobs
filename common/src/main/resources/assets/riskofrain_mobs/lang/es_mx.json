@@ -90,5 +90,10 @@
     "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.@Tooltip": "Los mobs recogen objetos de Risk of Rain del suelo y obtienen sus efectos pasivos. Los objetos que llevan se sueltan al morir.",
     "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.ENEMIES_CAN_PICK_UP": "Los Enemigos Pueden Recoger Objetos",
     "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DRONES_CAN_PICK_UP": "Los Drones Pueden Recoger Objetos",
-    "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.INVENTORY_SLOTS": "Espacios de Inventario"
+    "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.INVENTORY_SLOTS": "Espacios de Inventario",
+    "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.SHOW_CARRIED_ITEMS": "Mostrar Objetos Llevados",
+    "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_DISTANCE": "Distancia de Visualización de Objetos Llevados",
+    "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_MODE": "Modo de Visualización de Objetos Llevados",
+    "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_MODE.ALWAYS": "Siempre",
+    "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_MODE.WHEN_LOOKING": "Al Mirar"
 }

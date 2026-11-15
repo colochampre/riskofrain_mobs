@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import io.github.colochampre.riskofrain_mobs.entities.goals.DroneFollowOwnerGoal;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import io.github.colochampre.riskofrain_mobs.utils.ItemPickup;
+import io.github.colochampre.riskofrain_mobs.utils.CarriedItemsSource;
 import io.github.colochampre.riskofrain_mobs.utils.EntityUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -58,7 +59,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-public abstract class AbstractDroneEntity extends TamableAnimal implements InventoryCarrier {
+public abstract class AbstractDroneEntity extends TamableAnimal implements InventoryCarrier, CarriedItemsSource {
 
   public static final int TYPE_LAND = 0;
   public static final int TYPE_FLYING = 1;
@@ -83,7 +84,8 @@ public abstract class AbstractDroneEntity extends TamableAnimal implements Inven
   private final DroneFollowOwnerGoal followOwnerGoal = new DroneFollowOwnerGoal(this, 1.0D, 8.0F, 4.0F, true);
   private final WaterAvoidingRandomFlyingGoal randomFlyingGoal = new WaterAvoidingRandomFlyingGoal(this, 0.5D);
   private final SitWhenOrderedToGoal sitGoal = new SitWhenOrderedToGoal(this);
-  private final SimpleContainer inventory = ItemPickup.createInventory();
+  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = SynchedEntityData.defineId(AbstractDroneEntity.class, EntityDataSerializers.COMPOUND_TAG);
+  private final SimpleContainer inventory = ItemPickup.createInventory(this, DATA_CARRIED_ITEMS);
   private float bodyXRot;
   private float bodyZRot;
   private int flyingSound;
@@ -122,6 +124,7 @@ public abstract class AbstractDroneEntity extends TamableAnimal implements Inven
     this.entityData.define(DATA_PRICE, this.getInitialGoldPrice());
     this.entityData.define(DATA_ID_ATTACK_TARGET, 0);
     this.entityData.define(DATA_BODY_COLOR, DyeColor.LIGHT_BLUE.getId());
+    ItemPickup.registerCarriedItems(this, DATA_CARRIED_ITEMS);
   }
 
   private int getInitialGoldPrice() {
@@ -147,6 +150,11 @@ public abstract class AbstractDroneEntity extends TamableAnimal implements Inven
       this.setBodyColor(DyeColor.byId(tag.getInt("BodyColor")));
     }
     ItemPickup.load(this, this, tag);
+  }
+
+  @Override
+  public CompoundTag getCarriedItemsTag() {
+    return this.entityData.get(DATA_CARRIED_ITEMS);
   }
 
   @Override
