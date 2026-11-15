@@ -3,6 +3,7 @@ package io.github.colochampre.riskofrain_mobs.client.models;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.colochampre.riskofrain_mobs.client.animation.AttackAnimation;
+import io.github.colochampre.riskofrain_mobs.client.animation.WalkCycle;
 import io.github.colochampre.riskofrain_mobs.entities.enemies.LemurianEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -42,6 +43,29 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
   private static final float STRIKE_RIB_X = 0.15F;
   private static final float STRIKE_GUARD_ARM_X = 0.1F;
   private static final float STRIKE_GUARD_FOREARM_X = -0.2F;
+
+  // Leg gait (radians, before the walk amount, max 0.59), tune here. Axis notes, from createBodyLayer: a leg xRot
+  // positive swings the lower end backward (+Z) and negative forward, relative to its parent. Rest angles are
+  // hip -0.349 (thigh slopes forward), knee +0.960 (shin goes back, so the knee points forward), hock -0.873 (the
+  // lower leg comes forward again), foot +0.349; summed down the chain the foot is at about +0.09, flat on the
+  // ground. That zigzag is the deer hind leg. So, relative to rest:
+  //  - hip: -swing is forward (foot reaches ahead at the heel strike, position 0), +swing is backward;
+  //  - knee: + folds (foot lifts back and up); hock: - folds (the lower leg comes forward and up); the two together
+  //    shorten the leg during the swing, the foot stays near level through LEG_FOOT_LEVEL and toes down at push-off.
+  // The walk helper in client/animation/WalkCycle drives them; the foot contact of the left leg is at position 0
+  // and of the right leg at PI, which is the step interval (PI) and offset (0) of LemurianEntity.
+  private static final float LEG_HIP_REST = -0.34906584F;
+  private static final float LEG_KNEE_REST = 0.9599311F;
+  private static final float LEG_HOCK_REST = -0.87266463F;
+  private static final float LEG_FOOT_REST = 0.34906584F;
+  private static final float LEG_HIP_SWING = 1.1F;
+  private static final float LEG_KNEE_FOLD = 1.1F;
+  private static final float LEG_HOCK_FOLD = 1.0F;
+  /** Share of the rotation accumulated by the hip, knee and hock that the foot cancels (1 keeps it level). */
+  private static final float LEG_FOOT_LEVEL = 0.6F;
+  private static final float LEG_FOOT_PUSH = 0.6F;
+  /** Phase of the push-off, as an advance of the foot flick over the support half (PI / 4 peaks at 3/8 cycle). */
+  private static final float PUSH_PHASE = (float) Math.PI / 4.0F;
 
 
   private final ModelPart core;
@@ -288,8 +312,8 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
   }
 
   private void getWalkAnim(float limbSwing, float limbSwingAmount) {
-    this.stomach_axis.y = 0 - Mth.cos(limbSwing * 2.0F) * 1.8F * limbSwingAmount;
-    this.tail_1_axis.y = -1.0F - Mth.cos(limbSwing * 2.0F) * 1.8F * limbSwingAmount;
+    this.stomach_axis.y = 0 + Mth.cos(limbSwing * 2.0F) * 1.8F * limbSwingAmount;
+    this.tail_1_axis.y = -1.0F + Mth.cos(limbSwing * 2.0F) * 1.8F * limbSwingAmount;
 
     this.neck_axis.yRot = 0 + Mth.cos(limbSwing) * 0.25F * limbSwingAmount;
     this.rib_cage_axis.yRot = 0 - Mth.cos(limbSwing) * 0.25F * limbSwingAmount;
@@ -298,19 +322,42 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
     this.left_arm_axis.yRot = 0 - Mth.cos(limbSwing) * 0.8F * limbSwingAmount;
     this.right_arm_axis.yRot = 0 - Mth.cos(limbSwing) * 0.8F * limbSwingAmount;
 
-    this.left_leg_1_axis.xRot = -0.34906584F - Mth.cos(limbSwing) * 1.2F * limbSwingAmount;
-    this.left_leg_2_axis.xRot = 0.9599311F - Mth.cos(limbSwing) * 0.8F * limbSwingAmount;
-    //this.left_leg_3_axis.xRot = -0.87266463F - Mth.cos(limbSwing) * 1.5F * limbSwingAmount;
-    this.left_foot_axis.xRot = 0.34906584F + Mth.cos(limbSwing) * 2.0F * limbSwingAmount;
+    // Left leg at the walk position, right leg half a cycle later: identical curves, so no limp.
+    walkLeg(this.left_leg_1_axis, this.left_leg_2_axis, this.left_leg_3_axis, this.left_foot_axis,
+        limbSwing, limbSwingAmount);
+    walkLeg(this.right_leg_1_axis, this.right_leg_2_axis, this.right_leg_3_axis, this.right_foot_axis,
+        limbSwing + (float) Math.PI, limbSwingAmount);
 
-    this.right_leg_1_axis.xRot = -0.34906584F + Mth.cos(limbSwing) * 1.2F * limbSwingAmount;
-    this.right_leg_2_axis.xRot = 0.9599311F + Mth.cos(limbSwing * 0.5F) * 1.0F * limbSwingAmount;
-    //this.right_leg_3_axis.xRot = -0.87266463F + Mth.cos(limbSwing * 0.5F) * 1.5F * limbSwingAmount;
-    this.right_foot_axis.xRot = 0.34906584F - Mth.cos(limbSwing) * 1.6F * limbSwingAmount;
+    this.tail_1_axis.zRot = Mth.cos(limbSwing) * 0.33F * limbSwingAmount;
+    this.tail_2_axis.zRot = Mth.cos(limbSwing) * 0.33F * limbSwingAmount;
+    this.tail_3_axis.zRot = Mth.cos(limbSwing) * 0.33F * limbSwingAmount;
+  }
 
-    this.tail_1_axis.zRot = Mth.cos(limbSwing * 0.75F) * 0.33F * limbSwingAmount;
-    this.tail_2_axis.zRot = Mth.cos(limbSwing * 0.75F) * 0.33F * limbSwingAmount;
-    this.tail_3_axis.zRot = Mth.cos(limbSwing * 0.75F) * 0.33F * limbSwingAmount;
+  /**
+   * One digitigrade leg (hind leg of a deer) at {@code position}; see the axis notes at the top. The hip is a plain
+   * swing, farthest forward at position 0 (heel strike) and farthest back half a cycle later. The knee, hock and foot
+   * fold together during the second half of the cycle, while the leg swings forward through the air, and are at rest
+   * (extended) during the first half, while it supports and pushes back.
+   */
+  private static void walkLeg(ModelPart hip, ModelPart knee, ModelPart hock, ModelPart foot, float position,
+      float amount) {
+    float hipSwing = WalkCycle.swing(position, 0.0F);
+    // 1 during the swing half of the cycle (peak at 3/4), 0 while the foot is on the ground.
+    float lift = WalkCycle.fold(position, (float) Math.PI);
+    // Peak late in the support half (3/8 of the cycle), the push-off.
+    float push = WalkCycle.fold(position, -PUSH_PHASE);
+
+    float hipDelta = -LEG_HIP_SWING * hipSwing;
+    float kneeDelta = LEG_KNEE_FOLD * lift;
+    float hockDelta = -LEG_HOCK_FOLD * lift;
+    // Cancels part of the rotation accumulated down the chain so the sole stays near level, then pitches the toes
+    // down at push-off.
+    float footDelta = -LEG_FOOT_LEVEL * (hipDelta + kneeDelta + hockDelta) + LEG_FOOT_PUSH * push;
+
+    hip.xRot = LEG_HIP_REST + hipDelta * amount;
+    knee.xRot = LEG_KNEE_REST + kneeDelta * amount;
+    hock.xRot = LEG_HOCK_REST + hockDelta * amount;
+    foot.xRot = LEG_FOOT_REST + footDelta * amount;
   }
 
 
