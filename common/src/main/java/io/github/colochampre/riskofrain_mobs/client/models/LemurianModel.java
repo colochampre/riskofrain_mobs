@@ -93,6 +93,9 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
   private final ModelPart right_foot;
   // Attack progress in elapsed ticks for the current frame, or -1 when not attacking. Set in prepareMobModel.
   private float attackElapsed = -1.0F;
+  /** Capped walk cycle position and swing amount of the entity being rendered, set in prepareMobModel. */
+  private float walkPosition;
+  private float walkAmount;
   // Arm that punches in the current attack: +1 left arm (+X), -1 right arm. Set in prepareMobModel.
   private float punchSide = 1.0F;
 
@@ -210,7 +213,7 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
   public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float headYaw, float headPitch) {
     getLookAnim(headYaw, headPitch);
     getIdleAnim(entity, ageInTicks);
-    getWalkAnim(limbSwing, limbSwingAmount);
+    getWalkAnim(this.walkPosition, this.walkAmount);
     // After walking: the punch is blended onto the walk/rest values, so it starts and ends without a snap.
     if (this.attackElapsed >= 0.0F) {
       getAttackAnim(this.attackElapsed, this.punchSide);
@@ -219,6 +222,11 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
 
   @Override
   public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
+    // Walk inputs are capped (see LemurianEntity.WALK_MAX_AMOUNT): the model never reads the raw limbSwing values.
+    this.walkPosition = entity.walkClock.position(partialTick);
+    this.walkAmount = Math.min(limbSwingAmount, LemurianEntity.WALK_MAX_AMOUNT);
+    limbSwing = this.walkPosition;
+    limbSwingAmount = this.walkAmount;
     // Rest/walk values of every part the punch touches, set every frame so nothing stays stuck after an attack.
     this.left_arm_axis.xRot = -0.08726646F + Mth.cos(limbSwing) * 0.90F * limbSwingAmount;
     this.left_forearm_axis.xRot = -0.2617994F + Mth.cos(limbSwing) * 0.75F * limbSwingAmount;

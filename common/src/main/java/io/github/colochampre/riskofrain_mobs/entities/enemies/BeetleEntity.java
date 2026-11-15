@@ -1,5 +1,6 @@
 package io.github.colochampre.riskofrain_mobs.entities.enemies;
 
+import io.github.colochampre.riskofrain_mobs.client.animation.WalkClock;
 import io.github.colochampre.riskofrain_mobs.utils.ItemPickup;
 import io.github.colochampre.riskofrain_mobs.utils.CarriedItemsSource;
 import net.minecraft.world.SimpleContainer;
@@ -44,6 +45,13 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
   public static final int ATTACK_HOLD_END = 11;
   public static final int ATTACK_DURATION = 18;
   private int attackTick;
+  /**
+   * Cap for the walk animation swing amount and cycle speed: the steady-state `min(distance * 4, 1)` at the normal
+   * chase speed (speed 0.21 x 1.0, about 0.381), so a speed boost does not exaggerate the walk.
+   */
+  public static final float WALK_MAX_AMOUNT = 0.39F;
+  /** Client only: walk cycle position advanced by the capped walk speed. Plain data, unused on the server. */
+  public final WalkClock walkClock = new WalkClock();
   // Server only, not saved: an attack in progress is lost on unload
   @Nullable
   private LivingEntity pendingTarget;
@@ -86,6 +94,9 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
   @Override
   public void aiStep() {
     super.aiStep();
+    if (this.level().isClientSide) {
+      this.walkClock.tick(this.walkAnimation.speed(), WALK_MAX_AMOUNT);
+    }
     this.tickPendingHit();
     if (this.isAlive()) {
       if (this.isImmobile()) {

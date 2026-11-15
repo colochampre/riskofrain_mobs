@@ -45,6 +45,9 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
 
   // Attack progress in elapsed ticks for the current frame, or -1 when not attacking. Set in prepareMobModel.
   private float attackElapsed = -1.0F;
+  /** Capped walk cycle position and swing amount of the entity being rendered, set in prepareMobModel. */
+  private float walkPosition;
+  private float walkAmount;
   protected final ModelPart core;
   protected ModelPart torso_axis;
   protected ModelPart torso;
@@ -327,7 +330,7 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
   public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float headYaw, float headPitch) {
     getLookAnim(headYaw, headPitch);
     getIdleAnim(ageInTicks);
-    getWalkingAnim(limbSwing, limbSwingAmount);
+    getWalkingAnim(this.walkPosition, this.walkAmount);
     // After walking: the attack is added on top of the walk/rest values, so it starts and ends without a snap.
     if (this.attackElapsed >= 0.0F) {
       getAttackAnim(this.attackElapsed);
@@ -336,6 +339,11 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
 
   @Override
   public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
+    // Walk inputs are capped (see StoneGolemEntity.WALK_MAX_AMOUNT): the model never reads the raw limbSwing values.
+    this.walkPosition = entity.walkClock.position(partialTick);
+    this.walkAmount = Math.min(limbSwingAmount, StoneGolemEntity.WALK_MAX_AMOUNT);
+    limbSwing = this.walkPosition;
+    limbSwingAmount = this.walkAmount;
     // Rest/walk values of every part the attack touches, set every frame so nothing stays stuck after an attack.
     this.torso_axis.xRot = 0.0F;
     this.left_shoulder_axis.xRot = Mth.cos(limbSwing * 0.50F) * 0.8F * limbSwingAmount;
