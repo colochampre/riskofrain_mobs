@@ -1,5 +1,10 @@
 package io.github.colochampre.riskofrain_mobs.entities.enemies;
 
+import io.github.colochampre.riskofrain_mobs.utils.ItemPickup;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.npc.InventoryCarrier;
+import net.minecraft.world.item.ItemStack;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.entities.goals.LemurianAttackGoal;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
@@ -39,7 +44,8 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class LemurianEntity extends Monster {
+public class LemurianEntity extends Monster implements InventoryCarrier {
+  private final SimpleContainer inventory = ItemPickup.createInventory();
 
   private static final EntityDataAccessor<Integer> DATA_TYPE_ID = SynchedEntityData.defineId(LemurianEntity.class, EntityDataSerializers.INT);
   private static final float FIREBALL_ATTACK_RANGE = 20;
@@ -88,12 +94,14 @@ public class LemurianEntity extends Monster {
   public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
     super.addAdditionalSaveData(nbt);
     nbt.putString("Type", this.getLemurianType().getName());
+    ItemPickup.save(this, nbt);
   }
 
   @Override
   public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
     super.readAdditionalSaveData(nbt);
     this.setLemurianType(LemurianEntity.Type.byName(nbt.getString("Type")));
+    ItemPickup.load(this, this, nbt);
   }
 
   @Override
@@ -207,8 +215,42 @@ public class LemurianEntity extends Monster {
   }
 
   @Override
+  public SimpleContainer getInventory() {
+    return this.inventory;
+  }
+
+  // Read at runtime so a change in the config GUI applies without a restart
+  @Override
+  public boolean canPickUpLoot() {
+    return ItemPickup.enemiesCanPickUp();
+  }
+
+  @Override
+  public boolean wantsToPickUp(ItemStack stack) {
+    return ItemPickup.wantsToPickUp(this, stack);
+  }
+
+  @Override
+  protected void pickUpItem(ItemEntity itemEntity) {
+    ItemPickup.pickUp(this, this, itemEntity);
+  }
+
+  @Override
+  protected void dropEquipment() {
+    super.dropEquipment();
+    ItemPickup.dropAll(this, this);
+  }
+
+  @Override
+  public void checkDespawn() {
+    ItemPickup.dropBeforePeacefulDespawn(this, this);
+    super.checkDespawn();
+  }
+
+  @Override
   public boolean removeWhenFarAway(double distance) {
-    return RoRConfigs.get().MOBS.LEMURIANS.ENABLE_DESPAWN;
+    // A mob that carries an item never despawns, whatever the setting says
+    return !ItemPickup.hasItems(this) && RoRConfigs.get().MOBS.LEMURIANS.ENABLE_DESPAWN;
   }
 
   @Override

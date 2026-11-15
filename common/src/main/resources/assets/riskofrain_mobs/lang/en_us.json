@@ -84,5 +84,11 @@
   "text.autoconfig.riskofrain_mobs.option.SOUNDS.CHAT_MESSAGE": "Chat Message",
   "text.autoconfig.riskofrain_mobs.option.SOUNDS.DIFFICULTY_UPDATE": "Difficulty Change",
   "text.autoconfig.riskofrain_mobs.option.SOUNDS.LEVEL_UP": "Level Change",
-  "text.autoconfig.riskofrain_mobs.option.SOUNDS.PLAYER_DEATH_SOUND": "Player Death Sound"
+  "text.autoconfig.riskofrain_mobs.option.SOUNDS.PLAYER_DEATH_SOUND": "Player Death Sound",
+
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP": "Item pickup",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.@Tooltip": "Mobs pick up Risk of Rain items from the ground and gain their passive effects. Carried items drop on death.",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.ENEMIES_CAN_PICK_UP": "Enemies Can Pick Up Items",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DRONES_CAN_PICK_UP": "Drones Can Pick Up Items",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.INVENTORY_SLOTS": "Inventory Slots"
 }

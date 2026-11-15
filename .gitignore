@@ -28,6 +28,9 @@ screenshots/
 # Environment and Local Settings
 .env
 local/
+# Local mod jars loaded in the dev runs
+fabric/libs/
+forge/libs/
 
 # OS Specific
 .DS_Store
