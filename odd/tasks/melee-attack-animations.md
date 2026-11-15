@@ -32,7 +32,7 @@ User requests (2026-11-14, 2026-11-15): "Más adelante ajustamos además el mome
 - [x] T7 S8 (`61cb831`): cap the walk swing amount and cycle speed of the three walking models.
 - [x] T12 S11 (`b32fbc5`): step sounds driven by the walk clock for the three walking mobs.
 - [x] T8 S9 (`f2c6a0b`): Lemurian walk cycle, shared phase/bend helper.
-- [ ] T9 S9: Stone Golem walk cycle.
+- [x] T9 S9 (`d5cb764`): Stone Golem walk cycle.
 - [ ] T10 S9: Beetle walk cycle.
 - [ ] T11 S10: Gunner Turret walk while leashed.
 - [ ] T5: build, and both dedicated servers start and stop (no client class on the server); a summoned golem, Beetle and Lemurian attack a mob without server errors.
@@ -60,3 +60,4 @@ Risk: item 6 (no automated test covers animation or hit timing; the look can onl
 - L16 (2026-11-15), user in-game test after `8ec9e06`: "Quedó bien". S8/S11 closed. Next: T8.
 - L17 (2026-11-15), T8 done, `./gradlew build` passes, not seen in game. New `client/animation/WalkCycle`: `swing(p, phase)` = cos(p + phase); `fold(p, phase)` = smoothstep(max(0, sin(p + phase))), one-sided, peak at p + phase = π/2. Lemurian legs share one helper, left at `limbSwing`, right at `limbSwing + π` (fixes the 0.5 frequency limp and the 2.0/1.6 foot mismatch). Hip `-LEG_HIP_SWING * cos(p)`: foot farthest forward at p = 0 (heel strike). Support half (0..π) keeps knee, hock and foot at rest; swing half (π..2π) folds knee (+) and hock (-) with `fold(p, π)` and the foot cancels part of the chain rotation to stay level; a push-off flick `fold(p, -π/4)` pitches the toes in late support. Leg 3 (hock) re-enabled: the parts existed and were wired. Leg `xRot` positive swings the lower end back; rest angles hip -0.349, knee 0.960, hock -0.873, foot 0.349. Constants at the top of `LemurianModel`. Tail sway moved to the leg frequency; body and tail bob sign flipped so the body is lowest at footfall. Step contacts unchanged (interval π, offset 0 match the heel strikes).
 - L18 (2026-11-15), user in-game test of the Lemurian gait: "Quedó bien". Next: T9.
+- L19 (2026-11-15), T9 done, `./gradlew build` passes, not seen in game. Golem leg position `p = limbSwing * 0.5`, left at p, right at p + π, shared `walkLeg`: hip `-cos(p)` (foot forward at p = 0); knee positive only (positive `xRot` folds the shin back, so it never hyperextends), `fold(p, π)` in the swing half plus a small stance flex `fold(p, 1.17)` after heel strike. Arms swing against the same-side leg at the leg frequency; forearm and hand bend forward one way only, trailing by π/4 and π/2 (the 0.75 frequency is gone). Torso bob `cos(2p)`, lowest at footfall; torso turn 1.6 to 0.9, hip turn 0.8 to 0.6. Constants at the top of `StoneGolemModel`. Step contacts unchanged (interval 2π, offset 0).
