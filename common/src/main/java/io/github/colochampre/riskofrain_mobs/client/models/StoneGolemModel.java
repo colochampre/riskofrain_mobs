@@ -3,6 +3,7 @@ package io.github.colochampre.riskofrain_mobs.client.models;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.colochampre.riskofrain_mobs.client.animation.AttackAnimation;
+import io.github.colochampre.riskofrain_mobs.client.animation.WalkCycle;
 import io.github.colochampre.riskofrain_mobs.entities.enemies.StoneGolemEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -42,6 +43,28 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
   private static final float OPEN_SHOULDER_YAW = 1.3F;
   // Strike timing: the arms (arm, forearm, hand) start this many ticks after the shoulders and arrive together at impact.
   private static final float ARM_STRIKE_DELAY = 1.0F;
+  // Walk gait, all on the leg frequency (limbSwing * 0.5, one full leg cycle per 4 PI of limbSwing) and scaled by the
+  // capped walk amount (max 0.35). Axis notes: leg xRot negative swings the foot forward, positive back; the knee
+  // axis sits at the bottom of the thigh and the shin hangs from it, so a positive knee xRot folds the shin back
+  // (the way a human knee bends) and a negative one would hyperextend it, so the knee only gets positive values.
+  // Arm xRot is negative forward, and the forearm and hand bend forward with a negative value. The left leg is at
+  // position p and the right one at p + PI; the heel strike is at p = 0, which is STEP_INTERVAL (2 PI of limbSwing)
+  // and STEP_OFFSET (0) of StoneGolemEntity.
+  private static final float WALK_LEG_SWING = 1.2F;
+  private static final float WALK_KNEE_FOLD = 1.8F;
+  /** Small knee flex after the heel strike, and the phase that puts its peak about 0.4 rad after the contact. */
+  private static final float WALK_KNEE_STANCE = 0.25F;
+  private static final float KNEE_STANCE_PHASE = 1.17F;
+  private static final float WALK_ARM_SWING = 0.8F;
+  private static final float WALK_FOREARM_FOLD = 1.2F;
+  private static final float WALK_HAND_FOLD = 0.6F;
+  /** How far the forearm and the hand trail the arm swing, as a phase lag. */
+  private static final float FOREARM_LAG = (float) Math.PI / 4.0F;
+  private static final float HAND_LAG = (float) Math.PI / 2.0F;
+  private static final float WALK_BOB = 2.8F;
+  private static final float WALK_TORSO_TURN = 0.9F;
+  private static final float WALK_HIP_TURN = 0.6F;
+  private static final float WALK_SHOULDER_TURN = 0.4F;
 
   // Attack progress in elapsed ticks for the current frame, or -1 when not attacking. Set in prepareMobModel.
   private float attackElapsed = -1.0F;
@@ -346,14 +369,11 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
     this.walkAmount = Math.min(limbSwingAmount, StoneGolemEntity.WALK_MAX_AMOUNT);
     // Rest/walk values of every part the attack touches, set every frame so nothing stays stuck after an attack.
     this.torso_axis.xRot = 0.0F;
-    this.left_shoulder_axis.xRot = Mth.cos(this.walkPosition * 0.50F) * 0.8F * this.walkAmount;
-    this.left_arm_1_axis.xRot = Mth.cos(this.walkPosition * 0.50F) * 0.8F * this.walkAmount;
-    this.left_forearm_axis.xRot = -Mth.cos(this.walkPosition * 0.75F) * 0.8F * this.walkAmount;
-    this.left_hand_1_axis.xRot = -Mth.cos(this.walkPosition * 0.75F) * 0.8F * this.walkAmount;
-    this.right_shoulder_axis.xRot = -Mth.cos(this.walkPosition * 0.50F) * 0.8F * this.walkAmount;
-    this.right_arm_axis.xRot = -Mth.cos(this.walkPosition * 0.50F) * 0.8F * this.walkAmount;
-    this.right_forearm_axis.xRot = Mth.cos(this.walkPosition * 0.75F) * 0.8F * this.walkAmount;
-    this.right_hand_1_axis.xRot = Mth.cos(this.walkPosition * 0.75F) * 0.8F * this.walkAmount;
+    float legPosition = this.walkPosition * 0.5F;
+    walkArm(this.left_shoulder_axis, this.left_arm_1_axis, this.left_forearm_axis, this.left_hand_1_axis,
+        legPosition, this.walkAmount);
+    walkArm(this.right_shoulder_axis, this.right_arm_axis, this.right_forearm_axis, this.right_hand_1_axis,
+        legPosition + (float) Math.PI, this.walkAmount);
     this.left_shoulder_axis.yRot = 0.0F;
     this.left_shoulder_axis.zRot = 0.0F;
     this.left_arm_1_axis.zRot = 0.5235988F;
@@ -389,15 +409,39 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
 
   // field_f = xRot | field_g = yRot | field_h = zRot
   private void getWalkingAnim(float limbSwing, float walkAmount) {
-    this.torso_axis.y = -2.5F + Mth.cos(limbSwing) * 2.8F * walkAmount;
-    this.torso_axis.yRot = -Mth.cos(limbSwing * 0.5F) * 1.6F * walkAmount;
-    this.left_shoulder_axis.yRot = -0.08726646F - Mth.cos(limbSwing * 0.5F) * 0.4F * walkAmount;
-    this.right_shoulder_axis.yRot = -0.08726646F - Mth.cos(limbSwing * 0.5F) * 0.4F * walkAmount;
-    this.hip_axis.yRot = Mth.cos(limbSwing * 0.5F) * 0.8F * walkAmount;
-    this.left_leg_axis.xRot = 0.0F - Mth.cos(limbSwing * 0.5F) * 1.2F * walkAmount;
-    this.left_leg_2_axis.xRot = 0.0F + Mth.cos(limbSwing) * 0.6F * walkAmount;
-    this.right_leg_axis.xRot = 0.0F + Mth.cos(limbSwing * 0.5F) * 1.2F * walkAmount;
-    this.right_leg_2_axis.xRot = 0.0F + Mth.cos(limbSwing) * 0.6F * walkAmount;
+    // Leg position: left leg at p, right leg half a cycle later. One footfall every PI of p (two bobs per cycle).
+    float p = limbSwing * 0.5F;
+    this.torso_axis.y = -2.5F + Mth.cos(2.0F * p) * WALK_BOB * walkAmount;
+    this.torso_axis.yRot = -Mth.cos(p) * WALK_TORSO_TURN * walkAmount;
+    this.left_shoulder_axis.yRot = -0.08726646F - Mth.cos(p) * WALK_SHOULDER_TURN * walkAmount;
+    this.right_shoulder_axis.yRot = -0.08726646F - Mth.cos(p) * WALK_SHOULDER_TURN * walkAmount;
+    this.hip_axis.yRot = Mth.cos(p) * WALK_HIP_TURN * walkAmount;
+    walkLeg(this.left_leg_axis, this.left_leg_2_axis, p, walkAmount);
+    walkLeg(this.right_leg_axis, this.right_leg_2_axis, p + (float) Math.PI, walkAmount);
+  }
+
+  /**
+   * One leg of the gait at its own position {@code p} (left: p, right: p + PI). The hip swings, foot farthest forward
+   * at p = 0 (heel strike). The knee folds only while the leg swings forward through the air (p from PI to 2 PI, peak
+   * at 3 PI / 2), lifting the foot, and keeps a small flex after the heel strike; it never goes past straight.
+   */
+  private static void walkLeg(ModelPart hip, ModelPart knee, float p, float amount) {
+    hip.xRot = -WalkCycle.swing(p, 0.0F) * WALK_LEG_SWING * amount;
+    knee.xRot = (WalkCycle.fold(p, (float) Math.PI) * WALK_KNEE_FOLD
+        + WalkCycle.fold(p, KNEE_STANCE_PHASE) * WALK_KNEE_STANCE) * amount;
+  }
+
+  /**
+   * One arm of the gait at the position {@code p} of the leg on the same side: the shoulder and arm swing against
+   * that leg, and the forearm and hand bend forward (one way) in the forward half of the swing, the forearm lagging
+   * the arm by a quarter-ish step and the hand lagging the forearm. All on the leg frequency.
+   */
+  private static void walkArm(ModelPart shoulder, ModelPart arm, ModelPart forearm, ModelPart hand, float p, float amount) {
+    float swing = WalkCycle.swing(p, 0.0F) * WALK_ARM_SWING * amount;
+    shoulder.xRot = swing;
+    arm.xRot = swing;
+    forearm.xRot = -WalkCycle.fold(p, -FOREARM_LAG) * WALK_FOREARM_FOLD * amount;
+    hand.xRot = -WalkCycle.fold(p, -HAND_LAG) * WALK_HAND_FOLD * amount;
   }
 
   /**
