@@ -21,16 +21,19 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
   //  - shoulder yRot: with the arm raised, left positive / right negative sweeps it inward; the opposite opens it.
   //  - arm/forearm/hand zRot: with the arm raised forward these act as a horizontal bend; left positive and
   //    right negative bend inward.
-  // Strike keyframe ("clap"): the hands meet in front of the body.
+  // Strike keyframe ("clap"): the hands meet in front of the body, as far from the torso as possible. The shoulders
+  // do most of the closing (yaw past straight ahead, toward the middle) and the elbows stay nearly straight.
   private static final float CLAP_TORSO_X = 0.2F;
   private static final float CLAP_SHOULDER_X = -1.5F;
+  // Same sign convention as OPEN_SHOULDER_YAW: positive opens, negative sweeps inward past straight ahead
+  private static final float CLAP_SHOULDER_YAW = -0.75F;
   private static final float CLAP_LEFT_SHOULDER_Z = -0.6F;
   private static final float CLAP_RIGHT_SHOULDER_Z = 0.6F;
-  private static final float CLAP_LEFT_ARM_Z = 0.48F;
-  private static final float CLAP_RIGHT_ARM_Z = -0.61F;
-  private static final float CLAP_LEFT_FOREARM_Z = 0.41F;
-  private static final float CLAP_RIGHT_FOREARM_Z = -0.5F;
-  private static final float CLAP_FOREARM_X = -0.5F;
+  private static final float CLAP_LEFT_ARM_Z = 0.15F;
+  private static final float CLAP_RIGHT_ARM_Z = -0.2F;
+  private static final float CLAP_LEFT_FOREARM_Z = 0.12F;
+  private static final float CLAP_RIGHT_FOREARM_Z = -0.16F;
+  private static final float CLAP_FOREARM_X = -0.15F;
   private static final float CLAP_LEFT_HAND_Z = -1.0F;
   private static final float CLAP_RIGHT_HAND_Z = 1.0F;
   // Wind-up keyframe ("open"): arms raised partly and spread to the sides, torso leaning back.
@@ -412,7 +415,7 @@ public class StoneGolemModel<T extends StoneGolemEntity> extends EntityModel<T> 
 
     // Shoulders: raised and spread while open, then raised further and swept to the front
     float shoulderX = AttackAnimation.lerp(shoulderStrike, OPEN_SHOULDER_X, CLAP_SHOULDER_X) * weight;
-    float yaw = AttackAnimation.lerp(shoulderStrike, OPEN_SHOULDER_YAW, 0.0F) * weight;
+    float yaw = AttackAnimation.lerp(shoulderStrike, OPEN_SHOULDER_YAW, CLAP_SHOULDER_YAW) * weight;
     float roll = shoulderStrike * clapWeight;
     this.left_shoulder_axis.xRot += shoulderX;
     this.right_shoulder_axis.xRot += shoulderX;
