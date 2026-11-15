@@ -33,7 +33,7 @@ User requests (2026-11-14, 2026-11-15): "Más adelante ajustamos además el mome
 - [x] T12 S11 (`b32fbc5`): step sounds driven by the walk clock for the three walking mobs.
 - [x] T8 S9 (`f2c6a0b`): Lemurian walk cycle, shared phase/bend helper.
 - [x] T9 S9 (`d5cb764`): Stone Golem walk cycle.
-- [ ] T10 S9: Beetle walk cycle.
+- [x] T10 S9 (`b3fbc68`): Beetle walk cycle.
 - [ ] T11 S10: Gunner Turret walk while leashed.
 - [ ] T5: build, and both dedicated servers start and stop (no client class on the server); a summoned golem, Beetle and Lemurian attack a mob without server errors.
 - [ ] T6: user in-game test on Fabric and Forge: timing of the hit against the animation, misses when stepping out of reach, look of each animation. Angle and timing tweaks are expected here.
@@ -62,3 +62,4 @@ Risk: item 6 (no automated test covers animation or hit timing; the look can onl
 - L18 (2026-11-15), user in-game test of the Lemurian gait: "Quedó bien". Next: T9.
 - L19 (2026-11-15), T9 done, `./gradlew build` passes, not seen in game. Golem leg position `p = limbSwing * 0.5`, left at p, right at p + π, shared `walkLeg`: hip `-cos(p)` (foot forward at p = 0); knee positive only (positive `xRot` folds the shin back, so it never hyperextends), `fold(p, π)` in the swing half plus a small stance flex `fold(p, 1.17)` after heel strike. Arms swing against the same-side leg at the leg frequency; forearm and hand bend forward one way only, trailing by π/4 and π/2 (the 0.75 frequency is gone). Torso bob `cos(2p)`, lowest at footfall; torso turn 1.6 to 0.9, hip turn 0.8 to 0.6. Constants at the top of `StoneGolemModel`. Step contacts unchanged (interval 2π, offset 0).
 - L20 (2026-11-15), user in-game test of the golem gait: "Quedó bien". Next: T10.
+- L21 (2026-11-15), T10 done, `./gradlew build` passes, not seen in game. The front leg asymmetry (1.25 against 0.65) was a mistake: both sides have the same pivots (the right arm z=+1 and forearm z=-1 cancel), rest rotations and mirrored cubes, as do the hind legs; left and right are now identical (front swing 0.95, the average). Bound kept: pairs share a phase, hind pair `HIND_PHASE` = π later; front pair lands at p = π, hind pair at p = 0. Front forearm lifts the claw one way only (`fold`) during the forward swing; hind `leg_2` folds forward and up one way only. Body: chest dips at the front landing, hips at the hind landing, `core.y` bob at 2x, lowest at each landing; surge reduced (core 5.5 to 3.5, head 2.0 to 1.5). Constants at the top of `BeetleModel`. Step contacts unchanged (π / 0, one step per pair landing).
