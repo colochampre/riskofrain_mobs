@@ -14,6 +14,7 @@ import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -66,6 +67,15 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
   public static final int ATTACK_HOLD_END = 9;
   public static final int ATTACK_DURATION = 14;
   private int attackTick;
+  /** Share of the horizontal velocity kept each client tick by the smoothed body-space velocity (S13). */
+  private static final float MOVE_SMOOTHING = 0.35F;
+  // Client only: horizontal velocity relative to the body (blocks per tick), smoothed over a few ticks so a strafe
+  // that flips direction fades through zero instead of popping. Forward is positive ahead, lateral is positive
+  // toward the Lemurian's left. The model reads them interpolated with the partial tick.
+  private float moveForward;
+  private float moveLateral;
+  private float moveForwardO;
+  private float moveLateralO;
   /**
    * Cap for the walk animation swing amount and cycle speed: the steady-state `min(distance * 4, 1)` at the normal
    * chase speed (speed 0.26 x 1.0, about 0.584), so a speed boost does not exaggerate the walk.
@@ -140,6 +150,7 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
     super.aiStep();
     if (this.level().isClientSide) {
       this.playWalkStep();
+      this.updateBodyVelocity();
     }
     this.tickPendingHit();
     if (this.attackTick > 0) {
@@ -267,6 +278,33 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
   /** Vanilla's distance based walking step is off: steps follow the walk animation, see {@link #playWalkStep()}. */
   @Override
   protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState blockState) {
+  }
+
+  /**
+   * Client only. Splits this tick's horizontal movement (position now minus position at the start of the tick) into
+   * a forward and a lateral part relative to the body yaw, and eases the smoothed values toward it. The body faces
+   * (-sin, cos) in (x, z) for yaw in degrees and its left is (cos, sin).
+   */
+  private void updateBodyVelocity() {
+    this.moveForwardO = this.moveForward;
+    this.moveLateralO = this.moveLateral;
+    float yaw = this.yBodyRot * Mth.DEG_TO_RAD;
+    float sin = Mth.sin(yaw);
+    float cos = Mth.cos(yaw);
+    double dx = this.getX() - this.xo;
+    double dz = this.getZ() - this.zo;
+    this.moveForward += ((float) (-dx * sin + dz * cos) - this.moveForward) * MOVE_SMOOTHING;
+    this.moveLateral += ((float) (dx * cos + dz * sin) - this.moveLateral) * MOVE_SMOOTHING;
+  }
+
+  /** Client only: smoothed forward velocity relative to the body, blocks per tick (negative is backward). */
+  public float getMoveForward(float partialTick) {
+    return Mth.lerp(partialTick, this.moveForwardO, this.moveForward);
+  }
+
+  /** Client only: smoothed lateral velocity relative to the body, blocks per tick (positive is toward its left). */
+  public float getMoveLateral(float partialTick) {
+    return Mth.lerp(partialTick, this.moveLateralO, this.moveLateral);
   }
 
   /**

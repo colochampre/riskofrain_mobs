@@ -67,6 +67,28 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
   /** Phase of the push-off, as an advance of the foot flick over the support half (PI / 4 peaks at 3/8 cycle). */
   private static final float PUSH_PHASE = (float) Math.PI / 4.0F;
 
+  // Sidestep (strafing), blended in by the share of the movement that is lateral. It runs on the same leg phases as
+  // the forward gait (left leg at the walk position, right leg PI later), so the foot contacts keep their interval
+  // (PI) and offset (0). Axis notes, from createBodyLayer: with +Y down and +X the Lemurian's left, a leg zRot
+  // positive swings the foot toward -X (the right) and negative toward +X (the left); a part's top leans toward +X
+  // with positive zRot. So a foot reaching toward the direction of travel d (+1 left, -1 right) is zRot = -d * reach
+  // for both legs, and a leg is abducted (foot out) when its side s (+1 left leg, -1 right leg) matches d.
+  //  - hip zRot: -d * LEG_SIDE_SWING * cos(position): the foot reaches furthest toward travel at the contact
+  //    (position 0), then sweeps back through support, then comes forward while lifted (same lift as the forward gait);
+  //  - a foot moving toward the middle (adduction) is scaled by LEG_SIDE_CLOSE so it closes in under the body
+  //    instead of crossing the other leg;
+  //  - the lift of the knee and hock is scaled by LEG_SIDE_LIFT; the hip xRot swing and the push-off belong to the
+  //    forward gait and fade out with the lateral share;
+  //  - stomach and rib cage zRot lean the torso toward travel (BODY_SIDE_LEAN) so it stays over the leading leg.
+  private static final float LEG_SIDE_SWING = 0.4F;
+  private static final float LEG_SIDE_CLOSE = 0.6F;
+  private static final float LEG_SIDE_LIFT = 0.8F;
+  private static final float BODY_SIDE_LEAN = 0.12F;
+  /** Share of the arm swing kept while moving purely sideways (1 keeps it, 0 stills the arms). */
+  private static final float ARM_SIDE_SWING = 0.35F;
+  /** Below this smoothed speed (blocks per tick) the movement direction is unknown and the forward gait is used. */
+  private static final float MIN_DIRECTION_SPEED = 1.0E-4F;
+
 
   private final ModelPart core;
   private final ModelPart stomach_axis;
@@ -120,6 +142,15 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
   /** Walk position and capped swing amount of the entity being rendered, set in prepareMobModel. */
   private float walkPosition;
   private float walkAmount;
+  /**
+   * Blend of the forward gait and the sidestep for the entity being rendered, set in prepareMobModel: the shares of
+   * the movement that are forward (forwardShare) and lateral (sideShare, they add up to 1), and the direction of each
+   * part: forwardDir -1 runs the forward gait backward, sideDir is +1 toward the Lemurian's left.
+   */
+  private float forwardShare = 1.0F;
+  private float sideShare;
+  private float forwardDir = 1.0F;
+  private float sideDir = 1.0F;
   // Arm that punches in the current attack: +1 left arm (+X), -1 right arm. Set in prepareMobModel.
   private float punchSide = 1.0F;
 
@@ -252,18 +283,35 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
     limbSwing = this.walkPosition;
     limbSwingAmount = this.walkAmount;
     // Rest/walk values of every part the punch touches, set every frame so nothing stays stuck after an attack.
-    this.left_arm_axis.xRot = -0.08726646F + Mth.cos(limbSwing) * 0.90F * limbSwingAmount;
-    this.left_forearm_axis.xRot = -0.2617994F + Mth.cos(limbSwing) * 0.75F * limbSwingAmount;
-    this.right_arm_axis.xRot = -0.08726646F - Mth.cos(limbSwing) * 0.90F * limbSwingAmount;
-    this.right_forearm_axis.xRot = -0.2617994F - Mth.cos(limbSwing) * 0.75F * limbSwingAmount;
+    float forward = entity.getMoveForward(partialTick);
+    float lateral = entity.getMoveLateral(partialTick);
+    float speed = Math.abs(forward) + Math.abs(lateral);
+    if (speed > MIN_DIRECTION_SPEED) {
+      this.forwardShare = Math.abs(forward) / speed;
+      this.sideShare = 1.0F - this.forwardShare;
+      this.forwardDir = forward >= 0.0F ? 1.0F : -1.0F;
+      this.sideDir = lateral >= 0.0F ? 1.0F : -1.0F;
+    } else {
+      this.forwardShare = 1.0F;
+      this.sideShare = 0.0F;
+      this.forwardDir = 1.0F;
+      this.sideDir = 1.0F;
+    }
+    // The arms keep part of their swing while sidestepping.
+    float armSwing = limbSwingAmount * armShare();
+    this.left_arm_axis.xRot = -0.08726646F + Mth.cos(limbSwing) * 0.90F * armSwing;
+    this.left_forearm_axis.xRot = -0.2617994F + Mth.cos(limbSwing) * 0.75F * armSwing;
+    this.right_arm_axis.xRot = -0.08726646F - Mth.cos(limbSwing) * 0.90F * armSwing;
+    this.right_forearm_axis.xRot = -0.2617994F - Mth.cos(limbSwing) * 0.75F * armSwing;
     this.head_axis.xRot = -0.5235988F - Mth.cos(limbSwing * 2F) * 0.3F * limbSwingAmount;
     this.neck_axis.xRot = 0.2617994F + Mth.cos(limbSwing * 2F) * 0.3F * limbSwingAmount;
     this.left_arm_axis.zRot = 0.0F;
     this.right_arm_axis.zRot = 0.0F;
     this.rib_cage_axis.xRot = 0.17453292F;
-    this.rib_cage_axis.zRot = 0.0F;
+    // Torso leans toward the direction of travel while sidestepping.
+    this.rib_cage_axis.zRot = this.sideDir * BODY_SIDE_LEAN * this.sideShare * limbSwingAmount;
     this.stomach_axis.xRot = 0.08726646F;
-    this.stomach_axis.zRot = 0.0F;
+    this.stomach_axis.zRot = this.sideDir * BODY_SIDE_LEAN * this.sideShare * limbSwingAmount;
 
     int attackTick = entity.getAttackTick();
     if (attackTick > 0) {
@@ -281,6 +329,11 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
       entity.setIsSelectingHand(true);
       this.attackElapsed = -1.0F;
     }
+  }
+
+  /** Share of the arm swing that is kept: all of it walking forward, ARM_SIDE_SWING of it sidestepping. */
+  private float armShare() {
+    return this.forwardShare + this.sideShare * ARM_SIDE_SWING;
   }
 
   private void getLookAnim(float headYaw, float headPitch) {
@@ -315,18 +368,22 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
     this.stomach_axis.y = 0 + Mth.cos(limbSwing * 2.0F) * 1.8F * limbSwingAmount;
     this.tail_1_axis.y = -1.0F + Mth.cos(limbSwing * 2.0F) * 1.8F * limbSwingAmount;
 
-    this.neck_axis.yRot = 0 + Mth.cos(limbSwing) * 0.25F * limbSwingAmount;
-    this.rib_cage_axis.yRot = 0 - Mth.cos(limbSwing) * 0.25F * limbSwingAmount;
-    this.stomach_axis.yRot = 0 - Mth.cos(limbSwing) * 0.15F * limbSwingAmount;
+    // The torso twist is part of the forward gait.
+    float twist = limbSwingAmount * this.forwardShare;
+    this.neck_axis.yRot = 0 + Mth.cos(limbSwing) * 0.25F * twist;
+    this.rib_cage_axis.yRot = 0 - Mth.cos(limbSwing) * 0.25F * twist;
+    this.stomach_axis.yRot = 0 - Mth.cos(limbSwing) * 0.15F * twist;
 
-    this.left_arm_axis.yRot = 0 - Mth.cos(limbSwing) * 0.8F * limbSwingAmount;
-    this.right_arm_axis.yRot = 0 - Mth.cos(limbSwing) * 0.8F * limbSwingAmount;
+    this.left_arm_axis.yRot = 0 - Mth.cos(limbSwing) * 0.8F * limbSwingAmount * armShare();
+    this.right_arm_axis.yRot = 0 - Mth.cos(limbSwing) * 0.8F * limbSwingAmount * armShare();
 
-    // Left leg at the walk position, right leg half a cycle later: identical curves, so no limp.
+    // Left leg at the walk position, right leg half a cycle later: identical curves, so no limp. Walking backward
+    // runs the forward gait with the position reversed (the contacts stay at multiples of PI).
+    float forwardPosition = this.forwardDir * limbSwing;
     walkLeg(this.left_leg_1_axis, this.left_leg_2_axis, this.left_leg_3_axis, this.left_foot_axis,
-        limbSwing, limbSwingAmount);
+        forwardPosition, limbSwing, 1.0F, limbSwingAmount);
     walkLeg(this.right_leg_1_axis, this.right_leg_2_axis, this.right_leg_3_axis, this.right_foot_axis,
-        limbSwing + (float) Math.PI, limbSwingAmount);
+        forwardPosition + (float) Math.PI, limbSwing + (float) Math.PI, -1.0F, limbSwingAmount);
 
     this.tail_1_axis.zRot = Mth.cos(limbSwing) * 0.33F * limbSwingAmount;
     this.tail_2_axis.zRot = Mth.cos(limbSwing) * 0.33F * limbSwingAmount;
@@ -339,17 +396,20 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
    * fold together during the second half of the cycle, while the leg swings forward through the air, and are at rest
    * (extended) during the first half, while it supports and pushes back.
    */
-  private static void walkLeg(ModelPart hip, ModelPart knee, ModelPart hock, ModelPart foot, float position,
-      float amount) {
+  private void walkLeg(ModelPart hip, ModelPart knee, ModelPart hock, ModelPart foot, float position,
+      float sidePosition, float side, float amount) {
     float hipSwing = WalkCycle.swing(position, 0.0F);
     // 1 during the swing half of the cycle (peak at 3/4), 0 while the foot is on the ground.
     float lift = WalkCycle.fold(position, (float) Math.PI);
     // Peak late in the support half (3/8 of the cycle), the push-off.
-    float push = WalkCycle.fold(position, -PUSH_PHASE);
+    float push = WalkCycle.fold(position, -PUSH_PHASE) * this.forwardShare;
+    // The sidestep lifts on the same half of the cycle as the unreversed forward gait, so the contacts match.
+    float sideLift = WalkCycle.fold(sidePosition, (float) Math.PI);
+    float liftBlend = lift * this.forwardShare + sideLift * LEG_SIDE_LIFT * this.sideShare;
 
-    float hipDelta = -LEG_HIP_SWING * hipSwing;
-    float kneeDelta = LEG_KNEE_FOLD * lift;
-    float hockDelta = -LEG_HOCK_FOLD * lift;
+    float hipDelta = -LEG_HIP_SWING * hipSwing * this.forwardShare;
+    float kneeDelta = LEG_KNEE_FOLD * liftBlend;
+    float hockDelta = -LEG_HOCK_FOLD * liftBlend;
     // Cancels part of the rotation accumulated down the chain so the sole stays near level, then pitches the toes
     // down at push-off.
     float footDelta = -LEG_FOOT_LEVEL * (hipDelta + kneeDelta + hockDelta) + LEG_FOOT_PUSH * push;
@@ -358,6 +418,13 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
     knee.xRot = LEG_KNEE_REST + kneeDelta * amount;
     hock.xRot = LEG_HOCK_REST + hockDelta * amount;
     foot.xRot = LEG_FOOT_REST + footDelta * amount;
+
+    // Sidestep reach toward the direction of travel (see the axis notes); a foot moving toward the middle (outward
+    // below zero for this leg's side) is shortened so it closes in without crossing the other leg.
+    float travel = this.sideDir * WalkCycle.swing(sidePosition, 0.0F);
+    float outward = side * travel;
+    hip.zRot = -this.sideDir * LEG_SIDE_SWING * WalkCycle.swing(sidePosition, 0.0F)
+        * (outward < 0.0F ? LEG_SIDE_CLOSE : 1.0F) * this.sideShare * amount;
   }
 
 
