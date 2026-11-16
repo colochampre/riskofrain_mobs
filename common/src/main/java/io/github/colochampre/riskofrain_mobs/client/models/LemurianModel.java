@@ -80,8 +80,8 @@ public class LemurianModel<T extends LemurianEntity> extends EntityModel<T> {
   //  - the lift of the knee and hock is scaled by LEG_SIDE_LIFT; the hip xRot swing and the push-off belong to the
   //    forward gait and fade out with the lateral share;
   //  - stomach and rib cage zRot lean the torso toward travel (BODY_SIDE_LEAN) so it stays over the leading leg.
-  private static final float LEG_SIDE_SWING = 0.4F;
-  private static final float LEG_SIDE_CLOSE = 0.6F;
+  private static final float LEG_SIDE_SWING = 0.8F;
+  private static final float LEG_SIDE_CLOSE = 1.6F;
   private static final float LEG_SIDE_LIFT = 0.8F;
   private static final float BODY_SIDE_LEAN = 0.12F;
   /** Share of the arm swing kept while moving purely sideways (1 keeps it, 0 stills the arms). */
