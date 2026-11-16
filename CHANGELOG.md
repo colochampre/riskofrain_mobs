@@ -16,6 +16,7 @@
 ### Fixes
 - Stone Golem torso and Beetle legs no longer stay stuck in a pose after an attack.
 - Two Lemurians attacking at once no longer mix up which hand punches.
+- Carried item icons above mobs are as bright as in the inventory, whatever the time of day or where you look.
 
 ## 1.3.0 - Minecraft 1.20.1 (Fabric & Forge)
 
