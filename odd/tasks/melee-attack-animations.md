@@ -38,7 +38,7 @@ User requests (2026-11-14, 2026-11-15): "Más adelante ajustamos además el mome
 - [x] T10 S9 (dropped, see L24): Beetle walk cycle.
 - [x] T11 S10 (`f8af908`): Gunner Turret walk while leashed.
 - [x] T5: build, and both dedicated servers start and stop (no client class on the server); a summoned golem, Beetle and Lemurian attack a mob without server errors.
-- [ ] T13 S12: impact reach margin for the three mobs.
+- [x] T13 S12 (`cf5b679`): impact reach margin for the three mobs.
 - [ ] T14 S13: Lemurian sidestep while strafing.
 - [ ] T6: user in-game test on Fabric and Forge: timing of the hit against the animation, misses when stepping out of reach, look of each animation. Angle and timing tweaks are expected here.
 
