@@ -52,6 +52,18 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   private float prevSitProgress;
   private float tameProgress;
   private float prevTameProgress;
+  private float walkBlend;
+  private float prevWalkBlend;
+
+  /**
+   * Cap for the leash walk swing amount of every walk part: a turret dragged by a leash follows the player at about
+   * 0.22 blocks per tick (walking), where vanilla's `min(distance * 4, 1)` gives 0.86, and a sprint gives 1. The
+   * cycle advances by the amount each tick, so the cap keeps one diagonal footfall every PI / 0.6 = 5.2 ticks
+   * (the Lemurian steps every 5.3 ticks at 0.59) instead of every 3 ticks.
+   */
+  public static final float WALK_MAX_AMOUNT = 0.6F;
+  /** Blend change per tick: the legs take 10 ticks to go from planted to walking and back. */
+  private static final float WALK_BLEND_STEP = 0.1F;
 
   public GunnerTurretEntity(EntityType<? extends AbstractDroneEntity> entityType, Level level) {
     super(entityType, level);
@@ -99,6 +111,26 @@ public class GunnerTurretEntity extends AbstractDroneEntity implements RangedAtt
   public void aiStep() {
     super.aiStep();
     this.updateGun();
+    if (this.level().isClientSide) {
+      this.updateWalkBlend();
+    }
+  }
+
+  /**
+   * Client only. The legs walk only while the turret is tame and leashed. Shooting (an active attack target, the
+   * planted pose) and sitting take over, so the target drops to 0 and the legs ease back to the planted pose.
+   * getLeashHolder, not isLeashed: on the client the holder is resolved lazily from the synced entity id.
+   */
+  private void updateWalkBlend() {
+    this.prevWalkBlend = this.walkBlend;
+    boolean walks = this.isTame() && !this.isInSittingPose() && this.getLeashHolder() != null
+            && this.getActiveAttackTarget() == null;
+    this.walkBlend = Mth.clamp(this.walkBlend + (walks ? WALK_BLEND_STEP : -WALK_BLEND_STEP), 0.0F, 1.0F);
+  }
+
+  /** Interpolated 0 to 1 weight of the leash walk on the legs, 0 is the planted pose. */
+  public float getWalkBlend(float partialTick) {
+    return Mth.lerp(partialTick, this.prevWalkBlend, this.walkBlend);
   }
 
   @Override

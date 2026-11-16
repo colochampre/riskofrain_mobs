@@ -2,6 +2,7 @@ package io.github.colochampre.riskofrain_mobs.client.models;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.colochampre.riskofrain_mobs.client.animation.WalkCycle;
 import io.github.colochampre.riskofrain_mobs.entities.allies.GunnerTurretEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -13,6 +14,35 @@ import net.minecraft.util.Mth;
 
 @Environment(EnvType.CLIENT)
 public class GunnerTurretModel<T extends GunnerTurretEntity> extends EntityModel<T> {
+
+  /*
+   * Leash walk (S10). Axes, derived from createBodyLayer (model +y is down, the entity faces -z, +x is its left):
+   * - leg_*_1 is a post hanging 6 down from the hips, yawed 45 degrees (front) or 135 degrees (back) so its local -z
+   *   points diagonally outward. Everything below it (leg_2 to leg_5) extends along that local -z.
+   * - leg_*_1.yRot sweeps the whole leg around the hip, along the ground. For the left legs (+x) a positive yRot moves
+   *   the foot forward, for the right legs it moves it backward, so the sweep is multiplied by a side sign.
+   * - xRot turns about the tangent axis. On leg_2 and leg_3 (whose feet are further out along local -z) a negative
+   *   xRot raises the foot, a positive one presses it into the ground (the resting 0.2618 on leg_2 is the planted,
+   *   dug in pose).
+   * The planted pose has no animation of its own (no shooting pose in the model), so planted means every walk offset
+   * is 0. A trot: front-left with back-right at one phase, front-right with back-left half a cycle later. A foot is
+   * forward at p + phase = 0 (heel strike), sweeps back while it supports (0 to PI) and lifts only during the forward
+   * swing (PI to 2 PI). Every walk part is scaled by min(limbSwingAmount, WALK_MAX_AMOUNT) and the leash blend.
+   */
+  /** Hip sweep of a leg around its post, radians at amount 1 (the radius to the foot is about 9 px). */
+  private static final float LEG_SWEEP = 0.80F;
+  /** Foot lift through leg_2, radians at amount 1, applied only during the forward swing. */
+  private static final float LEG_LIFT = 1.20F;
+  /** Extra lift through leg_3, radians at amount 1, so the foot clears the ground with a bent leg. */
+  private static final float LEG_LIFT_UPPER = 0.50F;
+  /** Body rise at mid support in model pixels at amount 1; the body is lowest at each footfall. */
+  private static final float BODY_BOB = 1.20F;
+  /** Offset between the two diagonal pairs of legs. */
+  private static final float PAIR_PHASE = Mth.PI;
+  private static final float FRONT_LEFT_YAW = -0.7854F;
+  private static final float FRONT_RIGHT_YAW = 0.7854F;
+  private static final float BACK_LEFT_YAW = -2.3562F;
+  private static final float BACK_RIGHT_YAW = 2.3562F;
 
   private final ModelPart core;
   private final ModelPart hips_axis;
@@ -197,6 +227,7 @@ public class GunnerTurretModel<T extends GunnerTurretEntity> extends EntityModel
     this.getWalkAnim(limbSwing, limbSwingAmount);
     this.getGunAnim(entity, partialTicks);
     this.getBuriedPosition(entity, partialTicks);
+    this.getLegWalkAnim(limbSwing, limbSwingAmount, entity.getWalkBlend(partialTicks));
   }
 
   private void getLookAnim(float headYaw, float headPitch) {
@@ -205,13 +236,35 @@ public class GunnerTurretModel<T extends GunnerTurretEntity> extends EntityModel
   }
 
   private void getWalkAnim(float limbSwing, float limbSwingAmount) {
-    this.spout.xRot = 0 + Mth.cos(limbSwing * 0.3F) * 1.0F * limbSwingAmount;
-    this.bandolier_left.zRot = 0 + Mth.cos(limbSwing * 0.3F) * 1.0F * limbSwingAmount;
-    this.bandolier_right.zRot = 0 - Mth.cos(limbSwing * 0.3F) * 1.0F * limbSwingAmount;
+    float amount = Math.min(limbSwingAmount, GunnerTurretEntity.WALK_MAX_AMOUNT);
+    this.spout.xRot = 0 + Mth.cos(limbSwing * 0.3F) * 1.0F * amount;
+    this.bandolier_left.zRot = 0 + Mth.cos(limbSwing * 0.3F) * 1.0F * amount;
+    this.bandolier_right.zRot = 0 - Mth.cos(limbSwing * 0.3F) * 1.0F * amount;
     /*this.leg_front_left_1.yRot = -0.7854F + Mth.cos(limbSwing * 0.25F) * 1.0F * limbSwingAmount;
     this.leg_front_right_1.yRot = 0.7854F + Mth.cos(limbSwing * 0.25F) * 1.0F * limbSwingAmount;
     this.leg_back_left_1.yRot = -2.3562F - Mth.cos(limbSwing * 0.25F) * 1.0F * limbSwingAmount;
     this.leg_back_right_1.yRot = 2.3562F - Mth.cos(limbSwing * 0.25F) * 1.0F * limbSwingAmount;*/
+  }
+
+  /** Four-leg trot, added on top of the planted pose; with weight 0 every leg keeps the planted pose exactly. */
+  private void getLegWalkAnim(float limbSwing, float limbSwingAmount, float blend) {
+    float weight = blend * Math.min(limbSwingAmount, GunnerTurretEntity.WALK_MAX_AMOUNT);
+    float pairA = limbSwing;
+    float pairB = limbSwing + PAIR_PHASE;
+    this.walkLeg(leg_front_left_1, leg_front_left_2, leg_front_left_3, FRONT_LEFT_YAW, 1.0F, pairA, weight);
+    this.walkLeg(leg_back_right_1, leg_back_right_2, leg_back_right_3, BACK_RIGHT_YAW, -1.0F, pairA, weight);
+    this.walkLeg(leg_front_right_1, leg_front_right_2, leg_front_right_3, FRONT_RIGHT_YAW, -1.0F, pairB, weight);
+    this.walkLeg(leg_back_left_1, leg_back_left_2, leg_back_left_3, BACK_LEFT_YAW, 1.0F, pairB, weight);
+    // Lowest when a pair lands (p = 0 and PI), highest between the two landings
+    this.core.y -= BODY_BOB * weight * 0.5F * (1.0F - Mth.cos(2.0F * limbSwing));
+  }
+
+  /** One leg: sweep the post around the hip, and fold the foot up only while it swings forward. */
+  private void walkLeg(ModelPart post, ModelPart lower, ModelPart mid, float restYaw, float side, float position, float weight) {
+    post.yRot = restYaw + side * LEG_SWEEP * WalkCycle.swing(position, 0.0F) * weight;
+    float lift = WalkCycle.fold(position, Mth.PI) * weight;
+    lower.xRot -= LEG_LIFT * lift;
+    mid.xRot = -LEG_LIFT_UPPER * lift;
   }
 
   private void getGunAnim(GunnerTurretEntity entity, float partialTicks) {
