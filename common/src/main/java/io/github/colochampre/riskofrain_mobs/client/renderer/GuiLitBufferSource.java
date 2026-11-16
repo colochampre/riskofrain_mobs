@@ -25,7 +25,7 @@ import org.joml.Vector3f;
  * puts its normals in a y-down frame. The normal is rewritten as vertices are written, so the buffer stays batched
  * with the other entities and no global lighting state is touched. Client only.
  * <p>
- * Approximation: the Nether uses a different second light, so there the icons are about 2% darker than in the GUI.
+ * Approximation: the Nether's second light points down, so there front faces are about 2% darker than in the GUI.
  */
 @Environment(EnvType.CLIENT)
 final class GuiLitBufferSource implements MultiBufferSource {
@@ -43,12 +43,16 @@ final class GuiLitBufferSource implements MultiBufferSource {
   private Matrix3f normals;
 
   /**
-   * @param cameraOrientation the camera's rotation, as {@code EntityRenderDispatcher.cameraOrientation()}; its inverse is
-   *                          the view rotation the level lights were set up with
+   * @param cameraOrientation the camera's rotation, as {@code EntityRenderDispatcher.cameraOrientation()}. The view the
+   *                          level lights were set up with ({@code GameRenderer.renderLevel}: pitch, then yaw + 180) is
+   *                          {@code Ry(180) * conj(cameraOrientation)}, not the plain inverse: the camera quaternion is
+   *                          {@code rotationYXZ(-yaw, pitch, 0)}. This relies on the caller billboarding with
+   *                          {@code mulPose(cameraOrientation)} plus a 180 degree turn around Y, which leaves the model
+   *                          axes aligned with the eye.
    */
   GuiLitBufferSource(MultiBufferSource delegate, Quaternionf cameraOrientation) {
     this.delegate = delegate;
-    Matrix3f view = new Matrix3f().rotation(new Quaternionf(cameraOrientation).conjugate());
+    Matrix3f view = new Matrix3f().rotation(new Quaternionf(cameraOrientation).conjugate()).rotateLocalY((float) Math.PI);
     this.flatNormals = new Matrix3f(view).mul(FLAT_TO_WORLD);
     this.blockNormals = new Matrix3f(view).mul(BLOCK_TO_WORLD);
     this.normals = flatNormals;
@@ -57,9 +61,8 @@ final class GuiLitBufferSource implements MultiBufferSource {
   /**
    * @param blockLight {@code BakedModel.usesBlockLight()}: the inventory lights these like cubes, anything else flat
    */
-  GuiLitBufferSource forModel(boolean blockLight) {
+  void forModel(boolean blockLight) {
     this.normals = blockLight ? blockNormals : flatNormals;
-    return this;
   }
 
   @Override
