@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -108,13 +109,15 @@ public final class CarriedItemsRenderer {
     poseStack.mulPose(minecraft.getEntityRenderDispatcher().cameraOrientation());
     // The camera orientation leaves +x pointing to the viewer's left, as vanilla name tags compensate with a negative scale
     poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+    // Items shade as they do in the inventory; text keeps the original buffer, it has no normals to shade
+    GuiLitBufferSource itemBuffer = new GuiLitBufferSource(buffer, minecraft.getEntityRenderDispatcher().cameraOrientation());
 
     for (int rowStart = 0; rowStart < items.size(); rowStart += ITEMS_PER_ROW) {
       List<Carried> row = items.subList(rowStart, Math.min(rowStart + ITEMS_PER_ROW, items.size()));
       float rowY = (rowStart / ITEMS_PER_ROW) * ROW_HEIGHT + ICON_SIZE / 2.0F;
       float x = -rowWidth(row, font) / 2.0F;
       for (Carried carried : row) {
-        renderIcon(entity, carried.stack(), x + ICON_SIZE / 2.0F, rowY, poseStack, buffer);
+        renderIcon(entity, carried.stack(), x + ICON_SIZE / 2.0F, rowY, poseStack, itemBuffer);
         x += ICON_SIZE;
         if (carried.label() != null) {
           renderLabel(font, carried.label(), x + COUNT_GAP, rowY, background, poseStack, buffer);
@@ -161,11 +164,14 @@ public final class CarriedItemsRenderer {
     return width;
   }
 
-  private static void renderIcon(Entity entity, ItemStack stack, float x, float y, PoseStack poseStack, MultiBufferSource buffer) {
+  private static void renderIcon(Entity entity, ItemStack stack, float x, float y, PoseStack poseStack, GuiLitBufferSource buffer) {
+    ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
+    // Same choice as the inventory: models that use block light are lit like cubes, the rest like flat sprites
+    buffer.forModel(itemRenderer.getModel(stack, entity.level(), null, entity.getId()).usesBlockLight());
     poseStack.pushPose();
     poseStack.translate(x, y, 0.0F);
     poseStack.scale(ICON_SIZE, ICON_SIZE, ICON_SIZE);
-    Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.GUI, LightTexture.FULL_BRIGHT,
+    itemRenderer.renderStatic(stack, ItemDisplayContext.GUI, LightTexture.FULL_BRIGHT,
             OverlayTexture.NO_OVERLAY, poseStack, buffer, entity.level(), entity.getId());
     poseStack.popPose();
   }
