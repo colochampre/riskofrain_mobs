@@ -42,24 +42,45 @@ public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
   // foot contact is every PI (BeetleEntity.STEP_INTERVAL) with offset 0. Each pair swings forward while p moves from
   // its landing back to the next one: the front pair for p in (0, PI), the hind pair for p in (PI, 2 PI).
   private static final float HIND_PHASE = (float) Math.PI;
-  // Front legs: arm_axis swings; while the leg swings forward the arm also raises forward (reach) and the forearm
-  // lifts the claw, so the leg 'reaches' for the next step. Each side has a factor on purpose: identical front legs
-  // looked unnatural, so the left one moves wider than the right as a deliberate imperfection.
+  // Front legs, a reach-and-pull stroke (p = position, front pair lands at p = PI):
+  //  - lift-off (p = 0): the arm is farthest back with the elbow flexed from the pull; the arm raises forward (reach) and
+  //    the forearm lifts the claw quickly (FRONT_REACH_RISE of the swing).
+  //  - reach: the leg stays extended forward while the arm keeps sweeping forward.
+  //  - set-down (to p = PI): the reach and the lift fall back slowly with eased ends, so the claw arrives near the
+  //    ground before the forward extreme and lands with almost no downward speed, forearm open (rest angle).
+  //  - pull (p in PI..2 PI): the arm sweeps back and the elbow flexes progressively (FRONT_PULL_FLEX), the claw
+  //    stays near the ground; the body surges forward meanwhile (BODY_SURGE).
+  // Each side has a factor on purpose: identical front legs looked unnatural, so the left one moves wider than the
+  // right as a deliberate imperfection.
   private static final float FRONT_SWING = 0.95F;
-  private static final float FRONT_REACH = 1.0F;
-  private static final float FRONT_LIFT = 1.0F;
+  // Extra forward raise of the arm during the swing, at its peak.
+  private static final float FRONT_REACH = 2.0F;
+  // Fraction of the swing spent lifting off and reaching up (the rest is the slow set-down).
+  private static final float FRONT_REACH_RISE = 0.30F;
+  // Forearm lift at the peak of the reach (positive lifts the claw; the forearm xRot goes negative).
+  private static final float FRONT_LIFT = 1.2F;
+  // Elbow flex reached at the end of the pull, released over the first FRONT_PULL_RELEASE of the swing as the lift
+  // takes over.
+  private static final float FRONT_PULL_FLEX = 1.0F;
+  private static final float FRONT_PULL_RELEASE = FRONT_REACH_RISE;
   private static final float FRONT_LEFT_FACTOR = 1.3F;
   private static final float FRONT_RIGHT_FACTOR = 0.7F;
   // Hind legs: leg_1 swings, leg_2 folds (foot lifted) only while the leg swings forward.
   private static final float HIND_SWING = 0.30F;
   private static final float HIND_FOLD = 1.6F;
-  // Body: the pitch and shell counter-rotation follow the front landing (chest down at p = PI), the hips follow the
-  // hind landing (hips down at p = 0), the bob runs twice per cycle and is lowest at each landing.
-  private static final float CHEST_PITCH = 0.40F;
-  private static final float HEAD_PITCH = 0.38F;
+  // Body: the weight transfers while the legs pull, so the chest pitch and the bob are lowest a little AFTER each
+  // landing instead of on it (a dip on the landing read as an impact). The pitch and shell counter-rotation follow
+  // the front landing (chest down at p = PI + PITCH_LAG), the hips follow the hind landing (hips down at p = 0), the
+  // bob runs twice per cycle and is lowest at each landing plus BOB_LAG.
+  private static final float CHEST_PITCH = 0.25F;
+  private static final float HEAD_PITCH = 0.24F;
   private static final float SHELL_PITCH = 0.20F;
   private static final float HIPS_PITCH = 0.40F;
-  private static final float BODY_BOB = 2.0F;
+  private static final float BODY_BOB = 1.2F;
+  // Delay of the chest pitch, in walk position radians.
+  private static final float PITCH_LAG = (float) Math.PI / 4.0F;
+  // Delay of the bob, in walk position radians.
+  private static final float BOB_LAG = (float) Math.PI / 6.0F;
   // Surge of the body and head along Z, once per cycle, as the push-off.
   private static final float BODY_SURGE = 3.5F;
   private static final float HEAD_SURGE = 1.5F;
@@ -210,8 +231,9 @@ public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
     this.core.z = 0 - Mth.cos(this.walkPosition) * BODY_SURGE * this.walkAmount;
     this.head.z = 0 - Mth.cos(this.walkPosition) * HEAD_SURGE * this.walkAmount;
     this.head_axis.z = NECK_REST_Z;
-    this.chest_axis.xRot = 0.0873F - Mth.cos(this.walkPosition) * CHEST_PITCH * this.walkAmount;
-    this.head_axis.xRot = -0.0873F + Mth.cos(this.walkPosition) * HEAD_PITCH * this.walkAmount;
+    float pitch = Mth.cos(this.walkPosition - PITCH_LAG);
+    this.chest_axis.xRot = 0.0873F - pitch * CHEST_PITCH * this.walkAmount;
+    this.head_axis.xRot = -0.0873F + pitch * HEAD_PITCH * this.walkAmount;
 
     int attackTick = entity.getAttackTick();
     this.attackElapsed = attackTick > 0
@@ -252,7 +274,7 @@ public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
   }
 
   private void getWalkAnim(BeetleEntity entity, float limbSwing, float walkAmount) {
-    this.core.y = 12 + Mth.cos(limbSwing * 2.0F) * BODY_BOB * walkAmount;
+    this.core.y = 12 + Mth.cos((limbSwing - BOB_LAG) * 2.0F) * BODY_BOB * walkAmount;
     this.chest_shell_axis.xRot = Mth.cos(limbSwing) * SHELL_PITCH * walkAmount;
     this.hips_axis.xRot = Mth.cos(limbSwing) * HIPS_PITCH * walkAmount;
     walkFrontLeg(this.left_arm_axis, this.left_forearm_axis, limbSwing, walkAmount * FRONT_LEFT_FACTOR);
@@ -263,8 +285,10 @@ public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
 
   private static void walkFrontLeg(ModelPart arm, ModelPart forearm, float limbSwing, float walkAmount) {
     arm.xRot = 0.0436F + WalkCycle.swing(limbSwing, 0.0F) * FRONT_SWING * walkAmount
-        - WalkCycle.fold(limbSwing, 0.0F) * FRONT_REACH * walkAmount;
-    forearm.xRot = 0.1745F - WalkCycle.fold(limbSwing, 0.0F) * FRONT_LIFT * walkAmount;
+        - WalkCycle.bump(limbSwing, 0.0F, FRONT_REACH_RISE) * FRONT_REACH * walkAmount;
+    forearm.xRot = 0.1745F
+        - (WalkCycle.pull(limbSwing, 0.0F, FRONT_PULL_RELEASE) * FRONT_PULL_FLEX
+        + WalkCycle.bump(limbSwing, 0.0F, FRONT_REACH_RISE) * FRONT_LIFT) * walkAmount;
   }
 
   private static void walkHindLeg(ModelPart upper, ModelPart lower, float limbSwing, float walkAmount) {
