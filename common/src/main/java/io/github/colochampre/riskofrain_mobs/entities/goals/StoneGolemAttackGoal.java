@@ -58,7 +58,7 @@ public class StoneGolemAttackGoal extends Goal {
       if (this.path != null) {
         return true;
       } else {
-        return this.getAttackReachSqr(target) >= this.golem.distanceToSqr(target.getX(), target.getY(), target.getZ());
+        return this.golem.getAttackReachSqr(target) >= this.golem.distanceToSqr(target.getX(), target.getY(), target.getZ());
       }
     }
   }
@@ -204,12 +204,11 @@ public class StoneGolemAttackGoal extends Goal {
   }
 
   protected void checkAndPerformAttack(LivingEntity livingEntity, double distance) {
-    double d0 = this.getAttackReachSqr(livingEntity);
+    double d0 = this.golem.getAttackReachSqr(livingEntity);
     if (distance <= d0 && this.ticksUntilNextAttack <= 0) {
       this.resetAttackCooldown();
       this.golem.swing(InteractionHand.MAIN_HAND);
       this.golem.doHurtTarget(livingEntity);
-      this.golem.strongKnockback(livingEntity);
     }
   }
 
@@ -223,9 +222,5 @@ public class StoneGolemAttackGoal extends Goal {
 
   protected SoundEvent getLaserFireSound() {
     return RoRSounds.STONE_GOLEM_LASER_FIRE.get();
-  }
-
-  protected double getAttackReachSqr(LivingEntity entity) {
-    return (this.golem.getBbWidth() * 1.5F * this.golem.getBbWidth() * 1.5F + entity.getBbWidth());
   }
 }

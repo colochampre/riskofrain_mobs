@@ -2,6 +2,7 @@ package io.github.colochampre.riskofrain_mobs.client.models;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.colochampre.riskofrain_mobs.client.animation.AttackAnimation;
 import io.github.colochampre.riskofrain_mobs.entities.enemies.BeetleEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -13,6 +14,31 @@ import net.minecraft.util.Mth;
 
 @Environment(EnvType.CLIENT)
 public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
+  // Ram pose offsets from the rest/walk pose, in radians and model units. Axis conventions (model space: -Z is
+  // front, +Y is down, rotation order Rz*Ry*Rx), derived from the geometry and the old attack:
+  //  - head_axis/chest_axis xRot: positive tips the front down (the old attack went to +1.0 head, +0.5 chest), so
+  //    negative rears up and back.
+  //  - the Beetle has no neck part: the neck is the head_axis pivot at the top of the chest, so retracting the neck
+  //    is moving head_axis along Z (+Z back, -Z forward).
+  //  - arm_axis xRot: negative swings the arm forward (the old attack used -0.5).
+  // Wind-up keyframe: neck pulled back, head pitched up, chest rearing, arms braced back.
+  private static final float WINDUP_HEAD_X = -0.45F;
+  private static final float WINDUP_NECK_Z = 2.5F;
+  private static final float WINDUP_CHEST_X = -0.25F;
+  private static final float WINDUP_ARM_X = 0.3F;
+  // Strike keyframe (contact): head driven forward and down a little past the old extreme, chest lunging.
+  private static final float STRIKE_HEAD_X = 1.1F;
+  private static final float STRIKE_NECK_Z = -2.5F;
+  private static final float STRIKE_CHEST_X = 0.55F;
+  private static final float STRIKE_ARM_X = -0.6F;
+  private static final float NECK_REST_Z = -1.5F;
+
+  // Attack progress in elapsed ticks for the current frame, or -1 when not attacking. Set in prepareMobModel.
+  private float attackElapsed = -1.0F;
+  /** Walk cycle position (vanilla limbSwing) of the entity being rendered, set in prepareMobModel. */
+  private float walkPosition;
+  // Walk swing amount for every part, legs and body, capped at BeetleEntity.WALK_MAX_AMOUNT.
+  private float walkAmount;
 
   protected final ModelPart core;
   private final ModelPart chest_axis;
@@ -145,23 +171,31 @@ public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
   }
 
   @Override
-  public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float ageInTicks) {
-    int i = entity.getAttackTick();
-    if (i > 0) {
-      getAttackAnim(entity, i, ageInTicks);
-    } else {
-      this.core.z = 0 - Mth.cos(limbSwing) * 5.50F * limbSwingAmount;
-      this.head.z = 0 - Mth.cos(limbSwing) * 2.00F * limbSwingAmount;
-      this.chest_axis.xRot = 0.0873F + Mth.cos(limbSwing) * 0.40F * limbSwingAmount;
-      this.head_axis.xRot = -0.0873F - Mth.cos(limbSwing) * 0.38F * limbSwingAmount;
-    }
+  public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
+    // Vanilla cadence, capped swing amount for every part.
+    this.walkPosition = limbSwing;
+    this.walkAmount = Math.min(limbSwingAmount, BeetleEntity.WALK_MAX_AMOUNT);
+    // Rest/walk values of every part the ram touches, set every frame so nothing stays stuck after an attack.
+    this.core.z = 0 - Mth.cos(this.walkPosition) * 5.50F * this.walkAmount;
+    this.head.z = 0 - Mth.cos(this.walkPosition) * 2.00F * this.walkAmount;
+    this.head_axis.z = NECK_REST_Z;
+    this.chest_axis.xRot = 0.0873F + Mth.cos(this.walkPosition) * 0.40F * this.walkAmount;
+    this.head_axis.xRot = -0.0873F - Mth.cos(this.walkPosition) * 0.38F * this.walkAmount;
+
+    int attackTick = entity.getAttackTick();
+    this.attackElapsed = attackTick > 0
+            ? AttackAnimation.progress(attackTick, partialTick, BeetleEntity.ATTACK_DURATION)
+            : -1.0F;
   }
 
   @Override
   public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float headYaw, float headPitch) {
     getLookAnim(entity, headYaw, headPitch);
     getIdleAnim(entity, ageInTicks);
-    getWalkAnim(entity, limbSwing, limbSwingAmount);
+    getWalkAnim(entity, this.walkPosition, this.walkAmount);
+    if (this.attackElapsed >= 0.0F) {
+      getAttackAnim(this.attackElapsed);
+    }
   }
 
   private void getLookAnim(BeetleEntity entity, float headYaw, float headPitch) {
@@ -186,24 +220,42 @@ public class BeetleModel<T extends BeetleEntity> extends EntityModel<T> {
     }
   }
 
-  private void getWalkAnim(BeetleEntity entity, float limbSwing, float limbSwingAmount) {
-    this.core.y = 12 - Mth.cos(limbSwing) * 2.50F * limbSwingAmount;
-    this.chest_shell_axis.xRot = 0 - Mth.cos(limbSwing) * 0.20F * limbSwingAmount;
-    this.left_arm_axis.xRot = 0.0436F + Mth.cos(limbSwing) * 1.25F * limbSwingAmount;
-    this.left_forearm_axis.xRot = 0.1745F - Mth.cos(limbSwing) * 1.25F * limbSwingAmount;
-    this.right_arm_axis.xRot = 0.0436F + Mth.cos(limbSwing) * 0.65F * limbSwingAmount;
-    this.right_forearm_axis.xRot = 0.1745F - Mth.cos(limbSwing) * 0.65F * limbSwingAmount;
-    this.hips_axis.xRot = 0 - Mth.cos(limbSwing) * 0.40F * limbSwingAmount;
-    this.left_leg_1_axis.xRot = -0.3491F - Mth.cos(limbSwing) * 0.15F * limbSwingAmount;
-    this.left_leg_2_axis.xRot = 0 - Mth.cos(limbSwing) * 0.35F * limbSwingAmount;
-    this.right_leg_1_axis.xRot = -0.3491F - Mth.cos(limbSwing) * 0.20F * limbSwingAmount;
-    this.right_leg_2_axis.xRot = 0 - Mth.cos(limbSwing) * 0.30F * limbSwingAmount;
+  private void getWalkAnim(BeetleEntity entity, float limbSwing, float walkAmount) {
+    this.core.y = 12 - Mth.cos(limbSwing) * 2.50F * walkAmount;
+    this.chest_shell_axis.xRot = 0 - Mth.cos(limbSwing) * 0.20F * walkAmount;
+    this.left_arm_axis.xRot = 0.0436F + Mth.cos(limbSwing) * 1.25F * walkAmount;
+    this.left_forearm_axis.xRot = 0.1745F - Mth.cos(limbSwing) * 1.25F * walkAmount;
+    this.right_arm_axis.xRot = 0.0436F + Mth.cos(limbSwing) * 0.65F * walkAmount;
+    this.right_forearm_axis.xRot = 0.1745F - Mth.cos(limbSwing) * 0.65F * walkAmount;
+    this.hips_axis.xRot = 0 - Mth.cos(limbSwing) * 0.40F * walkAmount;
+    this.left_leg_1_axis.xRot = -0.3491F - Mth.cos(limbSwing) * 0.15F * walkAmount;
+    this.left_leg_2_axis.xRot = 0 - Mth.cos(limbSwing) * 0.35F * walkAmount;
+    this.right_leg_1_axis.xRot = -0.3491F - Mth.cos(limbSwing) * 0.20F * walkAmount;
+    this.right_leg_2_axis.xRot = 0 - Mth.cos(limbSwing) * 0.30F * walkAmount;
   }
 
-  private void getAttackAnim(BeetleEntity entity, int i, float ageInTicks) {
-    this.head_axis.xRot = -(-0.50F + 0.50F * Mth.triangleWave((float) i - ageInTicks, 16.0F));
-    this.chest_axis.xRot = -(-0.25F + 0.25F * Mth.triangleWave((float) i - ageInTicks, 16.0F));
-    this.left_arm.xRot = -0.25F + 0.25F * Mth.triangleWave((float) i - ageInTicks, 16.0F);
-    this.right_arm.xRot = -0.25F + 0.25F * Mth.triangleWave((float) i - ageInTicks, 16.0F);
+  /**
+   * Ram as phases over the elapsed ticks (BeetleEntity ATTACK_* constants): wind-up (neck and head pulled back, chest
+   * rearing), strike (head and neck driven forward and down), hold, recovery. The offsets are added to the walk/idle
+   * pose and scaled by a weight that is 0 at the start and at the end, so the attack never snaps.
+   */
+  private void getAttackAnim(float elapsed) {
+    float windupEnd = BeetleEntity.ATTACK_WINDUP_END;
+    float impact = BeetleEntity.ATTACK_IMPACT_TICK;
+    float holdEnd = BeetleEntity.ATTACK_HOLD_END;
+    float end = BeetleEntity.ATTACK_DURATION;
+
+    float windup = AttackAnimation.easeInOut(AttackAnimation.segment(elapsed, 0.0F, windupEnd));
+    float recovery = AttackAnimation.easeInOut(AttackAnimation.segment(elapsed, holdEnd, end));
+    // 0 = wind-up pose, 1 = contact. Ease in: the ram builds speed and lands at impact.
+    float strike = AttackAnimation.easeIn(AttackAnimation.segment(elapsed, windupEnd, impact));
+    float weight = windup * (1.0F - recovery);
+
+    this.head_axis.xRot += weight * AttackAnimation.lerp(strike, WINDUP_HEAD_X, STRIKE_HEAD_X);
+    this.head_axis.z += weight * AttackAnimation.lerp(strike, WINDUP_NECK_Z, STRIKE_NECK_Z);
+    this.chest_axis.xRot += weight * AttackAnimation.lerp(strike, WINDUP_CHEST_X, STRIKE_CHEST_X);
+    float arm = weight * AttackAnimation.lerp(strike, WINDUP_ARM_X, STRIKE_ARM_X);
+    this.left_arm_axis.xRot += arm;
+    this.right_arm_axis.xRot += arm;
   }
 }

@@ -8,6 +8,7 @@ import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.item.ItemStack;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.entities.goals.StoneGolemAttackGoal;
+import io.github.colochampre.riskofrain_mobs.utils.WalkClock;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import net.minecraft.core.BlockPos;
@@ -58,7 +59,34 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
   private static final EntityDataAccessor<Integer> DATA_ID_ATTACK_TARGET = SynchedEntityData.defineId(StoneGolemEntity.class, EntityDataSerializers.INT);
   private LivingEntity clientSideCachedAttackTarget;
   public int clientSideAttackTime;
+  // Melee attack timeline in ticks since the attack started; the model reads these, so retiming is done here.
+  // Wind-up (arms open) 0..ATTACK_WINDUP_END, strike (arms close) ..ATTACK_IMPACT_TICK, hold ..ATTACK_HOLD_END,
+  // then recovery to the rest pose until ATTACK_DURATION. The attack goal cooldown (40) must stay above the duration.
+  public static final int ATTACK_WINDUP_END = 9;
+  public static final int ATTACK_IMPACT_TICK = 13;
+  /**
+   * Extra reach, in blocks, allowed at the impact tick on top of the reach that starts the attack: the distance a
+   * walking player (about 0.216 blocks per tick) covers after a 5-tick reaction, 0.216 * (13 - 5). Walking away
+   * still gets hit; dodging needs an early sprint. Recompute it when ATTACK_IMPACT_TICK changes.
+   */
+  public static final double IMPACT_REACH_MARGIN = 1.75;
+  public static final int ATTACK_HOLD_END = 15;
+  public static final int ATTACK_DURATION = 22;
   private int attackTick;
+  /**
+   * Cap for the walk swing amount of every walk part (torso, arms and legs): the steady-state
+   * `min(distance * 4, 1)` at the normal chase speed (speed 0.25 x 0.8, about 0.345).
+   */
+  public static final float WALK_MAX_AMOUNT = 0.35F;
+  /** Vanilla walk position units between footfalls: the legs use cos(limbSwing * 0.5), one footfall every 2 PI. */
+  public static final float STEP_INTERVAL = (float) (2.0D * Math.PI);
+  /** Vanilla walk position of the first footfall, so a contact lands at a leg extreme. */
+  public static final float STEP_OFFSET = 0.0F;
+  /** Volume of the walking step, played by {@link #playWalkStep()} instead of the vanilla distance based step. */
+  private static final float STEP_VOLUME = 3.0F;
+  // Server only, not saved: an attack in progress is lost on unload
+  @Nullable
+  private LivingEntity pendingTarget;
 
   public StoneGolemEntity(EntityType<? extends Monster> type, Level level) {
     super(type, level);
@@ -117,6 +145,10 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
   @Override
   public void aiStep() {
     super.aiStep();
+    if (this.level().isClientSide) {
+      this.playWalkStep();
+    }
+    this.tickPendingHit();
     if (this.isAlive()) {
       if (this.isImmobile()) {
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
@@ -160,12 +192,49 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
 
   @Override
   public boolean doHurtTarget(Entity target) {
-    this.attackTick = 15;
+    if (this.pendingTarget != null || !(target instanceof LivingEntity living)) {
+      return false;
+    }
+    this.attackTick = ATTACK_DURATION;
+    this.pendingTarget = living;
     this.level().broadcastEntityEvent(this, (byte) 4);
-    float f = this.getAttackDamage();
-    boolean flag = target.hurt(this.damageSources().mobAttack(this), f);
     this.playSound(RoRSounds.STONE_GOLEM_CLAP.get(), 3.0F, 1.0F);
-    return flag;
+    return true;
+  }
+
+  /**
+   * Server only. Runs in aiStep before the attackTick decrement, so on the tick doHurtTarget starts the attack
+   * the elapsed time is 0, and the hit fires ATTACK_IMPACT_TICK ticks after that tick.
+   */
+  private void tickPendingHit() {
+    if (this.pendingTarget == null) {
+      return;
+    }
+    if (!this.isAlive()) {
+      this.pendingTarget = null;
+    } else if (ATTACK_DURATION - this.attackTick >= ATTACK_IMPACT_TICK) {
+      LivingEntity target = this.pendingTarget;
+      this.pendingTarget = null;
+      this.performHit(target);
+    }
+  }
+
+  private void performHit(LivingEntity target) {
+    if (!target.isAlive() || target.isRemoved() || target.level() != this.level() || !this.isInMeleeReach(target)) {
+      return;
+    }
+    target.hurt(this.damageSources().mobAttack(this), this.getAttackDamage());
+    this.strongKnockback(target);
+  }
+
+  /** Single source of the melee reach, shared by the attack goal and the deferred hit check. */
+  public double getAttackReachSqr(LivingEntity target) {
+    return this.getBbWidth() * 1.5F * this.getBbWidth() * 1.5F + target.getBbWidth();
+  }
+
+  public boolean isInMeleeReach(LivingEntity target) {
+    double reach = Math.sqrt(this.getAttackReachSqr(target)) + IMPACT_REACH_MARGIN;
+    return this.getPerceivedTargetDistanceSquareForMeleeAttack(target) <= reach * reach;
   }
 
   private void doFloorParticleEffect() {
@@ -315,8 +384,27 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
     return RoRSounds.STONE_GOLEM_STEP.get();
   }
 
+  /** Vanilla's distance based walking step is off: steps follow the walk animation, see {@link #playWalkStep()}. */
+  @Override
   protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState blockState) {
-    this.playSound(this.getStepSound(), 3.0F, 1.0F);
+  }
+
+  /**
+   * Client only. Entity.playSound has a null player and is silent on the client, so the step is played locally when
+   * the vanilla walk position crosses a foot contact. aiStep has already advanced the position this tick (travel
+   * calls calculateEntityAnimation), so the previous position is position - speed. The server keeps emitting the
+   * step game event (sculk vibrations).
+   */
+  private void playWalkStep() {
+    float speed = this.walkAnimation.speed();
+    if (this.isSilent() || this.isInWater() || !this.onGround() || speed <= WalkClock.MIN_STEP_SPEED) {
+      return;
+    }
+    float position = this.walkAnimation.position();
+    if (WalkClock.crossedContact(position - speed, position, STEP_INTERVAL, STEP_OFFSET)) {
+      this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), this.getStepSound(), this.getSoundSource(),
+          STEP_VOLUME, 1.0F, false);
+    }
   }
 
   @Override
@@ -337,7 +425,7 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
   @Override
   public void handleEntityEvent(byte b) {
     if (b == 4) {
-      this.attackTick = 15;
+      this.attackTick = ATTACK_DURATION;
       this.playSound(RoRSounds.STONE_GOLEM_CLAP.get(), 3.0F, 1.0F);
     } else {
       super.handleEntityEvent(b);

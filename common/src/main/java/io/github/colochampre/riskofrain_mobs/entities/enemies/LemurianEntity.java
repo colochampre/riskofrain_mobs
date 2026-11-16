@@ -1,5 +1,6 @@
 package io.github.colochampre.riskofrain_mobs.entities.enemies;
 
+import io.github.colochampre.riskofrain_mobs.utils.WalkClock;
 import io.github.colochampre.riskofrain_mobs.utils.ItemPickup;
 import io.github.colochampre.riskofrain_mobs.utils.CarriedItemsSource;
 import net.minecraft.world.SimpleContainer;
@@ -13,6 +14,7 @@ import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -51,7 +53,43 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
 
   private static final EntityDataAccessor<Integer> DATA_TYPE_ID = SynchedEntityData.defineId(LemurianEntity.class, EntityDataSerializers.INT);
   private static final float FIREBALL_ATTACK_RANGE = 20;
+  // Punch timing in ticks since the attack started, read by the server hit and the client model (S6):
+  // wind-up 0-6 (fist pulled back), strike 6-8 (punch driven forward), contact at 8, hold 8-9, recovery 9-14.
+  // The attack cooldown (LemurianAttackGoal, 20) must stay at least ATTACK_DURATION.
+  public static final int ATTACK_WINDUP_END = 6;
+  public static final int ATTACK_IMPACT_TICK = 8;
+  /**
+   * Extra reach, in blocks, allowed at the impact tick on top of the reach that starts the attack: the distance a
+   * walking player (about 0.216 blocks per tick) covers after a 5-tick reaction, 0.216 * (8 - 5). Walking away
+   * still gets hit; dodging needs an early sprint. Recompute it when ATTACK_IMPACT_TICK changes.
+   */
+  public static final double IMPACT_REACH_MARGIN = 0.65;
+  public static final int ATTACK_HOLD_END = 9;
+  public static final int ATTACK_DURATION = 14;
   private int attackTick;
+  /** Share of the horizontal velocity kept each client tick by the smoothed body-space velocity (S13). */
+  private static final float MOVE_SMOOTHING = 0.35F;
+  // Client only: horizontal velocity relative to the body (blocks per tick), smoothed over a few ticks so a strafe
+  // that flips direction fades through zero instead of popping. Forward is positive ahead, lateral is positive
+  // toward the Lemurian's left. The model reads them interpolated with the partial tick.
+  private float moveForward;
+  private float moveLateral;
+  private float moveForwardO;
+  private float moveLateralO;
+  /**
+   * Cap for the walk animation swing amount and cycle speed: the steady-state `min(distance * 4, 1)` at the normal
+   * chase speed (speed 0.26 x 1.0, about 0.584), so a speed boost does not exaggerate the walk.
+   */
+  public static final float WALK_MAX_AMOUNT = 0.59F;
+  /** Walk position units between footfalls: the legs use cos(position), period 2 PI, a footfall per leg extreme. */
+  public static final float STEP_INTERVAL = (float) Math.PI;
+  /** Walk position of the first footfall, so a contact lands at a leg extreme. */
+  public static final float STEP_OFFSET = 0.0F;
+  /** Volume of the walking step, played by {@link #playWalkStep()} instead of the vanilla distance based step. */
+  private static final float STEP_VOLUME = 0.2F;
+  // Server only, not saved: an attack in progress is lost on unload
+  @Nullable
+  private LivingEntity pendingTarget;
   private boolean selectingHand = true;
   private boolean rightHandSelected = true;
 
@@ -110,6 +148,11 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
   @Override
   public void aiStep() {
     super.aiStep();
+    if (this.level().isClientSide) {
+      this.playWalkStep();
+      this.updateBodyVelocity();
+    }
+    this.tickPendingHit();
     if (this.attackTick > 0) {
       --this.attackTick;
     }
@@ -124,11 +167,48 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
 
   @Override
   public boolean doHurtTarget(Entity entity) {
+    if (this.pendingTarget != null || !(entity instanceof LivingEntity living)) {
+      return false;
+    }
+    this.attackTick = ATTACK_DURATION;
+    this.pendingTarget = living;
     this.level().broadcastEntityEvent(this, (byte) 4);
-    float f = this.getAttackDamage();
-    boolean flag = entity.hurt(this.damageSources().mobAttack(this), f);
     this.playSound(RoRSounds.LEMURIAN_ATTACK.get(), 1.0F, 1.0F);
-    return flag;
+    return true;
+  }
+
+  /**
+   * Server only. Runs in aiStep before the attackTick decrement, so on the tick doHurtTarget starts the attack
+   * the elapsed time is 0, and the hit fires ATTACK_IMPACT_TICK ticks after that tick.
+   */
+  private void tickPendingHit() {
+    if (this.pendingTarget == null) {
+      return;
+    }
+    if (!this.isAlive()) {
+      this.pendingTarget = null;
+    } else if (ATTACK_DURATION - this.attackTick >= ATTACK_IMPACT_TICK) {
+      LivingEntity target = this.pendingTarget;
+      this.pendingTarget = null;
+      this.performHit(target);
+    }
+  }
+
+  private void performHit(LivingEntity target) {
+    if (!target.isAlive() || target.isRemoved() || target.level() != this.level() || !this.isInMeleeReach(target)) {
+      return;
+    }
+    target.hurt(this.damageSources().mobAttack(this), this.getAttackDamage());
+  }
+
+  /** Single source of the melee reach, shared by the attack goal and the deferred hit check. */
+  public double getAttackReachSqr(LivingEntity target) {
+    return this.getBbWidth() * 2.0F * this.getBbWidth() * 2.0F + target.getBbWidth();
+  }
+
+  public boolean isInMeleeReach(LivingEntity target) {
+    double reach = Math.sqrt(this.getAttackReachSqr(target)) + IMPACT_REACH_MARGIN;
+    return this.getPerceivedTargetDistanceSquareForMeleeAttack(target) <= reach * reach;
   }
 
   @Nullable
@@ -167,6 +247,11 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
     return this.rightHandSelected;
   }
 
+  /** Current value of the hand flag without flipping it, so the client model can read it every frame. */
+  public boolean peekRightHandSelected() {
+    return this.rightHandSelected;
+  }
+
   @Override
   protected SoundEvent getAmbientSound() {
     return RoRSounds.LEMURIAN_AMBIENT.get();
@@ -190,8 +275,54 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
     return RoRSounds.LEMURIAN_STEP.get();
   }
 
+  /** Vanilla's distance based walking step is off: steps follow the walk animation, see {@link #playWalkStep()}. */
+  @Override
   protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState blockState) {
-    this.playSound(this.getStepSound(), 0.2F, 1.0F);
+  }
+
+  /**
+   * Client only. Splits this tick's horizontal movement (position now minus position at the start of the tick) into
+   * a forward and a lateral part relative to the body yaw, and eases the smoothed values toward it. The body faces
+   * (-sin, cos) in (x, z) for yaw in degrees and its left is (cos, sin).
+   */
+  private void updateBodyVelocity() {
+    this.moveForwardO = this.moveForward;
+    this.moveLateralO = this.moveLateral;
+    float yaw = this.yBodyRot * Mth.DEG_TO_RAD;
+    float sin = Mth.sin(yaw);
+    float cos = Mth.cos(yaw);
+    double dx = this.getX() - this.xo;
+    double dz = this.getZ() - this.zo;
+    this.moveForward += ((float) (-dx * sin + dz * cos) - this.moveForward) * MOVE_SMOOTHING;
+    this.moveLateral += ((float) (dx * cos + dz * sin) - this.moveLateral) * MOVE_SMOOTHING;
+  }
+
+  /** Client only: smoothed forward velocity relative to the body, blocks per tick (negative is backward). */
+  public float getMoveForward(float partialTick) {
+    return Mth.lerp(partialTick, this.moveForwardO, this.moveForward);
+  }
+
+  /** Client only: smoothed lateral velocity relative to the body, blocks per tick (positive is toward its left). */
+  public float getMoveLateral(float partialTick) {
+    return Mth.lerp(partialTick, this.moveLateralO, this.moveLateral);
+  }
+
+  /**
+   * Client only. Entity.playSound has a null player and is silent on the client, so the step is played locally when
+   * the vanilla walk position crosses a foot contact. aiStep has already advanced the position this tick (travel
+   * calls calculateEntityAnimation), so the previous position is position - speed. The server keeps emitting the
+   * step game event (sculk vibrations).
+   */
+  private void playWalkStep() {
+    float speed = this.walkAnimation.speed();
+    if (this.isSilent() || this.isInWater() || !this.onGround() || speed <= WalkClock.MIN_STEP_SPEED) {
+      return;
+    }
+    float position = this.walkAnimation.position();
+    if (WalkClock.crossedContact(position - speed, position, STEP_INTERVAL, STEP_OFFSET)) {
+      this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), this.getStepSound(), this.getSoundSource(),
+          STEP_VOLUME, 1.0F, false);
+    }
   }
 
   protected SoundEvent getSpawnSound() {
@@ -210,7 +341,7 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
   @Override
   public void handleEntityEvent(byte b) {
     if (b == 4) {
-      this.attackTick = 10;
+      this.attackTick = ATTACK_DURATION;
       this.playSound(RoRSounds.LEMURIAN_ATTACK.get(), 1.0F, 1.0F);
     } else {
       super.handleEntityEvent(b);

@@ -6,6 +6,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.item.ItemStack;
+import io.github.colochampre.riskofrain_mobs.utils.WalkClock;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import net.minecraft.core.BlockPos;
@@ -36,7 +37,34 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
   private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = SynchedEntityData.defineId(BeetleEntity.class, EntityDataSerializers.COMPOUND_TAG);
   private final SimpleContainer inventory = ItemPickup.createInventory(this, DATA_CARRIED_ITEMS);
 
+  // Ram timing in ticks since the attack started, read by the server hit and the client model (S6):
+  // wind-up 0-8 (neck and head pulled back), strike 8-10 (fast ram), contact at 10, hold 10-11, recovery 11-18.
+  // The vanilla MeleeAttackGoal cooldown (20) must stay at least ATTACK_DURATION.
+  public static final int ATTACK_WINDUP_END = 8;
+  public static final int ATTACK_IMPACT_TICK = 10;
+  /**
+   * Extra reach, in blocks, allowed at the impact tick on top of the reach that starts the attack: the distance a
+   * walking player (about 0.216 blocks per tick) covers after a 5-tick reaction, 0.216 * (10 - 5). Walking away
+   * still gets hit; dodging needs an early sprint. Recompute it when ATTACK_IMPACT_TICK changes.
+   */
+  public static final double IMPACT_REACH_MARGIN = 1.1;
+  public static final int ATTACK_HOLD_END = 11;
+  public static final int ATTACK_DURATION = 18;
   private int attackTick;
+  /**
+   * Cap for the walk swing amount of every part, legs and body: the steady-state
+   * `min(distance * 4, 1)` at the normal chase speed (speed 0.21 x 1.0, about 0.381).
+   */
+  public static final float WALK_MAX_AMOUNT = 0.39F;
+  /** Vanilla walk position units between footfalls: the legs use cos(limbSwing), one footfall every PI. */
+  public static final float STEP_INTERVAL = (float) Math.PI;
+  /** Vanilla walk position of the first footfall, so a contact lands at a leg extreme. */
+  public static final float STEP_OFFSET = 0.0F;
+  /** Volume of the walking step, played by {@link #playWalkStep()} instead of the vanilla distance based step. */
+  private static final float STEP_VOLUME = 0.25F;
+  // Server only, not saved: an attack in progress is lost on unload
+  @Nullable
+  private LivingEntity pendingTarget;
 
   public BeetleEntity(EntityType<? extends Monster> type, Level level) {
     super(type, level);
@@ -76,6 +104,10 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
   @Override
   public void aiStep() {
     super.aiStep();
+    if (this.level().isClientSide) {
+      this.playWalkStep();
+    }
+    this.tickPendingHit();
     if (this.isAlive()) {
       if (this.isImmobile()) {
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
@@ -99,12 +131,49 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
 
   @Override
   public boolean doHurtTarget(Entity target) {
-    this.attackTick = 16;
+    if (this.pendingTarget != null || !(target instanceof LivingEntity living)) {
+      return false;
+    }
+    this.attackTick = ATTACK_DURATION;
+    this.pendingTarget = living;
     this.level().broadcastEntityEvent(this, (byte) 4);
-    float f = this.getAttackDamage();
-    boolean flag = target.hurt(this.damageSources().mobAttack(this), f);
     this.playSound(this.getAttackSound(), 1.0F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
-    return flag;
+    return true;
+  }
+
+  /**
+   * Server only. Runs in aiStep before the attackTick decrement, so on the tick doHurtTarget starts the attack
+   * the elapsed time is 0, and the hit fires ATTACK_IMPACT_TICK ticks after that tick.
+   */
+  private void tickPendingHit() {
+    if (this.pendingTarget == null) {
+      return;
+    }
+    if (!this.isAlive()) {
+      this.pendingTarget = null;
+    } else if (ATTACK_DURATION - this.attackTick >= ATTACK_IMPACT_TICK) {
+      LivingEntity target = this.pendingTarget;
+      this.pendingTarget = null;
+      this.performHit(target);
+    }
+  }
+
+  private void performHit(LivingEntity target) {
+    if (!target.isAlive() || target.isRemoved() || target.level() != this.level() || !this.isInMeleeReach(target)) {
+      return;
+    }
+    target.hurt(this.damageSources().mobAttack(this), this.getAttackDamage());
+  }
+
+  /**
+   * Same reach and distance measure as vanilla 1.20.1 MeleeAttackGoal, which drives this mob:
+   * getPerceivedTargetDistanceSquareForMeleeAttack(target) <= bbWidth * 2 * bbWidth * 2 + target.bbWidth, widened by IMPACT_REACH_MARGIN
+   * because it is checked at the impact tick.
+   */
+  public boolean isInMeleeReach(LivingEntity target) {
+    double reachSqr = this.getBbWidth() * 2.0F * this.getBbWidth() * 2.0F + target.getBbWidth();
+    double reach = Math.sqrt(reachSqr) + IMPACT_REACH_MARGIN;
+    return this.getPerceivedTargetDistanceSquareForMeleeAttack(target) <= reach * reach;
   }
 
   public float getAttackDamage() {
@@ -130,7 +199,7 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
   @Override
   public void handleEntityEvent(byte b) {
     if (b == 4) {
-      this.attackTick = 16;
+      this.attackTick = ATTACK_DURATION;
     } else {
       super.handleEntityEvent(b);
     }
@@ -215,8 +284,27 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
     return RoRSounds.BEETLE_STEP.get();
   }
 
+  /** Vanilla's distance based walking step is off: steps follow the walk animation, see {@link #playWalkStep()}. */
+  @Override
   protected void playStepSound(BlockPos pos, BlockState blockState) {
-    this.playSound(this.getStepSound(), 0.25F, 1.0F);
+  }
+
+  /**
+   * Client only. Entity.playSound has a null player and is silent on the client, so the step is played locally when
+   * the vanilla walk position crosses a foot contact. aiStep has already advanced the position this tick (travel
+   * calls calculateEntityAnimation), so the previous position is position - speed. The server keeps emitting the
+   * step game event (sculk vibrations).
+   */
+  private void playWalkStep() {
+    float speed = this.walkAnimation.speed();
+    if (this.isSilent() || this.isInWater() || !this.onGround() || speed <= WalkClock.MIN_STEP_SPEED) {
+      return;
+    }
+    float position = this.walkAnimation.position();
+    if (WalkClock.crossedContact(position - speed, position, STEP_INTERVAL, STEP_OFFSET)) {
+      this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), this.getStepSound(), this.getSoundSource(),
+          STEP_VOLUME, 1.0F, false);
+    }
   }
 
   @Override

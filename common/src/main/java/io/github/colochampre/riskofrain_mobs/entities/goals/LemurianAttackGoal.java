@@ -64,7 +64,7 @@ public class LemurianAttackGoal extends Goal {
       if (this.path != null) {
         return true;
       } else {
-        return this.getAttackReachSqr(target) >= this.lemurian.distanceToSqr(target.getX(), target.getY(), target.getZ());
+        return this.lemurian.getAttackReachSqr(target) >= this.lemurian.distanceToSqr(target.getX(), target.getY(), target.getZ());
       }
     }
   }
@@ -243,7 +243,7 @@ public class LemurianAttackGoal extends Goal {
   }
 
   protected void checkAndPerformAttack(LivingEntity livingEntity, double distance) {
-    double d0 = this.getAttackReachSqr(livingEntity);
+    double d0 = this.lemurian.getAttackReachSqr(livingEntity);
     if (distance <= d0 && this.ticksUntilNextAttack <= 0) {
       this.resetAttackCooldown();
       this.lemurian.swing(InteractionHand.MAIN_HAND);
@@ -253,10 +253,6 @@ public class LemurianAttackGoal extends Goal {
 
   protected void resetAttackCooldown() {
     this.ticksUntilNextAttack = this.adjustedTickDelay(20);
-  }
-
-  protected double getAttackReachSqr(LivingEntity entity) {
-    return (this.lemurian.getBbWidth() * 2.0F * this.lemurian.getBbWidth() * 2.0F + entity.getBbWidth());
   }
 
   protected SoundEvent getFireballSound() {
