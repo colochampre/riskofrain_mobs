@@ -57,6 +57,12 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
   // The attack cooldown (LemurianAttackGoal, 20) must stay at least ATTACK_DURATION.
   public static final int ATTACK_WINDUP_END = 6;
   public static final int ATTACK_IMPACT_TICK = 8;
+  /**
+   * Extra reach, in blocks, allowed at the impact tick on top of the reach that starts the attack: the distance a
+   * walking player (about 0.216 blocks per tick) covers after a 5-tick reaction, 0.216 * (8 - 5). Walking away
+   * still gets hit; dodging needs an early sprint. Recompute it when ATTACK_IMPACT_TICK changes.
+   */
+  public static final double IMPACT_REACH_MARGIN = 0.65;
   public static final int ATTACK_HOLD_END = 9;
   public static final int ATTACK_DURATION = 14;
   private int attackTick;
@@ -190,7 +196,8 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
   }
 
   public boolean isInMeleeReach(LivingEntity target) {
-    return this.getPerceivedTargetDistanceSquareForMeleeAttack(target) <= this.getAttackReachSqr(target);
+    double reach = Math.sqrt(this.getAttackReachSqr(target)) + IMPACT_REACH_MARGIN;
+    return this.getPerceivedTargetDistanceSquareForMeleeAttack(target) <= reach * reach;
   }
 
   @Nullable

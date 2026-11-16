@@ -42,6 +42,12 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
   // The vanilla MeleeAttackGoal cooldown (20) must stay at least ATTACK_DURATION.
   public static final int ATTACK_WINDUP_END = 8;
   public static final int ATTACK_IMPACT_TICK = 10;
+  /**
+   * Extra reach, in blocks, allowed at the impact tick on top of the reach that starts the attack: the distance a
+   * walking player (about 0.216 blocks per tick) covers after a 5-tick reaction, 0.216 * (10 - 5). Walking away
+   * still gets hit; dodging needs an early sprint. Recompute it when ATTACK_IMPACT_TICK changes.
+   */
+  public static final double IMPACT_REACH_MARGIN = 1.1;
   public static final int ATTACK_HOLD_END = 11;
   public static final int ATTACK_DURATION = 18;
   private int attackTick;
@@ -161,11 +167,13 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
 
   /**
    * Same reach and distance measure as vanilla 1.20.1 MeleeAttackGoal, which drives this mob:
-   * getPerceivedTargetDistanceSquareForMeleeAttack(target) <= bbWidth * 2 * bbWidth * 2 + target.bbWidth.
+   * getPerceivedTargetDistanceSquareForMeleeAttack(target) <= bbWidth * 2 * bbWidth * 2 + target.bbWidth, widened by IMPACT_REACH_MARGIN
+   * because it is checked at the impact tick.
    */
   public boolean isInMeleeReach(LivingEntity target) {
     double reachSqr = this.getBbWidth() * 2.0F * this.getBbWidth() * 2.0F + target.getBbWidth();
-    return this.getPerceivedTargetDistanceSquareForMeleeAttack(target) <= reachSqr;
+    double reach = Math.sqrt(reachSqr) + IMPACT_REACH_MARGIN;
+    return this.getPerceivedTargetDistanceSquareForMeleeAttack(target) <= reach * reach;
   }
 
   public float getAttackDamage() {

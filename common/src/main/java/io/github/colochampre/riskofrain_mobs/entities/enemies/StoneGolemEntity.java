@@ -64,6 +64,12 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
   // then recovery to the rest pose until ATTACK_DURATION. The attack goal cooldown (40) must stay above the duration.
   public static final int ATTACK_WINDUP_END = 9;
   public static final int ATTACK_IMPACT_TICK = 13;
+  /**
+   * Extra reach, in blocks, allowed at the impact tick on top of the reach that starts the attack: the distance a
+   * walking player (about 0.216 blocks per tick) covers after a 5-tick reaction, 0.216 * (13 - 5). Walking away
+   * still gets hit; dodging needs an early sprint. Recompute it when ATTACK_IMPACT_TICK changes.
+   */
+  public static final double IMPACT_REACH_MARGIN = 1.75;
   public static final int ATTACK_HOLD_END = 15;
   public static final int ATTACK_DURATION = 22;
   private int attackTick;
@@ -227,7 +233,8 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
   }
 
   public boolean isInMeleeReach(LivingEntity target) {
-    return this.getPerceivedTargetDistanceSquareForMeleeAttack(target) <= this.getAttackReachSqr(target);
+    double reach = Math.sqrt(this.getAttackReachSqr(target)) + IMPACT_REACH_MARGIN;
+    return this.getPerceivedTargetDistanceSquareForMeleeAttack(target) <= reach * reach;
   }
 
   private void doFloorParticleEffect() {
