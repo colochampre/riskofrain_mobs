@@ -6,7 +6,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.item.ItemStack;
-import io.github.colochampre.riskofrain_mobs.client.animation.WalkClock;
+import io.github.colochampre.riskofrain_mobs.utils.WalkClock;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import net.minecraft.core.BlockPos;
@@ -125,8 +125,11 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
 
   @Override
   public boolean doHurtTarget(Entity target) {
+    if (this.pendingTarget != null || !(target instanceof LivingEntity living)) {
+      return false;
+    }
     this.attackTick = ATTACK_DURATION;
-    this.pendingTarget = target instanceof LivingEntity living ? living : null;
+    this.pendingTarget = living;
     this.level().broadcastEntityEvent(this, (byte) 4);
     this.playSound(this.getAttackSound(), 1.0F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
     return true;
@@ -150,7 +153,7 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
   }
 
   private void performHit(LivingEntity target) {
-    if (!target.isAlive() || target.isRemoved() || !this.isInMeleeReach(target)) {
+    if (!target.isAlive() || target.isRemoved() || target.level() != this.level() || !this.isInMeleeReach(target)) {
       return;
     }
     target.hurt(this.damageSources().mobAttack(this), this.getAttackDamage());
@@ -286,7 +289,7 @@ public class BeetleEntity extends Monster implements InventoryCarrier, CarriedIt
    */
   private void playWalkStep() {
     float speed = this.walkAnimation.speed();
-    if (this.isSilent() || !this.onGround() || speed <= WalkClock.MIN_STEP_SPEED) {
+    if (this.isSilent() || this.isInWater() || !this.onGround() || speed <= WalkClock.MIN_STEP_SPEED) {
       return;
     }
     float position = this.walkAnimation.position();

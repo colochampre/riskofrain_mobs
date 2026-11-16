@@ -1,4 +1,4 @@
-package io.github.colochampre.riskofrain_mobs.client.animation;
+package io.github.colochampre.riskofrain_mobs.utils;
 
 import net.minecraft.util.Mth;
 

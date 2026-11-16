@@ -8,7 +8,7 @@ import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.item.ItemStack;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.entities.goals.StoneGolemAttackGoal;
-import io.github.colochampre.riskofrain_mobs.client.animation.WalkClock;
+import io.github.colochampre.riskofrain_mobs.utils.WalkClock;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
 import net.minecraft.core.BlockPos;
@@ -186,8 +186,11 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
 
   @Override
   public boolean doHurtTarget(Entity target) {
+    if (this.pendingTarget != null || !(target instanceof LivingEntity living)) {
+      return false;
+    }
     this.attackTick = ATTACK_DURATION;
-    this.pendingTarget = target instanceof LivingEntity living ? living : null;
+    this.pendingTarget = living;
     this.level().broadcastEntityEvent(this, (byte) 4);
     this.playSound(RoRSounds.STONE_GOLEM_CLAP.get(), 3.0F, 1.0F);
     return true;
@@ -211,7 +214,7 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
   }
 
   private void performHit(LivingEntity target) {
-    if (!target.isAlive() || target.isRemoved() || !this.isInMeleeReach(target)) {
+    if (!target.isAlive() || target.isRemoved() || target.level() != this.level() || !this.isInMeleeReach(target)) {
       return;
     }
     target.hurt(this.damageSources().mobAttack(this), this.getAttackDamage());
@@ -387,7 +390,7 @@ public class StoneGolemEntity extends Monster implements InventoryCarrier, Carri
    */
   private void playWalkStep() {
     float speed = this.walkAnimation.speed();
-    if (this.isSilent() || !this.onGround() || speed <= WalkClock.MIN_STEP_SPEED) {
+    if (this.isSilent() || this.isInWater() || !this.onGround() || speed <= WalkClock.MIN_STEP_SPEED) {
       return;
     }
     float position = this.walkAnimation.position();

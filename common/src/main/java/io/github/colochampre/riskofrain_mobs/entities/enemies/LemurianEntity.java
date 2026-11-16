@@ -1,6 +1,6 @@
 package io.github.colochampre.riskofrain_mobs.entities.enemies;
 
-import io.github.colochampre.riskofrain_mobs.client.animation.WalkClock;
+import io.github.colochampre.riskofrain_mobs.utils.WalkClock;
 import io.github.colochampre.riskofrain_mobs.utils.ItemPickup;
 import io.github.colochampre.riskofrain_mobs.utils.CarriedItemsSource;
 import net.minecraft.world.SimpleContainer;
@@ -150,8 +150,11 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
 
   @Override
   public boolean doHurtTarget(Entity entity) {
+    if (this.pendingTarget != null || !(entity instanceof LivingEntity living)) {
+      return false;
+    }
     this.attackTick = ATTACK_DURATION;
-    this.pendingTarget = entity instanceof LivingEntity living ? living : null;
+    this.pendingTarget = living;
     this.level().broadcastEntityEvent(this, (byte) 4);
     this.playSound(RoRSounds.LEMURIAN_ATTACK.get(), 1.0F, 1.0F);
     return true;
@@ -175,7 +178,7 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
   }
 
   private void performHit(LivingEntity target) {
-    if (!target.isAlive() || target.isRemoved() || !this.isInMeleeReach(target)) {
+    if (!target.isAlive() || target.isRemoved() || target.level() != this.level() || !this.isInMeleeReach(target)) {
       return;
     }
     target.hurt(this.damageSources().mobAttack(this), this.getAttackDamage());
@@ -267,7 +270,7 @@ public class LemurianEntity extends Monster implements InventoryCarrier, Carried
    */
   private void playWalkStep() {
     float speed = this.walkAnimation.speed();
-    if (this.isSilent() || !this.onGround() || speed <= WalkClock.MIN_STEP_SPEED) {
+    if (this.isSilent() || this.isInWater() || !this.onGround() || speed <= WalkClock.MIN_STEP_SPEED) {
       return;
     }
     float position = this.walkAnimation.position();
