@@ -38,6 +38,6 @@
     "fabric-api": "*"
   },
   "suggests": {
-    "riskofrain_items": ">=2.0.0"
+    "riskofrain_items": ">=2.1.0"
   }
 }
