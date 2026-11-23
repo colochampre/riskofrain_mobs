@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 
 @Environment(EnvType.CLIENT)
 public class WispRenderer extends MobRenderer<WispEntity, WispModel<WispEntity>> {
+  /** Also read by the riskofrain_items carrier icons through ItemsCompatClient, so the value lives here only. */
+  public static final float MODEL_SCALE = 0.75F;
   private static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(RoRMod.MOD_ID, "textures/entity/wisp/wisp_default.png");
 
   public WispRenderer(EntityRendererProvider.Context context) {
@@ -24,11 +26,9 @@ public class WispRenderer extends MobRenderer<WispEntity, WispModel<WispEntity>>
   @Override
   public void render(WispEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
     poseStack.pushPose();
-    float scale = 0.75F;
-    poseStack.scale(scale, scale, scale);
+    poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
     super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     poseStack.popPose();
-    CarriedItemsRenderer.render(entity, this.shouldShowName(entity), scale, poseStack, buffer);
   }
 
   @Override

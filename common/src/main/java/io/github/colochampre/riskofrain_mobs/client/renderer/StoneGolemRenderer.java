@@ -67,7 +67,6 @@ public class StoneGolemRenderer extends MobRenderer<StoneGolemEntity, StoneGolem
   public void render(@NotNull StoneGolemEntity entity, float p_114830_, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
     renderLaser(entity, partialTicks, poseStack, bufferSource);
     super.render(entity, p_114830_, partialTicks, poseStack, bufferSource, packedLight);
-    CarriedItemsRenderer.render(entity, this.shouldShowName(entity), 1.0F, poseStack, bufferSource);
   }
 
   private void renderLaser(StoneGolemEntity entity, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource) {

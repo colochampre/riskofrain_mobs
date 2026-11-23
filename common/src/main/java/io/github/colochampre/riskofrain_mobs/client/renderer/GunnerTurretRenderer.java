@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 @Environment(EnvType.CLIENT)
 public class GunnerTurretRenderer extends MobRenderer<GunnerTurretEntity, GunnerTurretModel<GunnerTurretEntity>> {
+  /** Also read by the riskofrain_items carrier icons through ItemsCompatClient, so the value lives here only. */
+  public static final float MODEL_SCALE = 0.80F;
   private static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(RoRMod.MOD_ID, "textures/entity/gunner_turret/gunner_turret_default.png");
   private static final String COLORED_TEXTURE = "textures/entity/gunner_turret/gunner_turret_%s.png";
 
@@ -31,11 +33,9 @@ public class GunnerTurretRenderer extends MobRenderer<GunnerTurretEntity, Gunner
   @Override
   public void render(@NotNull GunnerTurretEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, @NotNull MultiBufferSource buffer, int packedLight) {
     poseStack.pushPose();
-    float scale = 0.80F;
-    poseStack.scale(scale, scale, scale);
+    poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
     super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     poseStack.popPose();
-    CarriedItemsRenderer.render(entity, this.shouldShowName(entity), scale, poseStack, buffer);
   }
 
   @Override

@@ -87,13 +87,7 @@
   "text.autoconfig.riskofrain_mobs.option.SOUNDS.PLAYER_DEATH_SOUND": "玩家死亡音效",
 
   "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP": "物品拾取",
-  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.@Tooltip": "生物会从地面拾取雨中冒险物品并获得其被动效果。携带的物品会在死亡时掉落。",
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.@Tooltip": "生物通过 riskofrain_items 模组拾取雨中冒险物品并获得其效果，该模组必须已安装。没有它，这些设置不起作用。",
   "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.ENEMIES_CAN_PICK_UP": "敌人可拾取物品",
-  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DRONES_CAN_PICK_UP": "无人机可拾取物品",
-  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.INVENTORY_SLOTS": "物品栏格数",
-  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.SHOW_CARRIED_ITEMS": "显示携带的物品",
-  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_DISTANCE": "携带物品显示距离",
-  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_MODE": "携带物品显示模式",
-  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_MODE.ALWAYS": "始终",
-  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DISPLAY_MODE.WHEN_LOOKING": "注视时"
+  "text.autoconfig.riskofrain_mobs.option.ITEM_PICKUP.DRONES_CAN_PICK_UP": "无人机可拾取物品"
 }
