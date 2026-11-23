@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 
 @Environment(EnvType.CLIENT)
 public class BeetleRenderer extends MobRenderer<BeetleEntity, BeetleModel<BeetleEntity>> {
+  /** Also read by the riskofrain_items carrier icons through ItemsCompatClient, so the value lives here only. */
+  public static final float MODEL_SCALE = 0.90F;
   private static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(RoRMod.MOD_ID, "textures/entity/beetle/beetle_default.png");
 
   public BeetleRenderer(EntityRendererProvider.Context context) {
@@ -26,11 +28,9 @@ public class BeetleRenderer extends MobRenderer<BeetleEntity, BeetleModel<Beetle
   @Override
   public void render(BeetleEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
     poseStack.pushPose();
-    float scale = 0.90F;
-    poseStack.scale(scale, scale, scale);
+    poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
     super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     poseStack.popPose();
-    CarriedItemsRenderer.render(entity, this.shouldShowName(entity), scale, poseStack, buffer);
   }
 
   @Override

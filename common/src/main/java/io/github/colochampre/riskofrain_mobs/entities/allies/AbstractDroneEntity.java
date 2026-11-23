@@ -3,8 +3,7 @@ package io.github.colochampre.riskofrain_mobs.entities.allies;
 import com.google.common.collect.Sets;
 import io.github.colochampre.riskofrain_mobs.entities.goals.DroneFollowOwnerGoal;
 import io.github.colochampre.riskofrain_mobs.registry.RoRSounds;
-import io.github.colochampre.riskofrain_mobs.utils.ItemPickup;
-import io.github.colochampre.riskofrain_mobs.utils.CarriedItemsSource;
+import io.github.colochampre.riskofrain_mobs.compat.ItemsCompat;
 import io.github.colochampre.riskofrain_mobs.utils.EntityUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -23,7 +22,6 @@ import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -35,8 +33,6 @@ import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.DyeColor;
@@ -59,7 +55,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-public abstract class AbstractDroneEntity extends TamableAnimal implements InventoryCarrier, CarriedItemsSource {
+public abstract class AbstractDroneEntity extends TamableAnimal {
 
   public static final int TYPE_LAND = 0;
   public static final int TYPE_FLYING = 1;
@@ -84,8 +80,6 @@ public abstract class AbstractDroneEntity extends TamableAnimal implements Inven
   private final DroneFollowOwnerGoal followOwnerGoal = new DroneFollowOwnerGoal(this, 1.0D, 8.0F, 4.0F, true);
   private final WaterAvoidingRandomFlyingGoal randomFlyingGoal = new WaterAvoidingRandomFlyingGoal(this, 0.5D);
   private final SitWhenOrderedToGoal sitGoal = new SitWhenOrderedToGoal(this);
-  private static final EntityDataAccessor<CompoundTag> DATA_CARRIED_ITEMS = SynchedEntityData.defineId(AbstractDroneEntity.class, EntityDataSerializers.COMPOUND_TAG);
-  private final SimpleContainer inventory = ItemPickup.createInventory(this, DATA_CARRIED_ITEMS);
   private float bodyXRot;
   private float bodyZRot;
   private int flyingSound;
@@ -124,7 +118,6 @@ public abstract class AbstractDroneEntity extends TamableAnimal implements Inven
     this.entityData.define(DATA_PRICE, this.getInitialGoldPrice());
     this.entityData.define(DATA_ID_ATTACK_TARGET, 0);
     this.entityData.define(DATA_BODY_COLOR, DyeColor.LIGHT_BLUE.getId());
-    ItemPickup.registerCarriedItems(this, DATA_CARRIED_ITEMS);
   }
 
   private int getInitialGoldPrice() {
@@ -137,7 +130,6 @@ public abstract class AbstractDroneEntity extends TamableAnimal implements Inven
     super.addAdditionalSaveData(tag);
     tag.putByte("GoldPrice", (byte) this.getCurrentGoldPrice());
     tag.putByte("BodyColor", (byte) this.getBodyColor().getId());
-    ItemPickup.save(this, tag);
   }
 
   @Override
@@ -149,40 +141,6 @@ public abstract class AbstractDroneEntity extends TamableAnimal implements Inven
     if (tag.contains("BodyColor", 99)) {
       this.setBodyColor(DyeColor.byId(tag.getInt("BodyColor")));
     }
-    ItemPickup.load(this, this, tag);
-  }
-
-  @Override
-  public CompoundTag getCarriedItemsTag() {
-    return this.entityData.get(DATA_CARRIED_ITEMS);
-  }
-
-  @Override
-  public SimpleContainer getInventory() {
-    return this.inventory;
-  }
-
-  // Read at runtime so a change in the config GUI applies without a restart. Untamed drones are inert shop items
-  @Override
-  public boolean canPickUpLoot() {
-    return this.isTame() && ItemPickup.dronesCanPickUp();
-  }
-
-  @Override
-  public boolean wantsToPickUp(ItemStack stack) {
-    return ItemPickup.wantsToPickUp(this, stack);
-  }
-
-  @Override
-  protected void pickUpItem(ItemEntity itemEntity) {
-    ItemPickup.pickUp(this, this, itemEntity);
-  }
-
-  // Real deaths only (/kill, the void): a break-down cancels die() and drops the items in breakDown instead
-  @Override
-  protected void dropEquipment() {
-    super.dropEquipment();
-    ItemPickup.dropAll(this, this);
   }
 
   @Override
@@ -531,7 +489,7 @@ public abstract class AbstractDroneEntity extends TamableAnimal implements Inven
 
   // Back to the untamed, for-sale state, with nothing left over from the fight or the previous owner
   private void breakDown() {
-    ItemPickup.dropAll(this, this);
+    ItemsCompat.dropCarriedItems(this);
     this.setTame(false);
     this.setOwnerUUID(null);
     this.setOrderedToSit(false);

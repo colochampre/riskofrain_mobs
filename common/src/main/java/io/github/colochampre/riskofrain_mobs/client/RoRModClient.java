@@ -1,6 +1,7 @@
 package io.github.colochampre.riskofrain_mobs.client;
 
 import dev.architectury.networking.NetworkManager;
+import io.github.colochampre.riskofrain_mobs.compat.ItemsCompat;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityRendering;
 import io.github.colochampre.riskofrain_mobs.registry.RoRNetwork;
 import net.minecraft.client.Minecraft;
@@ -17,6 +18,7 @@ public final class RoRModClient {
   public static void init() {
     registerNetworkReceivers();
     RoREntityRendering.init();
+    ItemsCompat.initClient();
   }
 
   private static void registerNetworkReceivers() {

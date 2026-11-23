@@ -3,8 +3,8 @@
 ## Unreleased - Minecraft 1.20.1 (Fabric & Forge)
 
 ### New
-- **Mobs pick up Risk of Rain items** (with Risk of Rain Items installed). Beetles, Lemurians, Stone Golems and Wisps pick up item drops from the ground and gain their passive effects; tamed drones and turrets can too if enabled. Carried items drop on death, and a mob carrying items never despawns. Configurable in the new "Item pickup" section (enemies on, drones off, 8 slots).
-- **Carried items above the head.** Mobs show the icons of the items they carry, with `x2`, `x3`... counts, when you look at them (or always, configurable), within a configurable distance.
+- **Mobs pick up Risk of Rain items** (requires Risk of Rain Items 2.1.0 or newer, which provides the carrier system). Beetles, Lemurians, Stone Golems and Wisps pick up item drops from the ground and gain their passive effects; tamed drones and turrets can too if enabled. Carried items drop on death or when a drone breaks down, and a mob carrying items never despawns. Owners can take items back from their drones and turret with sneak + right-click on an empty hand, and conversions work. Configurable in the new "Item pickup" section (enemies on, drones off).
+- **Carried items above the head** (requires Risk of Rain Items). Mobs show the icons of the items they carry, drawn by Risk of Rain Items; slots and display settings are configured there.
 - **Melee wind-ups.** The Stone Golem opens its arms before clapping, the Beetle pulls its neck back before ramming, and the Lemurian pulls its fist back before punching.
 - **Melee hits land on contact.** Damage is dealt when the animation connects, not when the attack starts. Backing away can dodge a hit, but walking away is not enough: you need to sprint early.
 - **New walk animations.** The Lemurian walks like a deer's hind leg and sidesteps while strafing, the Stone Golem bends its knees one way only with arms in step, and a tamed Gunner Turret trots on its legs while led on a leash.
@@ -12,6 +12,8 @@
 ### Changed
 - **Walk animations stay calm at high speed.** Speed boosts no longer make Stone Golems, Beetles and Lemurians flail their limbs.
 - **Footsteps follow the feet.** Stone Golem, Beetle and Lemurian step sounds play when a foot lands, at any speed.
+- **Risk of Rain Items is an optional dependency (2.1.0 or newer).** Without it the mobs work as before and never pick up items.
+- **Removed settings** `INVENTORY_SLOTS`, `SHOW_CARRIED_ITEMS`, `DISPLAY_DISTANCE` and `DISPLAY_MODE`; Risk of Rain Items owns slots and display now.
 
 ### Fixes
 - Stone Golem torso and Beetle legs no longer stay stuck in a pose after an attack.

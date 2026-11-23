@@ -41,6 +41,13 @@ config = "riskofrain_mobs.mixins.json"
     ordering="AFTER"
     side="BOTH"
 
+[[dependencies.riskofrain_mobs]]
+    modId="riskofrain_items"
+    mandatory=false
+    versionRange="[2.1.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
 [[extensions.riskofrain_mobs]]
 type = "forge:display_test"
 value = "MATCH_VERSION"

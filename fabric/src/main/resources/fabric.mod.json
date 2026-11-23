@@ -36,5 +36,8 @@
     "architectury": ">=9.2.14 <10",
     "cloth-config": ">=11.1.136 <12",
     "fabric-api": "*"
+  },
+  "suggests": {
+    "riskofrain_items": ">=2.1.0"
   }
 }
