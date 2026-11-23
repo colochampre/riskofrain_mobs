@@ -11,3 +11,15 @@ dependencies {
     // Architectury API. This is optional, and you can comment it out if you don't need it.
     modImplementation "dev.architectury:architectury:$rootProject.architectury_api_version"
 }
+
+// riskofrain_items is an optional dependency, not published yet: compile against its local Fabric jar.
+// Loom remaps it to the named mappings. It is compile-only: never bundled and never a runtime requirement.
+def itemsJar = rootProject.file('fabric/libs/riskofrain_items-fabric-2.0.0.jar')
+if (!itemsJar.exists()) {
+    throw new GradleException("Missing ${itemsJar}. Build riskofrain_items (./gradlew build in its repo) and copy " +
+            "fabric/build/libs/riskofrain_items-fabric-2.0.0.jar to fabric/libs/ and " +
+            "forge/build/libs/riskofrain_items-forge-2.0.0.jar to forge/libs/. See README, Building.")
+}
+dependencies {
+    modCompileOnly files(itemsJar)
+}

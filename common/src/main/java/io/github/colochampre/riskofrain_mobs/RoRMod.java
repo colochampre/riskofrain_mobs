@@ -1,5 +1,6 @@
 package io.github.colochampre.riskofrain_mobs;
 
+import io.github.colochampre.riskofrain_mobs.compat.ItemsCompat;
 import io.github.colochampre.riskofrain_mobs.events.ModEvents;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
@@ -22,6 +23,7 @@ public final class RoRMod {
     RoRItems.init();
     ModEvents.init();
     ModBiomeModifiers.init();
+    ItemsCompat.init();
     // Client-only setup runs from the platform client entrypoints via client.RoRModClient
   }
 }

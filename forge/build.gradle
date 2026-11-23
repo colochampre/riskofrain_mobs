@@ -5,6 +5,10 @@ plugins {
 loom {
     forge {
         mixinConfig "riskofrain_mobs.mixins.json"
+        // Dev runs load riskofrain_items from a classpath jar, which ignores the [[mixins]] of its mods.toml
+        if (file("libs").listFiles({ f -> f.name.startsWith("riskofrain_items-") && f.name.endsWith(".jar") } as FileFilter)) {
+            mixinConfig "riskofrain_items-common.mixins.json"
+        }
     }
 }
 

@@ -55,6 +55,14 @@ gradlew.bat build  # Windows
 
 The compiled files will be in `build/libs/`
 
+#### riskofrain_items (optional dependency)
+
+The mod compiles against [riskofrain_items](https://github.com/colochampre/riskofrain_items), which is not published yet, so a local jar is needed before the first build (the build fails with a message if it is missing). It is compile-only: not bundled, and the mod runs without it.
+
+1. Clone riskofrain_items next to this repository and run `./gradlew build` there
+2. Copy `fabric/build/libs/riskofrain_items-fabric-2.0.0.jar` to `fabric/libs/` here
+3. Copy `forge/build/libs/riskofrain_items-forge-2.0.0.jar` to `forge/libs/` here (loaded in the Forge dev runs)
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please read our [contribution guidelines](CONTRIBUTING.md) before submitting a pull request.
