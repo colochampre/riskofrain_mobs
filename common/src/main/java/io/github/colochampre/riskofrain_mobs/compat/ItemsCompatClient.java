@@ -17,10 +17,10 @@ final class ItemsCompatClient {
 
   static void init() {
     // The renderers scale the model, so the icons need the same scale to sit at the right height.
-    // The values are the renderers' own constants. Deferred for the same reason as the carrier rules.
-    RoREntityTypes.BEETLE.listen(type -> CarriedItemsDisplay.registerRenderScale(type, entity -> BeetleRenderer.MODEL_SCALE));
-    RoREntityTypes.GUNNER_TURRET.listen(type -> CarriedItemsDisplay.registerRenderScale(type, entity -> GunnerTurretRenderer.MODEL_SCALE));
-    RoREntityTypes.WISP.listen(type -> CarriedItemsDisplay.registerRenderScale(type, entity -> WispRenderer.MODEL_SCALE));
+    // The values are the renderers' own constants. The entity types are passed as suppliers, resolved later by riskofrain_items.
+    CarriedItemsDisplay.registerRenderScale(RoREntityTypes.BEETLE, entity -> BeetleRenderer.MODEL_SCALE);
+    CarriedItemsDisplay.registerRenderScale(RoREntityTypes.GUNNER_TURRET, entity -> GunnerTurretRenderer.MODEL_SCALE);
+    CarriedItemsDisplay.registerRenderScale(RoREntityTypes.WISP, entity -> WispRenderer.MODEL_SCALE);
     RoRMod.LOGGER.debug("riskofrain_items found, render scales registered");
   }
 }

@@ -1,14 +1,12 @@
 package io.github.colochampre.riskofrain_mobs.compat;
 
 import dev.architectury.platform.Platform;
-import dev.architectury.registry.registries.RegistrySupplier;
 import io.github.colochampre.riskofrain_items.carrier.CarriedItems;
 import io.github.colochampre.riskofrain_items.carrier.CarrierRules;
 import io.github.colochampre.riskofrain_mobs.RoRMod;
 import io.github.colochampre.riskofrain_mobs.entities.allies.AbstractDroneEntity;
 import io.github.colochampre.riskofrain_mobs.registry.RoRConfigs;
 import io.github.colochampre.riskofrain_mobs.registry.RoREntityTypes;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 
 import java.util.function.Predicate;
@@ -20,6 +18,7 @@ import java.util.function.Predicate;
  */
 public final class ItemsCompat {
   public static final String ITEMS_MOD_ID = "riskofrain_items";
+  private static final String REQUIRED_ITEMS_VERSION = "2.1.0";
 
   private ItemsCompat() {
   }
@@ -33,7 +32,11 @@ public final class ItemsCompat {
     if (!isLoaded()) {
       return;
     }
-    Impl.init();
+    try {
+      Impl.init();
+    } catch (LinkageError e) {
+      logTooOld(e);
+    }
   }
 
   /** Client-only setup. Safe to call without riskofrain_items. */
@@ -41,7 +44,17 @@ public final class ItemsCompat {
     if (!isLoaded()) {
       return;
     }
-    ItemsCompatClient.init();
+    try {
+      ItemsCompatClient.init();
+    } catch (LinkageError e) {
+      logTooOld(e);
+    }
+  }
+
+  /** An older riskofrain_items without the carrier API: keep running, mobs just do not pick up items. */
+  private static void logTooOld(LinkageError e) {
+    RoRMod.LOGGER.warn("riskofrain_items {} or newer is required for item pickup; the installed version has no carrier API, "
+            + "so mobs will not pick up items", REQUIRED_ITEMS_VERSION, e);
   }
 
   /**
@@ -64,18 +77,13 @@ public final class ItemsCompat {
       Predicate<Mob> drones = mob -> mob instanceof AbstractDroneEntity drone && drone.isTame()
               && RoRConfigs.get().ITEM_PICKUP.DRONES_CAN_PICK_UP;
 
-      register(RoREntityTypes.BEETLE, enemies);
-      register(RoREntityTypes.LEMURIAN, enemies);
-      register(RoREntityTypes.STONE_GOLEM, enemies);
-      register(RoREntityTypes.WISP, enemies);
-      register(RoREntityTypes.GUNNER_DRONE, drones);
-      register(RoREntityTypes.GUNNER_TURRET, drones);
+      CarrierRules.register(RoREntityTypes.BEETLE, enemies);
+      CarrierRules.register(RoREntityTypes.LEMURIAN, enemies);
+      CarrierRules.register(RoREntityTypes.STONE_GOLEM, enemies);
+      CarrierRules.register(RoREntityTypes.WISP, enemies);
+      CarrierRules.register(RoREntityTypes.GUNNER_DRONE, drones);
+      CarrierRules.register(RoREntityTypes.GUNNER_TURRET, drones);
       RoRMod.LOGGER.debug("riskofrain_items found, carrier rules registered");
-    }
-
-    // The entity types are deferred: on Forge they only exist after the registry event, later than the mod constructor
-    private static void register(RegistrySupplier<? extends EntityType<?>> type, Predicate<Mob> rule) {
-      type.listen(entityType -> CarrierRules.register(entityType, rule));
     }
 
     static void dropCarriedItems(Mob mob) {
