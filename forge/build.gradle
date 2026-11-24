@@ -5,16 +5,20 @@ plugins {
 loom {
     forge {
         mixinConfig "riskofrain_mobs.mixins.json"
-    }
-    runs {
-        configureEach {
-            // Dev runs load riskofrain_items from a classpath jar, which ignores the [[mixins]] of its mods.toml.
-            // Passed as a run argument and not through forge { mixinConfig }, which Loom writes into the
-            // production jar manifest and would crash players who do not have riskofrain_items.
-            if (file("libs").listFiles({ f -> f.name.startsWith("riskofrain_items-") && f.name.endsWith(".jar") } as FileFilter)) {
-                programArgs "--mixin.config", "riskofrain_items-common.mixins.json"
-            }
+        // Dev runs load riskofrain_items from a classpath jar, which ignores the [[mixins]] of its mods.toml.
+        // Declared here so it reaches launch.cfg, which both Gradle and IDE runs read (run programArgs only reach
+        // Gradle runs). Loom also writes this list into the jar manifest; the jar tasks below put it back to the
+        // mobs config alone, or players without riskofrain_items would crash.
+        if (file("libs").listFiles({ f -> f.name.startsWith("riskofrain_items-") && f.name.endsWith(".jar") } as FileFilter)) {
+            mixinConfig "riskofrain_items-common.mixins.json"
         }
+    }
+}
+
+tasks.matching { it.name in ["jar", "shadowJar"] }.configureEach {
+    // Runs at execution, after Loom's configuration of the manifest
+    doFirst {
+        manifest.attributes("MixinConfigs": "riskofrain_mobs.mixins.json")
     }
 }
 
